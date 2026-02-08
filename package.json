@@ -1,0 +1,33 @@
+{
+  "name": "authly-mern",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["apps/client/*", "apps/server"],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:react\" \"npm run dev:next\" \"npm run dev:server\"",
+    "dev:react": "npm --workspace apps/client/web-react run dev",
+    "dev:next": "npm --workspace apps/client/web-next run dev",
+    "dev:server": "npm --workspace apps/server run dev",
+    "build": "npm run build:react && npm run build:next && npm run build:server",
+    "build:react": "npm --workspace apps/client/web-react run build",
+    "build:next": "npm --workspace apps/client/web-next run build",
+    "build:server": "npm --workspace apps/server run build",
+    "start": "npm --workspace apps/server run start",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "format": "prettier --write .",
+    "typecheck": "npm run typecheck:react && npm run typecheck:next && npm run typecheck:server",
+    "typecheck:react": "npm --workspace apps/client/web-react run typecheck",
+    "typecheck:next": "npm --workspace apps/client/web-next run typecheck",
+    "typecheck:server": "npm --workspace apps/server run typecheck",
+    "install:all": "npm install --workspaces"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
