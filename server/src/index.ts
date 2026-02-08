@@ -7,11 +7,8 @@ import connectDatabase from "./database/database";
 import { errorHandler } from "./middlewares/core/error-handler.middleware";
 import { HTTPSTATUS } from "./config/http.config";
 import { asyncHandler } from "./middlewares/helpers/async-handler.middleware";
-import authRoutes from "./modules/auth/auth.routes";
 import passport from "./middlewares/auth/passport.middleware";
-import sessionRoutes from "./modules/session/session.routes";
-import { authenticateJWT } from "./common/strategies/jwt.strategy";
-import mfaRoutes from "./modules/mfa/mfa.routes";
+//import { authenticateJWT } from "./common/strategies/jwt.strategy";
 import { logger, flushLogs } from "./common/utils/logger-utils";
 import { requestIdMiddleware } from "./middlewares/core/request-id.middleware";
 import { requestLoggerMiddleware } from "./middlewares/core/request-logger.middleware";
@@ -61,11 +58,11 @@ app.get(
   })
 );
 
-app.use(`${BASE_PATH}/auth`, authRoutes);
+// app.use(`${BASE_PATH}/auth`, authRoutes);
 
-app.use(`${BASE_PATH}/mfa`, mfaRoutes);
+// app.use(`${BASE_PATH}/mfa`, mfaRoutes);
 
-app.use(`${BASE_PATH}/session`, authenticateJWT, sessionRoutes);
+// app.use(`${BASE_PATH}/session`, authenticateJWT, sessionRoutes);
 
 app.use(errorHandler);
 
