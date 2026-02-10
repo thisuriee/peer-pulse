@@ -3,11 +3,8 @@
 const { asyncHandler } = require("../../middlewares/helpers/async-handler.middleware");
 const { HTTPSTATUS } = require("../../config/http.config");
 const {
-  emailSchema,
   loginSchema,
   registerSchema,
-  resetPasswordSchema,
-  verificationEmailSchema,
 } = require("../../common/validators/auth.validator");
 const {
   clearAuthenticationCookies,
@@ -19,6 +16,9 @@ const {
   NotFoundException,
   UnauthorizedException,
 } = require("../../common/utils/errors-utils");
+const SessionModel = require("../../database/models/authSession.model");
+const { signJwtToken, refreshTokenSignOptions } = require("../../common/utils/token-utils");
+const { config } = require("../../config/app.config");
 
 class AuthController {
   constructor(authService) {
@@ -105,46 +105,6 @@ class AuthController {
   });
 
   /**
-   * Verify email address
-   * POST /api/v1/auth/verify/email
-   */
-  verifyEmail = asyncHandler(async (req, res) => {
-    const { code } = verificationEmailSchema.parse(req.body);
-    await this.authService.verifyEmail(code);
-
-    return res.status(HTTPSTATUS.OK).json({
-      message: "Email verified successfully",
-    });
-  });
-
-  /**
-   * Send password reset email
-   * POST /api/v1/auth/password/forgot
-   */
-  forgotPassword = asyncHandler(async (req, res) => {
-    const email = emailSchema.parse(req.body.email);
-    await this.authService.forgotPassword(email);
-
-    return res.status(HTTPSTATUS.OK).json({
-      message: "Password reset email sent",
-    });
-  });
-
-  /**
-   * Reset password
-   * POST /api/v1/auth/password/reset
-   */
-  resetPassword = asyncHandler(async (req, res) => {
-    const body = resetPasswordSchema.parse(req.body);
-
-    await this.authService.resetPassword(body);
-
-    return clearAuthenticationCookies(res).status(HTTPSTATUS.OK).json({
-      message: "Password reset successfully",
-    });
-  });
-
-  /**
    * Logout user
    * POST /api/v1/auth/logout
    */
@@ -171,6 +131,34 @@ class AuthController {
       message: "User fetched successfully",
       data: user,
     });
+  });
+
+  /**
+   * Google OAuth Callback
+   * GET /api/v1/auth/google/callback
+   */
+  googleCallback = asyncHandler(async (req, res) => {
+    const user = req.user;
+    
+    const session = await SessionModel.create({
+      userId: user._id,
+      userAgent: req.headers["user-agent"],
+    });
+
+    const accessToken = signJwtToken({
+      userId: user._id,
+      sessionId: session._id,
+    });
+
+    const refreshToken = signJwtToken(
+      { sessionId: session._id },
+      refreshTokenSignOptions
+    );
+
+    // Set cookies and redirect to frontend
+    setAuthenticationCookies({ res, accessToken, refreshToken });
+    
+    return res.redirect(`${config.APP_ORIGIN}/home`);
   });
 }
 

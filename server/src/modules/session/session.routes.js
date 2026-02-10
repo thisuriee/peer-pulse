@@ -1,50 +1,64 @@
 "use strict";
 
 const { Router } = require("express");
+const { authenticateJWT } = require("../../common/middleware/auth.middleware");
 const { requireTutor } = require("../../common/guards/role.guard");
+const { bookingController } = require("./session.module");
 
-const sessionRoutes = Router();
+const bookingRoutes = Router();
 
 // ============================================
 // Component 1: Session Orchestrator (Dahami)
 // Booking & Scheduling for Peer-Tutoring
 // ============================================
 
-// All routes are protected by authenticateJWT in index.js
+// All routes require authentication
+bookingRoutes.use(authenticateJWT);
 
-// GET /api/v1/sessions - Get all sessions for the current user
-sessionRoutes.get("/", (req, res) => {
-  res.json({ message: "Get all sessions - TODO: Implement" });
-});
+// ============================================
+// Booking CRUD Operations
+// ============================================
 
-// GET /api/v1/sessions/:id - Get session by ID
-sessionRoutes.get("/:id", (req, res) => {
-  res.json({ message: "Get session by ID - TODO: Implement" });
-});
+// GET /api/v1/bookings/slots - Get available slots for a tutor (must be before /:id)
+bookingRoutes.get("/slots", bookingController.getAvailableSlots);
 
-// POST /api/v1/sessions - Create a new session request
-sessionRoutes.post("/", (req, res) => {
-  res.json({ message: "Create session - TODO: Implement" });
-});
+// GET /api/v1/bookings/tutors - Get tutors with availability
+bookingRoutes.get("/tutors", bookingController.getTutorsWithAvailability);
 
-// PUT /api/v1/sessions/:id/accept - Accept a session (Tutor only)
-sessionRoutes.put("/:id/accept", requireTutor, (req, res) => {
-  res.json({ message: "Accept session - TODO: Implement" });
-});
+// GET /api/v1/bookings/availability - Get current user's availability (tutor)
+bookingRoutes.get("/availability", requireTutor, bookingController.getAvailability);
 
-// PUT /api/v1/sessions/:id/decline - Decline a session (Tutor only)
-sessionRoutes.put("/:id/decline", requireTutor, (req, res) => {
-  res.json({ message: "Decline session - TODO: Implement" });
-});
+// PUT /api/v1/bookings/availability - Update availability (tutor)
+bookingRoutes.put("/availability", requireTutor, bookingController.updateAvailability);
 
-// PUT /api/v1/sessions/:id/complete - Mark session as completed
-sessionRoutes.put("/:id/complete", (req, res) => {
-  res.json({ message: "Complete session - TODO: Implement" });
-});
+// POST /api/v1/bookings/availability/override - Add date override (tutor)
+bookingRoutes.post("/availability/override", requireTutor, bookingController.addDateOverride);
 
-// DELETE /api/v1/sessions/:id - Cancel a session
-sessionRoutes.delete("/:id", (req, res) => {
-  res.json({ message: "Cancel session - TODO: Implement" });
-});
+// DELETE /api/v1/bookings/availability/override - Remove date override (tutor)
+bookingRoutes.delete("/availability/override", requireTutor, bookingController.removeDateOverride);
 
-module.exports = sessionRoutes;
+// GET /api/v1/bookings - Get all bookings for current user
+bookingRoutes.get("/", bookingController.getBookings);
+
+// POST /api/v1/bookings - Create a new booking request
+bookingRoutes.post("/", bookingController.createBooking);
+
+// GET /api/v1/bookings/:id - Get booking by ID
+bookingRoutes.get("/:id", bookingController.getBookingById);
+
+// PUT /api/v1/bookings/:id - Update a booking (student only, pending bookings)
+bookingRoutes.put("/:id", bookingController.updateBooking);
+
+// PUT /api/v1/bookings/:id/accept - Accept a booking (tutor only)
+bookingRoutes.put("/:id/accept", requireTutor, bookingController.acceptBooking);
+
+// PUT /api/v1/bookings/:id/decline - Decline a booking (tutor only)
+bookingRoutes.put("/:id/decline", requireTutor, bookingController.declineBooking);
+
+// PUT /api/v1/bookings/:id/complete - Mark booking as completed
+bookingRoutes.put("/:id/complete", bookingController.completeBooking);
+
+// DELETE /api/v1/bookings/:id - Cancel a booking
+bookingRoutes.delete("/:id", bookingController.cancelBooking);
+
+module.exports = bookingRoutes;

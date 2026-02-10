@@ -3,7 +3,7 @@
 const { verifyJwtToken } = require("../utils/token-utils");
 const { UnauthorizedException } = require("../utils/errors-utils");
 const { ErrorCode } = require("../enums/error-code.enum");
-const SessionModel = require("../../database/models/session.model");
+const SessionModel = require("../../database/models/authSession.model");
 
 /**
  * Middleware to authenticate JWT tokens from cookies

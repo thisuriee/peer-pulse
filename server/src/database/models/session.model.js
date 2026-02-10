@@ -2,30 +2,103 @@
 
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
-const { thirtyDaysFromNow } = require("../../common/utils/date-utils");
 
-const sessionSchema = new Schema({
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    index: true,
-    required: true,
+const BookingStatus = {
+  PENDING: "pending",
+  ACCEPTED: "accepted",
+  DECLINED: "declined",
+  CONFIRMED: "confirmed",
+  COMPLETED: "completed",
+  CANCELLED: "cancelled",
+};
+
+const bookingSchema = new Schema(
+  {
+    student: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    tutor: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
+    },
+    subject: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
+    scheduledAt: {
+      type: Date,
+      required: true,
+      index: true,
+    },
+    duration: {
+      type: Number, // Duration in minutes
+      required: true,
+      min: 15,
+      max: 180,
+      default: 60,
+    },
+    status: {
+      type: String,
+      enum: Object.values(BookingStatus),
+      default: BookingStatus.PENDING,
+      index: true,
+    },
+    meetingLink: {
+      type: String,
+      trim: true,
+    },
+    googleCalendarEventId: {
+      type: String,
+      trim: true,
+    },
+    notes: {
+      type: String,
+      trim: true,
+      maxlength: 1000,
+    },
+    cancelReason: {
+      type: String,
+      trim: true,
+    },
+    cancelledBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    },
+    completedAt: {
+      type: Date,
+    },
   },
-  userAgent: {
-    type: String,
-    required: false,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  expiredAt: {
-    type: Date,
-    required: true,
-    default: thirtyDaysFromNow,
-  },
+  { timestamps: true }
+);
+
+// Compound indexes for efficient queries
+bookingSchema.index({ tutor: 1, scheduledAt: 1 });
+bookingSchema.index({ student: 1, scheduledAt: 1 });
+bookingSchema.index({ status: 1, scheduledAt: 1 });
+
+// Virtual to calculate end time
+bookingSchema.virtual("endTime").get(function () {
+  if (this.scheduledAt && this.duration) {
+    return new Date(this.scheduledAt.getTime() + this.duration * 60000);
+  }
+  return null;
 });
 
-const SessionModel = mongoose.model("Session", sessionSchema);
+// Ensure virtuals are included in JSON output
+bookingSchema.set("toJSON", { virtuals: true });
+bookingSchema.set("toObject", { virtuals: true });
 
-module.exports = SessionModel;
+const BookingModel = mongoose.model("Booking", bookingSchema);
+
+module.exports = { BookingModel, BookingStatus };

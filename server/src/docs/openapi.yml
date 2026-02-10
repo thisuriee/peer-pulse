@@ -1,559 +1,418 @@
-openapi: 3.1.0
-info:
-  title: "${APP_NAME}"
-  version: "1.0.0"
-  description: "Centralized API documentation for Authly MERN backend."
-servers:
-  - url: "${APP_URL}/api/v1"
-    description: "Main API server"
-security:
-  - bearerAuth: []
+# Add this to your main openapi.yml or merge it
+
+paths:
+  /bookings:
+    get:
+      tags: [booking]
+      summary: Get all bookings for current user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, accepted, declined, confirmed, completed, cancelled]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Bookings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingListResponse'
+        '401':
+          description: Unauthorized
+    post:
+      tags: [booking]
+      summary: Create a new booking request
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBookingRequest'
+      responses:
+        '201':
+          description: Booking created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+  /bookings/slots:
+    get:
+      tags: [booking]
+      summary: Get available time slots for a tutor
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tutorId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: duration
+          in: query
+          schema:
+            type: number
+            default: 60
+      responses:
+        '200':
+          description: Available slots retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableSlotsResponse'
+
+  /bookings/tutors:
+    get:
+      tags: [booking]
+      summary: Get tutors with availability
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: subject
+          in: query
+          schema:
+            type: string
+        - name: activeOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Tutors retrieved successfully
+
+  /bookings/availability:
+    get:
+      tags: [booking]
+      summary: Get current user's availability (tutor only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Availability retrieved
+    put:
+      tags: [booking]
+      summary: Update availability (tutor only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAvailabilityRequest'
+      responses:
+        '200':
+          description: Availability updated
+
+  /bookings/{id}:
+    get:
+      tags: [booking]
+      summary: Get booking by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking retrieved
+        '404':
+          description: Booking not found
+    put:
+      tags: [booking]
+      summary: Update a booking
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBookingRequest'
+      responses:
+        '200':
+          description: Booking updated
+    delete:
+      tags: [booking]
+      summary: Cancel a booking
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+              required:
+                - reason
+      responses:
+        '200':
+          description: Booking cancelled
+
+  /bookings/{id}/accept:
+    put:
+      tags: [booking]
+      summary: Accept a booking (tutor only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                meetingLink:
+                  type: string
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Booking accepted
+
+  /bookings/{id}/decline:
+    put:
+      tags: [booking]
+      summary: Decline a booking (tutor only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+              required:
+                - reason
+      responses:
+        '200':
+          description: Booking declined
+
+  /bookings/{id}/complete:
+    put:
+      tags: [booking]
+      summary: Mark booking as completed
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Booking completed
+
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   schemas:
-    User:
+    Booking:
       type: object
       properties:
         _id:
           type: string
-        name:
+        student:
+          $ref: '#/components/schemas/User'
+        tutor:
+          $ref: '#/components/schemas/User'
+        subject:
           type: string
-        email:
+        description:
           type: string
-        isEmailVerified:
-          type: boolean
-        userPreferences:
-          $ref: '#/components/schemas/UserPreferences'
-    UserPreferences:
-      type: object
-      properties:
-        enable2FA:
-          type: boolean
-        emailNotification:
-          type: boolean
-        twoFactorSecret:
+        scheduledAt:
           type: string
-    Session:
-      type: object
-      properties:
-        _id:
+          format: date-time
+        duration:
+          type: number
+        status:
           type: string
-        userId:
+          enum: [pending, accepted, declined, confirmed, completed, cancelled]
+        meetingLink:
           type: string
-        userAgent:
+        googleCalendarEventId:
           type: string
+        notes:
+          type: string
+        cancelReason:
+          type: string
+        completedAt:
+          type: string
+          format: date-time
         createdAt:
           type: string
           format: date-time
-        expiredAt:
+        updatedAt:
           type: string
           format: date-time
-    MFASetup:
+
+    CreateBookingRequest:
       type: object
       properties:
-        secret:
+        tutor:
           type: string
-        qrImageUrl:
+        subject:
           type: string
-        message:
+        description:
           type: string
-    ErrorResponse:
+        scheduledAt:
+          type: string
+          format: date-time
+        duration:
+          type: number
+          default: 60
+        notes:
+          type: string
+      required:
+        - tutor
+        - subject
+        - scheduledAt
+
+    UpdateBookingRequest:
+      type: object
+      properties:
+        subject:
+          type: string
+        description:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        duration:
+          type: number
+        notes:
+          type: string
+
+    UpdateAvailabilityRequest:
+      type: object
+      properties:
+        timezone:
+          type: string
+        weeklySchedule:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/TimeSlot'
+        subjects:
+          type: array
+          items:
+            type: string
+        sessionDurations:
+          type: array
+          items:
+            type: number
+        isActive:
+          type: boolean
+
+    TimeSlot:
+      type: object
+      properties:
+        startTime:
+          type: string
+          pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+        endTime:
+          type: string
+          pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+
+    BookingResponse:
       type: object
       properties:
         success:
           type: boolean
-          example: false
         message:
           type: string
-        errorCode:
+        data:
+          $ref: '#/components/schemas/Booking'
+
+    BookingListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
           type: string
-        errors:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Booking'
+
+    AvailableSlotsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
           type: array
           items:
             type: object
-    HealthResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          example: ok
-        uptime:
-          type: number
-        timestamp:
-          type: string
-          format: date-time
-    AuthResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        message:
-          type: string
-        data:
-          type: object
-          properties:
-            user:
-              $ref: '#/components/schemas/User'
-            accessToken:
-              type: string
-            refreshToken:
-              type: string
-            mfaRequired:
-              type: boolean
-    SessionListResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        message:
-          type: string
-        data:
-          type: object
-          properties:
-            sessions:
-              type: array
-              items:
-                $ref: '#/components/schemas/Session'
-    MFAResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-        message:
-          type: string
-        data:
-          $ref: '#/components/schemas/MFASetup'
+            properties:
+              startTime:
+                type: string
+                format: date-time
+              endTime:
+                type: string
+                format: date-time
+              duration:
+                type: number
+
 tags:
-  - name: auth
-    description: Authentication & Authorization
-  - name: user
-    description: User management
-  - name: session
-    description: Session management
-  - name: mfa
-    description: Multi-factor authentication
-  - name: system
-    description: System endpoints
-paths:
-  /auth/register:
-    post:
-      tags: [auth]
-      summary: Register a new user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                email:
-                  type: string
-                password:
-                  type: string
-              required:
-                - name
-                - email
-                - password
-      responses:
-        '201':
-          description: User registered successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /auth/login:
-    post:
-      tags: [auth]
-      summary: Login user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                password:
-                  type: string
-              required:
-                - email
-                - password
-      responses:
-        '200':
-          description: User login successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /auth/refresh:
-    post:
-      tags: [auth]
-      summary: Refresh access token
-      responses:
-        '200':
-          description: Refresh access token successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /auth/logout:
-    post:
-      tags: [auth]
-      summary: Logout user
-      responses:
-        '200':
-          description: User logout successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /auth/forgot-password:
-    post:
-      tags: [auth]
-      summary: Send password reset email
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-              required:
-                - email
-      responses:
-        '200':
-          description: Password reset email sent
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '404':
-          description: User not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /auth/reset-password:
-    post:
-      tags: [auth]
-      summary: Reset password
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                password:
-                  type: string
-                verificationCode:
-                  type: string
-              required:
-                - password
-                - verificationCode
-      responses:
-        '200':
-          description: Reset password successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /auth/verify-email:
-    post:
-      tags: [auth]
-      summary: Verify email
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                code:
-                  type: string
-              required:
-                - code
-      responses:
-        '200':
-          description: Email verified successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /user/profile:
-    get:
-      tags: [user]
-      summary: Get user profile
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: User profile
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /session:
-    get:
-      tags: [session]
-      summary: Get all sessions
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Retrieved all sessions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionListResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /session/{id}:
-    get:
-      tags: [session]
-      summary: Get session by ID
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Session retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Session'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Session not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-    delete:
-      tags: [session]
-      summary: Delete session by ID
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Session removed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SessionListResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Session not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /mfa/generate:
-    post:
-      tags: [mfa]
-      summary: Generate MFA setup
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: MFA setup generated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MFAResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /mfa/verify:
-    post:
-      tags: [mfa]
-      summary: Verify MFA setup
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                code:
-                  type: string
-                secretKey:
-                  type: string
-              required:
-                - code
-                - secretKey
-      responses:
-        '200':
-          description: MFA setup verified
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MFAResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /mfa/revoke:
-    post:
-      tags: [mfa]
-      summary: Revoke MFA
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: MFA revoked
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MFAResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /mfa/verify-login:
-    post:
-      tags: [mfa]
-      summary: Verify MFA for login
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                code:
-                  type: string
-                email:
-                  type: string
-                userAgent:
-                  type: string
-              required:
-                - code
-                - email
-      responses:
-        '200':
-          description: MFA login verified
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-  /health:
-    get:
-      tags: [system]
-      summary: Health check
-      responses:
-        '200':
-          description: Health status
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/HealthResponse'
+  - name: booking
+    description: Booking & Scheduling for Peer-Tutoring Sessions
