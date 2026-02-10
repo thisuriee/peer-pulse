@@ -18,6 +18,16 @@ const swaggerUi = require("swagger-ui-express");
 const fs = require("fs");
 const path = require("path");
 
+// Import routes
+const authRoutes = require("./modules/auth/auth.routes");
+const sessionRoutes = require("./modules/session/session.routes");
+const resourceRoutes = require("./modules/resource/resource.routes");
+const reviewRoutes = require("./modules/review/review.routes");
+const threadRoutes = require("./modules/thread/thread.routes");
+
+// Import shared middleware
+const { authenticateJWT } = require("./common/middleware/auth.middleware");
+
 const app = express();
 const BASE_PATH = config.BASE_PATH;
 
@@ -53,17 +63,30 @@ app.get(
   "/",
   asyncHandler(async (req, res, next) => {
     res.status(HTTPSTATUS.OK).json({
-      message: "Welcome to the Authly API",
+      message: "Welcome to Peer-Pulse API",
       env: config.NODE_ENV,
     });
   })
 );
 
-// app.use(`${BASE_PATH}/auth`, authRoutes);
+// ============================================
+// API Routes
+// ============================================
 
-// app.use(`${BASE_PATH}/mfa`, mfaRoutes);
+// Auth routes (shared authentication service)
+app.use(`${BASE_PATH}/auth`, authRoutes);
 
-// app.use(`${BASE_PATH}/session`, authenticateJWT, sessionRoutes);
+// Component 1: Session Orchestrator (Dahami) - Booking & Scheduling
+app.use(`${BASE_PATH}/sessions`, authenticateJWT, sessionRoutes);
+
+// Component 2: Knowledge Vault (Imadh) - Resource & Content Management
+app.use(`${BASE_PATH}/resources`, resourceRoutes);
+
+// Component 3: Reputation Engine (Aman) - Gamification & Reviews
+app.use(`${BASE_PATH}/reviews`, authenticateJWT, reviewRoutes);
+
+// Component 4: Study-Hub (Thisuri) - Community & Discussion
+app.use(`${BASE_PATH}/threads`, threadRoutes);
 
 app.use(errorHandler);
 

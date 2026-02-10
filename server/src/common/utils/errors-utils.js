@@ -30,6 +30,16 @@ class UnauthorizedException extends AppError {
   }
 }
 
+class ForbiddenException extends AppError {
+  constructor(message = "Access Forbidden", errorCode) {
+    super(
+      message,
+      HTTPSTATUS.FORBIDDEN,
+      errorCode || ErrorCode.ACCESS_FORBIDDEN
+    );
+  }
+}
+
 class InternalServerException extends AppError {
   constructor(message = "Internal Server Error", errorCode) {
     super(
@@ -54,6 +64,7 @@ module.exports = {
   NotFoundException,
   BadRequestException,
   UnauthorizedException,
+  ForbiddenException,
   InternalServerException,
   HttpException,
 };

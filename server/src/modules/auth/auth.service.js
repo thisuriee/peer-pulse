@@ -1,325 +1,340 @@
 "use strict";
 
-// const jwt = require("jsonwebtoken");
-// const { ErrorCode } = require("../../common/enums/error-code.enum");
-// const { VerificationEnum } = require("../../common/enums/verification-code.enum");
-// const {
-//   BadRequestException,
-//   HttpException,
-//   InternalServerException,
-//   NotFoundException,
-//   UnauthorizedException,
-// } = require("../../common/utils/errors-utils");
-// const {
-//   anHourFromNow,
-//   calculateExpirationDate,
-//   fortyFiveMinutesFromNow,
-//   ONE_DAY_IN_MS,
-//   threeMinutesAgo,
-// } = require("../../common/utils/date-utils");
-// const SessionModel = require("../../database/models/session.model");
-// const VerificationCodeModel = require("../../database/models/verification.model");
-// const { config } = require("../../config/app.config");
-// const {
-//   refreshTokenSignOptions,
-//   signJwtToken,
-//   verifyJwtToken,
-// } = require("../../common/utils/tokken-utils");
-// const { sendEmail } = require("../../mailers/mailer");
-// const {
-//   passwordResetTemplate,
-//   verifyEmailTemplate,
-// } = require("../../mailers/templates/template");
-// const { HTTPSTATUS } = require("../../config/http.config");
-// const { hashValue } = require("../../common/utils/hash-utils");
-// const { logger } = require("../../common/utils/logger-utils");
+const { ErrorCode } = require("../../common/enums/error-code.enum");
+const { VerificationEnum } = require("../../common/enums/verification-code.enum");
+const {
+  BadRequestException,
+  HttpException,
+  InternalServerException,
+  NotFoundException,
+  UnauthorizedException,
+} = require("../../common/utils/errors-utils");
+const {
+  anHourFromNow,
+  calculateExpirationDate,
+  fortyFiveMinutesFromNow,
+  ONE_DAY_IN_MS,
+  threeMinutesAgo,
+} = require("../../common/utils/date-utils");
+const SessionModel = require("../../database/models/session.model");
+const VerificationCodeModel = require("../../database/models/verification.model");
+const UserModel = require("../../database/models/user.model");
+const { config } = require("../../config/app.config");
+const {
+  refreshTokenSignOptions,
+  signJwtToken,
+  verifyJwtToken,
+} = require("../../common/utils/token-utils");
+const { sendEmail } = require("../../mailers/mailer");
+const {
+  passwordResetTemplate,
+  verifyEmailTemplate,
+} = require("../../mailers/templates/template");
+const { HTTPSTATUS } = require("../../config/http.config");
+const { hashValue } = require("../../common/utils/hash-utils");
+const { logger } = require("../../common/utils/logger-utils");
 
-// class AuthService {
-//   async register(registerData) {
-//     const { name, email, password } = registerData;
+class AuthService {
+  /**
+   * Register a new user
+   */
+  async register(registerData) {
+    const { name, email, password, role = "student" } = registerData;
 
-//     const existingUser = await UserModel.exists({
-//       email,
-//     });
+    const existingUser = await UserModel.exists({ email });
 
-//     if (existingUser) {
-//       throw new BadRequestException(
-//         "User already exists with this email",
-//         ErrorCode.AUTH_EMAIL_ALREADY_EXISTS
-//       );
-//     }
-//     const newUser = await UserModel.create({
-//       name,
-//       email,
-//       password,
-//     });
+    if (existingUser) {
+      throw new BadRequestException(
+        "User already exists with this email",
+        ErrorCode.AUTH_EMAIL_ALREADY_EXISTS
+      );
+    }
 
-//     logger.info("New user registered", { userId: newUser._id, email: newUser.email });
+    const newUser = await UserModel.create({
+      name,
+      email,
+      password,
+      role,
+    });
 
-//     const userId = newUser._id;
+    logger.info("New user registered", { userId: newUser._id, email: newUser.email });
 
-//     const verification = await VerificationCodeModel.create({
-//       userId,
-//       type: VerificationEnum.EMAIL_VERIFICATION,
-//       expiresAt: fortyFiveMinutesFromNow(),
-//     });
+    const userId = newUser._id;
 
-//     logger.info("Email verification created", { userId, code: verification.code });
+    // Create email verification code
+    const verification = await VerificationCodeModel.create({
+      userId,
+      type: VerificationEnum.EMAIL_VERIFICATION,
+      expiresAt: fortyFiveMinutesFromNow(),
+    });
 
-//     // Sending verification email link
-//     const verificationUrl = `${config.APP_ORIGIN}/confirm-account?code=${verification.code}`;
-//     const { data, error } = await sendEmail({
-//       to: newUser.email,
-//       ...verifyEmailTemplate(verificationUrl),
-//     });
+    logger.info("Email verification created", { userId, code: verification.code });
 
-//     if (!data?.id) {
-//       logger.error("Failed to send verification email", { userId, error });
-//     } else {
-//       logger.info("Verification email sent", { userId, email: newUser.email, messageId: data.id });
-//     }
+    // Send verification email
+    const verificationUrl = `${config.APP_ORIGIN}/confirm-account?code=${verification.code}`;
+    const { data, error } = await sendEmail({
+      to: newUser.email,
+      ...verifyEmailTemplate(verificationUrl),
+    });
 
-//     return {
-//       user: newUser,
-//     };
-//   }
+    if (!data?.id) {
+      logger.error("Failed to send verification email", { userId, error });
+    } else {
+      logger.info("Verification email sent", { userId, email: newUser.email, messageId: data.id });
+    }
 
-//   async login(loginData) {
-//     const { email, password, userAgent } = loginData;
+    return {
+      user: newUser.omitPassword(),
+    };
+  }
 
-//     logger.info(`Login attempt for email: ${email}`);
-//     const user = await UserModel.findOne({
-//       email: email,
-//     });
+  /**
+   * Login user
+   */
+  async login(loginData) {
+    const { email, password, userAgent } = loginData;
 
-//     if (!user) {
-//       logger.warn(`Login failed: User with email ${email} not found`);
-//       throw new BadRequestException(
-//         "Invalid email or password provided",
-//         ErrorCode.AUTH_USER_NOT_FOUND
-//       );
-//     }
+    logger.info(`Login attempt for email: ${email}`);
+    const user = await UserModel.findOne({ email });
 
-//     const isPasswordValid = await user.comparePassword(password);
-//     if (!isPasswordValid) {
-//       logger.warn(`Login failed: Invalid password for email: ${email}`);
-//       throw new BadRequestException(
-//         "Invalid email or password provided",
-//         ErrorCode.AUTH_USER_NOT_FOUND
-//       );
-//     }
+    if (!user) {
+      logger.warn(`Login failed: User with email ${email} not found`);
+      throw new BadRequestException(
+        "Invalid email or password provided",
+        ErrorCode.AUTH_USER_NOT_FOUND
+      );
+    }
 
-//     // Check if the user enable 2fa return user= null
-//     if (user.userPreferences.enable2FA) {
-//       logger.info(`2FA required for user ID: ${user._id}`);
-//       return {
-//         user: null,
-//         mfaRequired: true,
-//         accessToken: "",
-//         refreshToken: "",
-//       };
-//     }
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      logger.warn(`Login failed: Invalid password for email: ${email}`);
+      throw new BadRequestException(
+        "Invalid email or password provided",
+        ErrorCode.AUTH_USER_NOT_FOUND
+      );
+    }
 
-//     logger.info(`Creating session for user ID: ${user._id}`);
-//     const session = await SessionModel.create({
-//       userId: user._id,
-//       userAgent,
-//     });
+    // Check if user has 2FA enabled
+    if (user.userPreferences.enable2FA) {
+      logger.info(`2FA required for user ID: ${user._id}`);
+      return {
+        user: null,
+        mfaRequired: true,
+        accessToken: "",
+        refreshToken: "",
+      };
+    }
 
-//     logger.info(`Signing tokens for user ID: ${user._id}`);
-//     const accessToken = signJwtToken({
-//       userId: user._id,
-//       sessionId: session._id,
-//     });
+    logger.info(`Creating session for user ID: ${user._id}`);
+    const session = await SessionModel.create({
+      userId: user._id,
+      userAgent,
+    });
 
-//     const refreshToken = signJwtToken(
-//       {
-//         sessionId: session._id,
-//       },
-//       refreshTokenSignOptions
-//     );
+    logger.info(`Signing tokens for user ID: ${user._id}`);
+    const accessToken = signJwtToken({
+      userId: user._id,
+      sessionId: session._id,
+    });
 
-//     logger.info(`Login successful for user ID: ${user._id}`);
-//     return {
-//       user,
-//       accessToken,
-//       refreshToken,
-//       mfaRequired: false,
-//     };
-//   }
+    const refreshToken = signJwtToken(
+      { sessionId: session._id },
+      refreshTokenSignOptions
+    );
 
-//   async refreshToken(refreshToken) {
-//     const { payload } = verifyJwtToken(refreshToken, {
-//       secret: refreshTokenSignOptions.secret,
-//     });
+    logger.info(`Login successful for user ID: ${user._id}`);
+    return {
+      user: user.omitPassword(),
+      accessToken,
+      refreshToken,
+      mfaRequired: false,
+    };
+  }
 
-//     if (!payload) {
-//       throw new UnauthorizedException("Invalid refresh token");
-//     }
+  /**
+   * Refresh access token
+   */
+  async refreshToken(refreshToken) {
+    const { payload } = verifyJwtToken(refreshToken, {
+      secret: refreshTokenSignOptions.secret,
+    });
 
-//     const session = await SessionModel.findById(payload.sessionId);
-//     const now = Date.now();
+    if (!payload) {
+      throw new UnauthorizedException("Invalid refresh token");
+    }
 
-//     if (!session) {
-//       throw new UnauthorizedException("Session does not exist");
-//     }
+    const session = await SessionModel.findById(payload.sessionId);
+    const now = Date.now();
 
-//     if (session.expiredAt.getTime() <= now) {
-//       throw new UnauthorizedException("Session expired");
-//     }
+    if (!session) {
+      throw new UnauthorizedException("Session does not exist");
+    }
 
-//     const sessionRequireRefresh =
-//       session.expiredAt.getTime() - now <= ONE_DAY_IN_MS;
+    if (session.expiredAt.getTime() <= now) {
+      throw new UnauthorizedException("Session expired");
+    }
 
-//     if (sessionRequireRefresh) {
-//       session.expiredAt = calculateExpirationDate(
-//         config.JWT.REFRESH_EXPIRES_IN
-//       );
-//       await session.save();
-//     }
+    const sessionRequireRefresh =
+      session.expiredAt.getTime() - now <= ONE_DAY_IN_MS;
 
-//     const newRefreshToken = sessionRequireRefresh
-//       ? signJwtToken(
-//           {
-//             sessionId: session._id,
-//           },
-//           refreshTokenSignOptions
-//         )
-//       : undefined;
+    if (sessionRequireRefresh) {
+      session.expiredAt = calculateExpirationDate(config.JWT.REFRESH_EXPIRES_IN);
+      await session.save();
+    }
 
-//     const accessToken = signJwtToken({
-//       userId: session.userId,
-//       sessionId: session._id,
-//     });
+    const newRefreshToken = sessionRequireRefresh
+      ? signJwtToken({ sessionId: session._id }, refreshTokenSignOptions)
+      : undefined;
 
-//     return {
-//       accessToken,
-//       newRefreshToken,
-//     };
-//   }
+    const accessToken = signJwtToken({
+      userId: session.userId,
+      sessionId: session._id,
+    });
 
-//   async verifyEmail(code) {
-//     const validCode = await VerificationCodeModel.findOne({
-//       code: code,
-//       type: VerificationEnum.EMAIL_VERIFICATION,
-//       expiresAt: { $gt: new Date() },
-//     });
+    return {
+      accessToken,
+      newRefreshToken,
+    };
+  }
 
-//     if (!validCode) {
-//       throw new BadRequestException("Invalid or expired verification code");
-//     }
+  /**
+   * Verify email address
+   */
+  async verifyEmail(code) {
+    const validCode = await VerificationCodeModel.findOne({
+      code: code,
+      type: VerificationEnum.EMAIL_VERIFICATION,
+      expiresAt: { $gt: new Date() },
+    });
 
-//     const updatedUser = await UserModel.findByIdAndUpdate(
-//       validCode.userId,
-//       {
-//         isEmailVerified: true,
-//       },
-//       { new: true }
-//     );
+    if (!validCode) {
+      throw new BadRequestException("Invalid or expired verification code");
+    }
 
-//     if (!updatedUser) {
-//       throw new BadRequestException(
-//         "Unable to verify email address",
-//         ErrorCode.VALIDATION_ERROR
-//       );
-//     }
+    const updatedUser = await UserModel.findByIdAndUpdate(
+      validCode.userId,
+      { isEmailVerified: true },
+      { new: true }
+    );
 
-//     await validCode.deleteOne();
-//     return {
-//       user: updatedUser,
-//     };
-//   }
+    if (!updatedUser) {
+      throw new BadRequestException(
+        "Unable to verify email address",
+        ErrorCode.VALIDATION_ERROR
+      );
+    }
 
-//   async forgotPassword(email) {
-//     const user = await UserModel.findOne({
-//       email: email,
-//     });
+    await validCode.deleteOne();
+    return {
+      user: updatedUser.omitPassword(),
+    };
+  }
 
-//     if (!user) {
-//       throw new NotFoundException("User not found");
-//     }
+  /**
+   * Send password reset email
+   */
+  async forgotPassword(email) {
+    const user = await UserModel.findOne({ email });
 
-//     //check mail rate limit is 2 emails per 3 or 10 min
-//     const timeAgo = threeMinutesAgo();
-//     const maxAttempts = 2;
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
 
-//     const count = await VerificationCodeModel.countDocuments({
-//       userId: user._id,
-//       type: VerificationEnum.PASSWORD_RESET,
-//       createdAt: { $gt: timeAgo },
-//     });
+    // Check rate limit: 2 emails per 3 minutes
+    const timeAgo = threeMinutesAgo();
+    const maxAttempts = 2;
 
-//     if (count >= maxAttempts) {
-//       throw new HttpException(
-//         "Too many request, try again later",
-//         HTTPSTATUS.TOO_MANY_REQUESTS,
-//         ErrorCode.AUTH_TOO_MANY_ATTEMPTS
-//       );
-//     }
+    const count = await VerificationCodeModel.countDocuments({
+      userId: user._id,
+      type: VerificationEnum.PASSWORD_RESET,
+      createdAt: { $gt: timeAgo },
+    });
 
-//     const expiresAt = anHourFromNow();
-//     const validCode = await VerificationCodeModel.create({
-//       userId: user._id,
-//       type: VerificationEnum.PASSWORD_RESET,
-//       expiresAt,
-//     });
+    if (count >= maxAttempts) {
+      throw new HttpException(
+        "Too many requests, try again later",
+        HTTPSTATUS.TOO_MANY_REQUESTS,
+        ErrorCode.AUTH_TOO_MANY_ATTEMPTS
+      );
+    }
 
-//     const resetLink = `${config.APP_ORIGIN}/reset-password?code=${
-//       validCode.code
-//     }&exp=${expiresAt.getTime()}`;
+    const expiresAt = anHourFromNow();
+    const validCode = await VerificationCodeModel.create({
+      userId: user._id,
+      type: VerificationEnum.PASSWORD_RESET,
+      expiresAt,
+    });
 
-//     const { data, error } = await sendEmail({
-//       to: user.email,
-//       ...passwordResetTemplate(resetLink),
-//     });
+    const resetLink = `${config.APP_ORIGIN}/reset-password?code=${validCode.code}&exp=${expiresAt.getTime()}`;
 
-//     if (!data?.id) {
-//       throw new InternalServerException(`${error?.name} ${error?.message}`);
-//     }
+    const { data, error } = await sendEmail({
+      to: user.email,
+      ...passwordResetTemplate(resetLink),
+    });
 
-//     return {
-//       url: resetLink,
-//       emailId: data.id,
-//     };
-//   }
+    if (!data?.id) {
+      throw new InternalServerException(`${error?.name} ${error?.message}`);
+    }
 
-//   async resePassword({ password, verificationCode }) {
-//     const validCode = await VerificationCodeModel.findOne({
-//       code: verificationCode,
-//       type: VerificationEnum.PASSWORD_RESET,
-//       expiresAt: { $gt: new Date() },
-//     });
+    return {
+      url: resetLink,
+      emailId: data.id,
+    };
+  }
 
-//     if (!validCode) {
-//       throw new NotFoundException("Invalid or expired verification code");
-//     }
+  /**
+   * Reset password
+   */
+  async resetPassword({ password, verificationCode }) {
+    const validCode = await VerificationCodeModel.findOne({
+      code: verificationCode,
+      type: VerificationEnum.PASSWORD_RESET,
+      expiresAt: { $gt: new Date() },
+    });
 
-//     const hashedPassword = await hashValue(password);
+    if (!validCode) {
+      throw new NotFoundException("Invalid or expired verification code");
+    }
 
-//     const updatedUser = await UserModel.findByIdAndUpdate(validCode.userId, {
-//       password: hashedPassword,
-//     });
+    const hashedPassword = await hashValue(password);
 
-//     if (!updatedUser) {
-//       throw new BadRequestException("Failed to reset password!");
-//     }
+    const updatedUser = await UserModel.findByIdAndUpdate(validCode.userId, {
+      password: hashedPassword,
+    });
 
-//     await validCode.deleteOne();
+    if (!updatedUser) {
+      throw new BadRequestException("Failed to reset password!");
+    }
 
-//     await SessionModel.deleteMany({
-//       userId: updatedUser._id,
-//     });
+    await validCode.deleteOne();
 
-//     return {
-//       user: updatedUser,
-//     };
-//   }
+    // Invalidate all sessions
+    await SessionModel.deleteMany({
+      userId: updatedUser._id,
+    });
 
-//   async logout(sessionId) {
-//     return await SessionModel.findByIdAndDelete(sessionId);
-//   }
-// }
+    return {
+      user: updatedUser.omitPassword(),
+    };
+  }
 
-// module.exports = { AuthService };
+  /**
+   * Logout user
+   */
+  async logout(sessionId) {
+    return await SessionModel.findByIdAndDelete(sessionId);
+  }
 
-module.exports = {};
+  /**
+   * Get current authenticated user
+   */
+  async getCurrentUser(userId) {
+    const user = await UserModel.findById(userId).select("-password");
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+    return user;
+  }
+}
+
+module.exports = { AuthService };

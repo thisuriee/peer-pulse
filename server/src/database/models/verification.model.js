@@ -1,13 +1,12 @@
 "use strict";
 
 const mongoose = require("mongoose");
-const { Schema } = mongoose;
 const { VerificationEnum } = require("../../common/enums/verification-code.enum");
 const { generateUniqueCode } = require("../../common/utils/id-utils");
 
-const verificationCodeSchema = new Schema({
+const verificationCodeSchema = new mongoose.Schema({
   userId: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     index: true,
     required: true,
@@ -21,6 +20,7 @@ const verificationCodeSchema = new Schema({
   type: {
     type: String,
     required: true,
+    enum: Object.values(VerificationEnum),
   },
   createdAt: {
     type: Date,
@@ -32,10 +32,10 @@ const verificationCodeSchema = new Schema({
   },
 });
 
-const VerificationCodeModel = mongoose.model(
-  "VerificationCode",
-  verificationCodeSchema,
-  "verification_codes"
-);
+// Index for faster lookups
+verificationCodeSchema.index({ code: 1, type: 1 });
+verificationCodeSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+const VerificationCodeModel = mongoose.model("VerificationCode", verificationCodeSchema);
 
 module.exports = VerificationCodeModel;

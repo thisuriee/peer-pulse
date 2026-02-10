@@ -1,20 +1,24 @@
 "use strict";
 
-// const { Router } = require("express");
-// const { authController } = require("./auth.module");
-// const { authenticateJWT } = require("../../common/strategies/jwt.strategy");
+const { Router } = require("express");
+const { authController } = require("./auth.module");
+const { authenticateJWT } = require("../../common/middleware/auth.middleware");
+const { authRateLimiter } = require("../../middlewares/core/rate-limit.middleware");
 
-// const authRoutes = Router();
+const authRoutes = Router();
 
-// authRoutes.post("/register", authController.register);
-// authRoutes.post("/login", authController.login);
-// authRoutes.post("/verify/email", authController.verifyEmail);
-// authRoutes.post("/password/forgot", authController.forgotPassword);
-// authRoutes.post("/password/reset", authController.resetPassword);
-// authRoutes.post("/logout", authenticateJWT, authController.logout);
+// Public routes (with rate limiting for security)
+authRoutes.post("/register", authRateLimiter, authController.register);
+authRoutes.post("/login", authRateLimiter, authController.login);
+authRoutes.post("/verify/email", authController.verifyEmail);
+authRoutes.post("/password/forgot", authRateLimiter, authController.forgotPassword);
+authRoutes.post("/password/reset", authController.resetPassword);
 
-// authRoutes.get("/refresh", authController.refreshToken);
+// Refresh token route
+authRoutes.get("/refresh", authController.refreshToken);
 
-// module.exports = authRoutes;
+// Protected routes (require authentication)
+authRoutes.post("/logout", authenticateJWT, authController.logout);
+authRoutes.get("/me", authenticateJWT, authController.getCurrentUser);
 
-module.exports = {};
+module.exports = authRoutes;
