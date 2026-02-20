@@ -2,7 +2,7 @@
 
 const { Router } = require("express");
 const { authenticateJWT } = require("../../common/middleware/auth.middleware");
-const { requireTutor } = require("../../common/guards/role.guard");
+const { requireTutor, requireStudent } = require("../../common/guards/role.guard");
 const { bookingController } = require("./session.module");
 
 const bookingRoutes = Router();
@@ -29,7 +29,7 @@ bookingRoutes.get("/tutors", bookingController.getTutorsWithAvailability);
 bookingRoutes.get("/", bookingController.getBookings);
 
 // POST /api/v1/bookings - Create a new booking request
-bookingRoutes.post("/", bookingController.createBooking);
+bookingRoutes.post("/", requireStudent, bookingController.createBooking);
 
 // GET /api/v1/bookings/:id - Get booking by ID
 bookingRoutes.get("/:id", bookingController.getBookingById);
