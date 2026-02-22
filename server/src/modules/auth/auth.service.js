@@ -1,325 +1,182 @@
 "use strict";
 
-// const jwt = require("jsonwebtoken");
-// const { ErrorCode } = require("../../common/enums/error-code.enum");
-// const { VerificationEnum } = require("../../common/enums/verification-code.enum");
-// const {
-//   BadRequestException,
-//   HttpException,
-//   InternalServerException,
-//   NotFoundException,
-//   UnauthorizedException,
-// } = require("../../common/utils/errors-utils");
-// const {
-//   anHourFromNow,
-//   calculateExpirationDate,
-//   fortyFiveMinutesFromNow,
-//   ONE_DAY_IN_MS,
-//   threeMinutesAgo,
-// } = require("../../common/utils/date-utils");
-// const SessionModel = require("../../database/models/session.model");
-// const VerificationCodeModel = require("../../database/models/verification.model");
-// const { config } = require("../../config/app.config");
-// const {
-//   refreshTokenSignOptions,
-//   signJwtToken,
-//   verifyJwtToken,
-// } = require("../../common/utils/tokken-utils");
-// const { sendEmail } = require("../../mailers/mailer");
-// const {
-//   passwordResetTemplate,
-//   verifyEmailTemplate,
-// } = require("../../mailers/templates/template");
-// const { HTTPSTATUS } = require("../../config/http.config");
-// const { hashValue } = require("../../common/utils/hash-utils");
-// const { logger } = require("../../common/utils/logger-utils");
+/**
+ * AuthService - Handles all authentication operations
+ * 
+ * Methods:
+ * - register(data)       - Create new user account
+ * - login(data)          - Authenticate user, create session
+ * - refreshToken(token)  - Refresh access token
+ * - logout(sessionId)    - End user session
+ * - getCurrentUser(id)   - Get authenticated user data
+ */
 
-// class AuthService {
-//   async register(registerData) {
-//     const { name, email, password } = registerData;
+const { ErrorCode } = require("../../common/enums/error-code.enum");
+const {
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} = require("../../common/utils/errors-utils");
+const {
+  calculateExpirationDate,
+  ONE_DAY_IN_MS,
+} = require("../../common/utils/date-utils");
+const SessionModel = require("../../database/models/authSession.model");
+const UserModel = require("../../database/models/user.model");
+const { config } = require("../../config/app.config");
+const {
+  refreshTokenSignOptions,
+  signJwtToken,
+  verifyJwtToken,
+} = require("../../common/utils/token-utils");
+const { logger } = require("../../common/utils/logger-utils");
 
-//     const existingUser = await UserModel.exists({
-//       email,
-//     });
+class AuthService {
+  /**
+   * Register a new user
+   */
+  async register(registerData) {
+    const { name, email, password, role = "student" } = registerData;
 
-//     if (existingUser) {
-//       throw new BadRequestException(
-//         "User already exists with this email",
-//         ErrorCode.AUTH_EMAIL_ALREADY_EXISTS
-//       );
-//     }
-//     const newUser = await UserModel.create({
-//       name,
-//       email,
-//       password,
-//     });
+    const existingUser = await UserModel.exists({ email });
 
-//     logger.info("New user registered", { userId: newUser._id, email: newUser.email });
+    if (existingUser) {
+      throw new BadRequestException(
+        "User already exists with this email",
+        ErrorCode.AUTH_EMAIL_ALREADY_EXISTS
+      );
+    }
 
-//     const userId = newUser._id;
+    const newUser = await UserModel.create({
+      name,
+      email,
+      password,
+      role,
+    });
 
-//     const verification = await VerificationCodeModel.create({
-//       userId,
-//       type: VerificationEnum.EMAIL_VERIFICATION,
-//       expiresAt: fortyFiveMinutesFromNow(),
-//     });
+    logger.info("New user registered", { userId: newUser._id, email: newUser.email });
 
-//     logger.info("Email verification created", { userId, code: verification.code });
+    return {
+      user: newUser.omitPassword(),
+    };
+  }
 
-//     // Sending verification email link
-//     const verificationUrl = `${config.APP_ORIGIN}/confirm-account?code=${verification.code}`;
-//     const { data, error } = await sendEmail({
-//       to: newUser.email,
-//       ...verifyEmailTemplate(verificationUrl),
-//     });
+  /**
+   * Login user
+   */
+  async login(loginData) {
+    const { email, password, userAgent } = loginData;
 
-//     if (!data?.id) {
-//       logger.error("Failed to send verification email", { userId, error });
-//     } else {
-//       logger.info("Verification email sent", { userId, email: newUser.email, messageId: data.id });
-//     }
+    logger.info(`Login attempt for email: ${email}`);
+    const user = await UserModel.findOne({ email });
 
-//     return {
-//       user: newUser,
-//     };
-//   }
+    if (!user) {
+      logger.warn(`Login failed: User with email ${email} not found`);
+      throw new BadRequestException(
+        "Invalid email or password provided",
+        ErrorCode.AUTH_USER_NOT_FOUND
+      );
+    }
 
-//   async login(loginData) {
-//     const { email, password, userAgent } = loginData;
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      logger.warn(`Login failed: Invalid password for email: ${email}`);
+      throw new BadRequestException(
+        "Invalid email or password provided",
+        ErrorCode.AUTH_USER_NOT_FOUND
+      );
+    }
 
-//     logger.info(`Login attempt for email: ${email}`);
-//     const user = await UserModel.findOne({
-//       email: email,
-//     });
 
-//     if (!user) {
-//       logger.warn(`Login failed: User with email ${email} not found`);
-//       throw new BadRequestException(
-//         "Invalid email or password provided",
-//         ErrorCode.AUTH_USER_NOT_FOUND
-//       );
-//     }
+    logger.info(`Creating session for user ID: ${user._id}`);
+    const session = await SessionModel.create({
+      userId: user._id,
+      userAgent,
+    });
 
-//     const isPasswordValid = await user.comparePassword(password);
-//     if (!isPasswordValid) {
-//       logger.warn(`Login failed: Invalid password for email: ${email}`);
-//       throw new BadRequestException(
-//         "Invalid email or password provided",
-//         ErrorCode.AUTH_USER_NOT_FOUND
-//       );
-//     }
+    logger.info(`Signing tokens for user ID: ${user._id}`);
+    const accessToken = signJwtToken({
+      userId: user._id,
+      sessionId: session._id,
+    });
 
-//     // Check if the user enable 2fa return user= null
-//     if (user.userPreferences.enable2FA) {
-//       logger.info(`2FA required for user ID: ${user._id}`);
-//       return {
-//         user: null,
-//         mfaRequired: true,
-//         accessToken: "",
-//         refreshToken: "",
-//       };
-//     }
+    const refreshToken = signJwtToken(
+      { sessionId: session._id },
+      refreshTokenSignOptions
+    );
 
-//     logger.info(`Creating session for user ID: ${user._id}`);
-//     const session = await SessionModel.create({
-//       userId: user._id,
-//       userAgent,
-//     });
+    logger.info(`Login successful for user ID: ${user._id}`);
+    return {
+      user: user.omitPassword(),
+      accessToken,
+      refreshToken,
+      mfaRequired: false,
+    };
+  }
 
-//     logger.info(`Signing tokens for user ID: ${user._id}`);
-//     const accessToken = signJwtToken({
-//       userId: user._id,
-//       sessionId: session._id,
-//     });
+  /**
+   * Refresh access token
+   */
+  async refreshToken(refreshToken) {
+    const { payload } = verifyJwtToken(refreshToken, {
+      secret: refreshTokenSignOptions.secret,
+    });
 
-//     const refreshToken = signJwtToken(
-//       {
-//         sessionId: session._id,
-//       },
-//       refreshTokenSignOptions
-//     );
+    if (!payload) {
+      throw new UnauthorizedException("Invalid refresh token");
+    }
 
-//     logger.info(`Login successful for user ID: ${user._id}`);
-//     return {
-//       user,
-//       accessToken,
-//       refreshToken,
-//       mfaRequired: false,
-//     };
-//   }
+    const session = await SessionModel.findById(payload.sessionId);
+    const now = Date.now();
 
-//   async refreshToken(refreshToken) {
-//     const { payload } = verifyJwtToken(refreshToken, {
-//       secret: refreshTokenSignOptions.secret,
-//     });
+    if (!session) {
+      throw new UnauthorizedException("Session does not exist");
+    }
 
-//     if (!payload) {
-//       throw new UnauthorizedException("Invalid refresh token");
-//     }
+    if (session.expiredAt.getTime() <= now) {
+      throw new UnauthorizedException("Session expired");
+    }
 
-//     const session = await SessionModel.findById(payload.sessionId);
-//     const now = Date.now();
+    const sessionRequireRefresh =
+      session.expiredAt.getTime() - now <= ONE_DAY_IN_MS;
 
-//     if (!session) {
-//       throw new UnauthorizedException("Session does not exist");
-//     }
+    if (sessionRequireRefresh) {
+      session.expiredAt = calculateExpirationDate(config.JWT.REFRESH_EXPIRES_IN);
+      await session.save();
+    }
 
-//     if (session.expiredAt.getTime() <= now) {
-//       throw new UnauthorizedException("Session expired");
-//     }
+    const newRefreshToken = sessionRequireRefresh
+      ? signJwtToken({ sessionId: session._id }, refreshTokenSignOptions)
+      : undefined;
 
-//     const sessionRequireRefresh =
-//       session.expiredAt.getTime() - now <= ONE_DAY_IN_MS;
+    const accessToken = signJwtToken({
+      userId: session.userId,
+      sessionId: session._id,
+    });
 
-//     if (sessionRequireRefresh) {
-//       session.expiredAt = calculateExpirationDate(
-//         config.JWT.REFRESH_EXPIRES_IN
-//       );
-//       await session.save();
-//     }
+    return {
+      accessToken,
+      newRefreshToken,
+    };
+  }
 
-//     const newRefreshToken = sessionRequireRefresh
-//       ? signJwtToken(
-//           {
-//             sessionId: session._id,
-//           },
-//           refreshTokenSignOptions
-//         )
-//       : undefined;
+  /**
+   * Logout user
+   */
+  async logout(sessionId) {
+    return await SessionModel.findByIdAndDelete(sessionId);
+  }
 
-//     const accessToken = signJwtToken({
-//       userId: session.userId,
-//       sessionId: session._id,
-//     });
+  /**
+   * Get current authenticated user
+   */
+  async getCurrentUser(userId) {
+    const user = await UserModel.findById(userId).select("-password");
+    if (!user) {
+      throw new NotFoundException("User not found");
+    }
+    return user;
+  }
+}
 
-//     return {
-//       accessToken,
-//       newRefreshToken,
-//     };
-//   }
-
-//   async verifyEmail(code) {
-//     const validCode = await VerificationCodeModel.findOne({
-//       code: code,
-//       type: VerificationEnum.EMAIL_VERIFICATION,
-//       expiresAt: { $gt: new Date() },
-//     });
-
-//     if (!validCode) {
-//       throw new BadRequestException("Invalid or expired verification code");
-//     }
-
-//     const updatedUser = await UserModel.findByIdAndUpdate(
-//       validCode.userId,
-//       {
-//         isEmailVerified: true,
-//       },
-//       { new: true }
-//     );
-
-//     if (!updatedUser) {
-//       throw new BadRequestException(
-//         "Unable to verify email address",
-//         ErrorCode.VALIDATION_ERROR
-//       );
-//     }
-
-//     await validCode.deleteOne();
-//     return {
-//       user: updatedUser,
-//     };
-//   }
-
-//   async forgotPassword(email) {
-//     const user = await UserModel.findOne({
-//       email: email,
-//     });
-
-//     if (!user) {
-//       throw new NotFoundException("User not found");
-//     }
-
-//     //check mail rate limit is 2 emails per 3 or 10 min
-//     const timeAgo = threeMinutesAgo();
-//     const maxAttempts = 2;
-
-//     const count = await VerificationCodeModel.countDocuments({
-//       userId: user._id,
-//       type: VerificationEnum.PASSWORD_RESET,
-//       createdAt: { $gt: timeAgo },
-//     });
-
-//     if (count >= maxAttempts) {
-//       throw new HttpException(
-//         "Too many request, try again later",
-//         HTTPSTATUS.TOO_MANY_REQUESTS,
-//         ErrorCode.AUTH_TOO_MANY_ATTEMPTS
-//       );
-//     }
-
-//     const expiresAt = anHourFromNow();
-//     const validCode = await VerificationCodeModel.create({
-//       userId: user._id,
-//       type: VerificationEnum.PASSWORD_RESET,
-//       expiresAt,
-//     });
-
-//     const resetLink = `${config.APP_ORIGIN}/reset-password?code=${
-//       validCode.code
-//     }&exp=${expiresAt.getTime()}`;
-
-//     const { data, error } = await sendEmail({
-//       to: user.email,
-//       ...passwordResetTemplate(resetLink),
-//     });
-
-//     if (!data?.id) {
-//       throw new InternalServerException(`${error?.name} ${error?.message}`);
-//     }
-
-//     return {
-//       url: resetLink,
-//       emailId: data.id,
-//     };
-//   }
-
-//   async resePassword({ password, verificationCode }) {
-//     const validCode = await VerificationCodeModel.findOne({
-//       code: verificationCode,
-//       type: VerificationEnum.PASSWORD_RESET,
-//       expiresAt: { $gt: new Date() },
-//     });
-
-//     if (!validCode) {
-//       throw new NotFoundException("Invalid or expired verification code");
-//     }
-
-//     const hashedPassword = await hashValue(password);
-
-//     const updatedUser = await UserModel.findByIdAndUpdate(validCode.userId, {
-//       password: hashedPassword,
-//     });
-
-//     if (!updatedUser) {
-//       throw new BadRequestException("Failed to reset password!");
-//     }
-
-//     await validCode.deleteOne();
-
-//     await SessionModel.deleteMany({
-//       userId: updatedUser._id,
-//     });
-
-//     return {
-//       user: updatedUser,
-//     };
-//   }
-
-//   async logout(sessionId) {
-//     return await SessionModel.findByIdAndDelete(sessionId);
-//   }
-// }
-
-// module.exports = { AuthService };
-
-module.exports = {};
+module.exports = { AuthService };
