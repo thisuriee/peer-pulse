@@ -1,6 +1,7 @@
 'use strict';
 
 const { BookingModel, BookingStatus } = require('../../database/models/session.model');
+const UserModel = require('../../database/models/user.model');
 const mongoose = require('mongoose');
 const {
   BadRequestException,
@@ -110,7 +111,12 @@ class ReviewService {
   }
 
   async getMyReviews(user) {
-    if (user.role === 'tutor') {
+    const dbUser = await UserModel.findById(user.id).select('role');
+    if (!dbUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (dbUser.role === 'tutor') {
       return this.reviewRepository.findByTutor(user.id);
     }
     return this.reviewRepository.findReviewsByReviewer(user.id);

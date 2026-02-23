@@ -337,7 +337,7 @@ class BookingService {
   /**
    * Mark a booking as completed
    */
-  async completeBooking(bookingId, userId) {
+  async completeBooking(bookingId, userId, options = {}) {
     const booking = await BookingModel.findById(bookingId);
 
     if (!booking) {
@@ -356,8 +356,14 @@ class BookingService {
     }
 
     // Check if the scheduled time has passed
-    if (new Date(booking.scheduledAt) > new Date()) {
-      throw new BadRequestException("Cannot complete a booking before its scheduled time");
+    const force = options?.force === true;
+    const allowForceComplete =
+      process.env.NODE_ENV !== "production" && process.env.ALLOW_FORCE_COMPLETE === "true";
+
+    if (!force || !allowForceComplete) {
+      if (new Date(booking.scheduledAt) > new Date()) {
+        throw new BadRequestException("Cannot complete a booking before its scheduled time");
+      }
     }
 
     booking.status = BookingStatus.COMPLETED;
