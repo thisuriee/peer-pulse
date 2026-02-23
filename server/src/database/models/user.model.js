@@ -42,6 +42,23 @@ const userSchema = new mongoose.Schema(
       type: Number, 
       default: 0,
       min: 0,
+      max: 5,
+    },
+    reviewCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    ratingDistribution: {
+      type: Map,
+      of: Number,
+      default: {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 0,
+      },
     },
   },
   { timestamps: true }

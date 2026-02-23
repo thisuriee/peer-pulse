@@ -3,6 +3,7 @@
 const { BookingModel, BookingStatus } = require('../../database/models/session.model');
 const UserModel = require('../../database/models/user.model');
 const mongoose = require('mongoose');
+const { ReputationService } = require('./reputation.service');
 const {
   BadRequestException,
   NotFoundException,
@@ -10,8 +11,9 @@ const {
 } = require('../../common/utils/errors-utils');
 
 class ReviewService {
-  constructor(reviewRepository) {
+  constructor(reviewRepository, reputationService = new ReputationService()) {
     this.reviewRepository = reviewRepository;
+    this.reputationService = reputationService;
   }
 
   validateObjectId(value, fieldName) {
@@ -73,6 +75,8 @@ class ReviewService {
         editedAt: new Date(),
       });
 
+      await this.reputationService.recalculateTutorReputation(restored.tutor.toString());
+
       return restored;
     }
 
@@ -86,6 +90,8 @@ class ReviewService {
         isDeleted: false,
         flaggedForModeration: false,
       });
+
+      await this.reputationService.recalculateTutorReputation(created.tutor.toString());
 
       return created;
     } catch (err) {
@@ -140,6 +146,8 @@ class ReviewService {
       throw new UnauthorizedException('Only the reviewer can update this review');
     }
 
+    const oldRating = review.rating;
+
     const update = {
       editedAt: new Date(),
       ...(rating !== undefined ? { rating } : {}),
@@ -149,6 +157,10 @@ class ReviewService {
     const updated = await this.reviewRepository.updateById(reviewId, update);
     if (!updated) {
       throw new NotFoundException('Review not found');
+    }
+
+    if (rating !== undefined && rating !== oldRating) {
+      await this.reputationService.recalculateTutorReputation(updated.tutor.toString());
     }
 
     return updated;
@@ -162,7 +174,12 @@ class ReviewService {
       throw new NotFoundException('Review not found');
     }
 
-    const isAdmin = user.role === 'admin';
+    const dbUser = await UserModel.findById(user.id).select('role');
+    if (!dbUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isAdmin = dbUser.role === 'admin';
     const isReviewer = review.reviewer.toString() === user.id.toString();
 
     if (!isAdmin && !isReviewer) {
@@ -173,6 +190,10 @@ class ReviewService {
       isDeleted: true,
       deletedAt: new Date(),
     });
+
+    if (deleted) {
+      await this.reputationService.recalculateTutorReputation(deleted.tutor.toString());
+    }
 
     return deleted;
   }
