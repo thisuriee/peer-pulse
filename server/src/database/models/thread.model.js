@@ -24,6 +24,11 @@ const replySchema = new Schema(
       type: Boolean,
       default: false,
     },
+    moderation: {
+      toxicityScore: Number,
+      insultScore: Number,
+      threatScore: Number,
+    },
   },
   { timestamps: true }
 );
@@ -67,6 +72,11 @@ const threadSchema = new Schema(
     flaggedForReview: {
       type: Boolean,
       default: false,
+    },
+    moderation: {
+      toxicityScore: Number,
+      insultScore: Number,
+      threatScore: Number,
     },
     isDeleted: {
       type: Boolean,

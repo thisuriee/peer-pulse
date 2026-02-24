@@ -1,75 +1,56 @@
 "use strict";
 
+const axios = require("axios");
 const { logger } = require("./logger-utils");
 
-/**
- * Check content for profanity/toxicity
- * This is a placeholder implementation. In production, integrate with:
- * - Perspective API (Google)
- * - Azure Content Moderator
- * - Or other moderation services
- */
+const API_KEY = process.env.PERSPECTIVE_API_KEY;
+const THRESHOLD = parseFloat(process.env.PERSPECTIVE_TOXICITY_THRESHOLD) || 0.75;
+
 class ProfanityFilter {
-  /**
-   * Simple keyword-based filter (placeholder)
-   * Replace with actual API integration in production
-   */
-  static TOXIC_KEYWORDS = [
-    "spam",
-    "scam",
-    // Add more keywords or use external service
-  ];
-
-  static TOXICITY_THRESHOLD = 0.7;
-
-  /**
-   * Check if text contains toxic content
-   * @param {string} text - Text to analyze
-   * @returns {Promise<{isToxic: boolean, score: number}>}
-   */
-  static async checkToxicity(text) {
+  static async analyzeText(text) {
     try {
-      // Placeholder implementation
-      // In production, call Perspective API or similar service
-      
-      const lowerText = text.toLowerCase();
-      let matchCount = 0;
-
-      for (const keyword of this.TOXIC_KEYWORDS) {
-        if (lowerText.includes(keyword)) {
-          matchCount++;
+      const response = await axios.post(
+        `https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=${API_KEY}`,
+        {
+          comment: { text },
+          languages: ["en"],
+          requestedAttributes: {
+            TOXICITY: {},
+            INSULT: {},
+            THREAT: {},
+          },
         }
-      }
+      );
 
-      const score = matchCount > 0 ? matchCount / 10 : 0;
-      const isToxic = score >= this.TOXICITY_THRESHOLD;
-
-      if (isToxic) {
-        logger.warn("Toxic content detected", { score, textLength: text.length });
-      }
+      const scores = response.data.attributeScores;
 
       return {
-        isToxic,
-        score,
+        toxicity: scores.TOXICITY.summaryScore.value,
+        insult: scores.INSULT.summaryScore.value,
+        threat: scores.THREAT.summaryScore.value,
       };
     } catch (error) {
-      logger.error("Profanity filter error", { error: error.message });
-      // Don't block on filter failure
-      return {
-        isToxic: false,
-        score: 0,
-      };
+      logger.error("Perspective API error", {
+        message: error.message,
+      });
+
+      // Fail-safe: do NOT block content if API fails
+      return null;
     }
   }
 
-  /**
-   * Check and flag content if toxic
-   * @param {string} text
-   * @returns {Promise<boolean>} - true if flagged
-   */
   static async shouldFlag(text) {
-    const { isToxic } = await this.checkToxicity(text);
-    return isToxic;
+    const result = await this.analyzeText(text);
+
+    if (!result) return false;
+
+    const { toxicity, insult, threat } = result;
+
+    return (
+      toxicity >= THRESHOLD ||
+      insult >= THRESHOLD ||
+      threat >= THRESHOLD
+    );
   }
 }
 

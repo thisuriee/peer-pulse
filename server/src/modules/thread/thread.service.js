@@ -15,34 +15,56 @@ class ThreadService {
   /**
    * Create a new thread
    */
-  async createThread(authorId, threadData) {
-    const { title, content, subject } = threadData;
+async createThread(authorId, threadData) {
+  const { title, content, subject } = threadData;
 
-    // Check for profanity
-    const titleFlagged = await ProfanityFilter.shouldFlag(title);
-    const contentFlagged = await ProfanityFilter.shouldFlag(content);
-    const flaggedForReview = titleFlagged || contentFlagged;
+  // 🔹 Analyze text using Perspective API
+  const titleAnalysis = await ProfanityFilter.analyzeText(title);
+  const contentAnalysis = await ProfanityFilter.analyzeText(content);
 
-    const thread = await ThreadModel.create({
-      authorId,
-      title,
-      content,
-      subject,
-      flaggedForReview,
-    });
+  let flaggedForReview = false;
+  let moderation = {};
 
-    if (flaggedForReview) {
-      logger.warn("Thread flagged for review", {
-        threadId: thread._id,
-        authorId,
-      });
-    }
+  if (titleAnalysis || contentAnalysis) {
+    const maxToxicity = Math.max(
+      titleAnalysis?.toxicity || 0,
+      contentAnalysis?.toxicity || 0
+    );
 
-    logger.info("Thread created", { threadId: thread._id, authorId });
+    flaggedForReview =
+      maxToxicity >= parseFloat(process.env.PERSPECTIVE_TOXICITY_THRESHOLD);
 
-    return await thread.populate("authorId", "name email role");
+    moderation = {
+      toxicityScore: maxToxicity,
+    };
   }
 
+  // BLOCK THREAD IF FLAGGED
+  if (flaggedForReview) {
+    logger.warn("Blocked thread due to toxic content", {
+      authorId,
+      moderation,
+    });
+
+    throw new BadRequestException(
+      "Your content violates community guidelines. Please revise and try again."
+    );
+  }
+
+  // ✅ Only create if safe
+  const thread = await ThreadModel.create({
+    authorId,
+    title,
+    content,
+    subject,
+    flaggedForReview: false,
+    moderation,
+  });
+
+  logger.info("Thread created", { threadId: thread._id, authorId });
+
+  return await thread.populate("authorId", "name email role");
+}
   /**
    * Get threads with pagination and filtering
    */
