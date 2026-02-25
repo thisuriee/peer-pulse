@@ -567,6 +567,231 @@ paths:
           description: Invalid tutor ID
 
   # ============================================
+  # Resource Routes (Knowledge Vault)
+  # ============================================
+  /resources:
+    get:
+      tags: [resource]
+      summary: Get all resources
+      description: Retrieve all resources with optional filtering. Public endpoint with optional authentication.
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+          description: Filter by resource type (e.g., pdf, video, document)
+        - name: tutorId
+          in: query
+          schema:
+            type: string
+          description: Filter by tutor ID
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search in title and description
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: Number of resources to return
+        - name: skip
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Number of resources to skip
+      responses:
+        '200':
+          description: Resources retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceListResponse'
+    post:
+      tags: [resource]
+      summary: Upload a new resource
+      description: Upload a new resource file. Only authenticated tutors can upload resources.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Resource title
+                  example: Introduction to Calculus
+                description:
+                  type: string
+                  description: Resource description
+                  example: A comprehensive guide to basic calculus concepts
+                type:
+                  type: string
+                  description: Resource type (e.g., pdf, video, document, image)
+                  example: pdf
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload (max 10MB)
+              required:
+                - title
+                - description
+                - type
+                - file
+      responses:
+        '201':
+          description: Resource created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceResponse'
+        '400':
+          description: Bad request (validation error or missing file)
+        '401':
+          description: Unauthorized
+
+  /resources/search:
+    get:
+      tags: [resource]
+      summary: Search resources
+      description: Search resources by query string in title and description
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Search query
+        - name: type
+          in: query
+          schema:
+            type: string
+          description: Filter by resource type
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+          description: Number of resources to return
+        - name: skip
+          in: query
+          schema:
+            type: integer
+            default: 0
+          description: Number of resources to skip
+      responses:
+        '200':
+          description: Search completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceListResponse'
+        '400':
+          description: Search query is required
+
+  /resources/{id}:
+    get:
+      tags: [resource]
+      summary: Get resource by ID
+      description: Retrieve a single resource by its ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+      responses:
+        '200':
+          description: Resource retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceResponse'
+        '404':
+          description: Resource not found
+    put:
+      tags: [resource]
+      summary: Update a resource
+      description: Update resource details or replace file. Only the resource owner can update.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  description: Resource title
+                description:
+                  type: string
+                  description: Resource description
+                type:
+                  type: string
+                  description: Resource type
+                file:
+                  type: string
+                  format: binary
+                  description: New file to replace existing (optional)
+      responses:
+        '200':
+          description: Resource updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - not the resource owner
+        '404':
+          description: Resource not found
+    delete:
+      tags: [resource]
+      summary: Delete a resource
+      description: Delete a resource and its associated file from storage. Only the resource owner can delete.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource ID
+      responses:
+        '200':
+          description: Resource deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Resource deleted successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - not the resource owner
+        '404':
+          description: Resource not found
+
+  # ============================================
   # Thread Routes (Study-Hub / Community)
   # ============================================
   /threads:
@@ -844,6 +1069,10 @@ paths:
       responses:
         '200':
           description: Comment updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
         '401':
           description: Unauthorized
         '404':
@@ -1214,6 +1443,59 @@ components:
                 type: number
 
     # ============================================
+    # Resource Schemas (Knowledge Vault)
+    # ============================================
+    Resource:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Unique resource identifier
+        title:
+          type: string
+          description: Resource title
+        description:
+          type: string
+          description: Resource description
+        type:
+          type: string
+          description: Resource type (e.g., pdf, video, document, image)
+        cloudinary_url:
+          type: string
+          description: URL to the uploaded file on Cloudinary
+        tutor_id:
+          $ref: '#/components/schemas/User'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ResourceResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Resource retrieved successfully
+        data:
+          $ref: '#/components/schemas/Resource'
+
+    ResourceListResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Resources retrieved successfully
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+        total:
+          type: integer
+          description: Total number of resources matching the query
+
+    # ============================================
     # Review Schemas
     # ============================================
     Review:
@@ -1522,6 +1804,8 @@ tags:
     description: Authentication & User Management
   - name: booking
     description: Booking & Scheduling for Peer-Tutoring Sessions
+  - name: resource
+    description: Resource & Content Management (Knowledge Vault)
   - name: review
     description: Reviews & Ratings for Tutors (Reputation Engine)
   - name: thread
