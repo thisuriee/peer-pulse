@@ -22,26 +22,17 @@ resourceRoutes.get('/', optionalAuth, resourceController.getAllResources);
 resourceRoutes.get('/:id', optionalAuth, resourceController.getResourceById);
 
 // POST /api/v1/resources - Upload a new resource (authenticated)
-resourceRoutes.post(
-  '/',
-  // authenticateJWT,
-  upload.single('file'),
-  resourceController.createResource,
-);
+resourceRoutes.post('/', authenticateJWT, upload.single('file'), resourceController.createResource);
 
 // PUT /api/v1/resources/:id - Update resource (authenticated, owner only)
 resourceRoutes.put(
   '/:id',
-  // authenticateJWT,
+  authenticateJWT,
   upload.single('file'),
   resourceController.updateResource,
 );
 
 // DELETE /api/v1/resources/:id - Delete resource (authenticated, owner only)
-resourceRoutes.delete(
-  '/:id',
-  //authenticateJWT,
-  resourceController.deleteResource,
-);
+resourceRoutes.delete('/:id', authenticateJWT, resourceController.deleteResource);
 
 module.exports = resourceRoutes;

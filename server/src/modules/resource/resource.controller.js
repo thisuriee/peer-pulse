@@ -49,8 +49,8 @@ class ResourceController {
    * POST /api/v1/resources
    */
   createResource = asyncHandler(async (req, res) => {
-    // const tutorId = req.userId; // From authenticateJWT middleware
-    const { title, description, type, tutorId } = req.body;
+    const tutorId = req.user.id; // From authenticateJWT middleware
+    const { title, description, type } = req.body;
     const file = req.file; // From multer middleware
 
     const resource = await resourceService.createResource(
@@ -71,8 +71,8 @@ class ResourceController {
    */
   updateResource = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    // const tutorId = req.userId;
-    const { title, description, type, tutorId } = req.body;
+    const tutorId = req.user.id;
+    const { title, description, type } = req.body;
     const file = req.file;
 
     const resource = await resourceService.updateResource(
@@ -94,7 +94,7 @@ class ResourceController {
    */
   deleteResource = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    const tutorId = req.userId || req.query.tutorId;
+    const tutorId = req.user.id;
 
     const result = await resourceService.deleteResource(id, tutorId);
 
