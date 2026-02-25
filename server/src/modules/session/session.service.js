@@ -11,6 +11,7 @@ const {
 const { ErrorCode } = require("../../common/enums/error-code.enum");
 const { logger } = require("../../common/utils/logger-utils");
 const { googleCalendarService } = require("../../integrations/google-calendar");
+const { sendEmail } = require("../../common/email/sendgrid.client");
 
 class BookingService {
   /**
@@ -337,7 +338,7 @@ class BookingService {
   /**
    * Mark a booking as completed
    */
-  async completeBooking(bookingId, userId, options = {}) {
+  async completeBooking(bookingId, userId) {
     const booking = await BookingModel.findById(bookingId);
 
     if (!booking) {
@@ -356,14 +357,8 @@ class BookingService {
     }
 
     // Check if the scheduled time has passed
-    const force = options?.force === true;
-    const allowForceComplete =
-      process.env.NODE_ENV !== "production" && process.env.ALLOW_FORCE_COMPLETE === "true";
-
-    if (!force || !allowForceComplete) {
-      if (new Date(booking.scheduledAt) > new Date()) {
-        throw new BadRequestException("Cannot complete a booking before its scheduled time");
-      }
+    if (new Date(booking.scheduledAt) > new Date()) {
+      throw new BadRequestException("Cannot complete a booking before its scheduled time");
     }
 
     booking.status = BookingStatus.COMPLETED;
@@ -372,7 +367,21 @@ class BookingService {
 
     logger.info("Booking completed", { bookingId, userId });
 
-    return await booking.populate(["student", "tutor"]);
+    const populated = await booking.populate(["student", "tutor"]);
+
+    try {
+      if (populated?.student?.email && populated?.tutor?.name) {
+        await sendEmail({
+          to: populated.student.email,
+          subject: "Please leave a review",
+          text: `Your session with ${populated.tutor.name} is completed. Please leave a review. Booking: ${bookingId}`,
+        });
+      }
+    } catch (e) {
+      logger.warn("Failed to send review request email", { bookingId, error: e?.message });
+    }
+
+    return populated;
   }
 
   /**

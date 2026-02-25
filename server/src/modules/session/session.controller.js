@@ -155,9 +155,7 @@ class BookingController {
     const userId = req.user.id;
     const bookingId = req.params.id;
 
-    const force = req.query.force === "true";
-
-    const booking = await this.bookingService.completeBooking(bookingId, userId, { force });
+    const booking = await this.bookingService.completeBooking(bookingId, userId);
 
     return res.status(HTTPSTATUS.OK).json({
       success: true,

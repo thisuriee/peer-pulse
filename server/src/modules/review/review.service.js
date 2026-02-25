@@ -4,6 +4,8 @@ const { BookingModel, BookingStatus } = require('../../database/models/session.m
 const UserModel = require('../../database/models/user.model');
 const mongoose = require('mongoose');
 const { ReputationService } = require('./reputation.service');
+const { computeBadgeFromReviewCount } = require('./badge.service');
+const { sendEmail } = require('../../common/email/sendgrid.client');
 const {
   BadRequestException,
   NotFoundException,
@@ -77,6 +79,26 @@ class ReviewService {
 
       await this.reputationService.recalculateTutorReputation(restored.tutor.toString());
 
+      const tutorAfterRestore = await UserModel.findById(restored.tutor).select(
+        'email name badge reviewCount'
+      );
+      if (tutorAfterRestore) {
+        const nextBadge = computeBadgeFromReviewCount(tutorAfterRestore.reviewCount || 0);
+        if (nextBadge !== tutorAfterRestore.badge) {
+          tutorAfterRestore.badge = nextBadge;
+          tutorAfterRestore.badgeUpdatedAt = new Date();
+          await tutorAfterRestore.save();
+
+          if (nextBadge !== 'none') {
+            await sendEmail({
+              to: tutorAfterRestore.email,
+              subject: 'New Badge Unlocked',
+              text: `Congrats ${tutorAfterRestore.name}! You earned the ${nextBadge} badge.`,
+            });
+          }
+        }
+      }
+
       return restored;
     }
 
@@ -92,6 +114,26 @@ class ReviewService {
       });
 
       await this.reputationService.recalculateTutorReputation(created.tutor.toString());
+
+      const tutorAfterCreate = await UserModel.findById(created.tutor).select(
+        'email name badge reviewCount'
+      );
+      if (tutorAfterCreate) {
+        const nextBadge = computeBadgeFromReviewCount(tutorAfterCreate.reviewCount || 0);
+        if (nextBadge !== tutorAfterCreate.badge) {
+          tutorAfterCreate.badge = nextBadge;
+          tutorAfterCreate.badgeUpdatedAt = new Date();
+          await tutorAfterCreate.save();
+
+          if (nextBadge !== 'none') {
+            await sendEmail({
+              to: tutorAfterCreate.email,
+              subject: 'New Badge Unlocked',
+              text: `Congrats ${tutorAfterCreate.name}! You earned the ${nextBadge} badge.`,
+            });
+          }
+        }
+      }
 
       return created;
     } catch (err) {
@@ -161,6 +203,26 @@ class ReviewService {
 
     if (rating !== undefined && rating !== oldRating) {
       await this.reputationService.recalculateTutorReputation(updated.tutor.toString());
+
+      const tutorAfterUpdate = await UserModel.findById(updated.tutor).select(
+        'email name badge reviewCount'
+      );
+      if (tutorAfterUpdate) {
+        const nextBadge = computeBadgeFromReviewCount(tutorAfterUpdate.reviewCount || 0);
+        if (nextBadge !== tutorAfterUpdate.badge) {
+          tutorAfterUpdate.badge = nextBadge;
+          tutorAfterUpdate.badgeUpdatedAt = new Date();
+          await tutorAfterUpdate.save();
+
+          if (nextBadge !== 'none') {
+            await sendEmail({
+              to: tutorAfterUpdate.email,
+              subject: 'New Badge Unlocked',
+              text: `Congrats ${tutorAfterUpdate.name}! You earned the ${nextBadge} badge.`,
+            });
+          }
+        }
+      }
     }
 
     return updated;
@@ -193,6 +255,26 @@ class ReviewService {
 
     if (deleted) {
       await this.reputationService.recalculateTutorReputation(deleted.tutor.toString());
+
+      const tutorAfterDelete = await UserModel.findById(deleted.tutor).select(
+        'email name badge reviewCount'
+      );
+      if (tutorAfterDelete) {
+        const nextBadge = computeBadgeFromReviewCount(tutorAfterDelete.reviewCount || 0);
+        if (nextBadge !== tutorAfterDelete.badge) {
+          tutorAfterDelete.badge = nextBadge;
+          tutorAfterDelete.badgeUpdatedAt = new Date();
+          await tutorAfterDelete.save();
+
+          if (nextBadge !== 'none') {
+            await sendEmail({
+              to: tutorAfterDelete.email,
+              subject: 'New Badge Unlocked',
+              text: `Congrats ${tutorAfterDelete.name}! You earned the ${nextBadge} badge.`,
+            });
+          }
+        }
+      }
     }
 
     return deleted;

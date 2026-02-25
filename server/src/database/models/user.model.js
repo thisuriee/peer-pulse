@@ -60,6 +60,14 @@ const userSchema = new mongoose.Schema(
         "5": 0,
       },
     },
+    badge: {
+      type: String,
+      enum: ["none", "bronze", "silver", "gold"],
+      default: "none",
+    },
+    badgeUpdatedAt: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
