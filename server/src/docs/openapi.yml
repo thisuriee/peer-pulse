@@ -1,6 +1,147 @@
-# Add this to your main openapi.yml or merge it
+openapi: 3.0.3
+info:
+  title: Peer-Pulse API
+  description: API documentation for Peer-Pulse - A peer tutoring platform
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Development server
 
 paths:
+  # ============================================
+  # Authentication Routes
+  # ============================================
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Register a new user
+      description: Create a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Bad request (validation error or email already exists)
+
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Login user
+      description: Authenticate user and return access/refresh tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid email or password
+
+  /auth/refresh:
+    get:
+      tags: [auth]
+      summary: Refresh access token
+      description: Get a new access token using refresh token from cookies
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Refresh access token successfully
+        '401':
+          description: Missing or invalid refresh token
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Logout user
+      description: End the current session and clear authentication cookies
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User logout successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Session not found
+
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Get current user
+      description: Retrieve the authenticated user's profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+  /auth/google:
+    get:
+      tags: [auth]
+      summary: Google OAuth login
+      description: Redirect to Google for OAuth authentication
+      responses:
+        '302':
+          description: Redirect to Google OAuth
+
+  /auth/google/callback:
+    get:
+      tags: [auth]
+      summary: Google OAuth callback
+      description: Handle Google OAuth callback and create session
+      responses:
+        '302':
+          description: Redirect to frontend with authentication
+        '401':
+          description: Authentication failed
+
+  # ============================================
+  # Booking Routes
+  # ============================================
   /bookings:
     get:
       tags: [booking]
@@ -128,6 +269,37 @@ paths:
       responses:
         '200':
           description: Availability updated
+
+  /bookings/availability/override:
+    post:
+      tags: [booking]
+      summary: Add date override (tutor only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DateOverrideRequest'
+      responses:
+        '200':
+          description: Date override added
+    delete:
+      tags: [booking]
+      summary: Remove date override (tutor only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Date override removed
 
   /bookings/{id}:
     get:
@@ -260,8 +432,607 @@ paths:
         '200':
           description: Booking completed
 
+  # ============================================
+  # Review Routes
+  # ============================================
+  /reviews:
+    get:
+      tags: [review]
+      summary: Get my reviews
+      description: Returns reviews for the current user (as tutor or reviewer based on role)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Reviews retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewListResponse'
+        '401':
+          description: Unauthorized
+    post:
+      tags: [review]
+      summary: Create a new review
+      description: Submit a review for a completed booking (student only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReviewRequest'
+      responses:
+        '201':
+          description: Review created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+        '400':
+          description: Bad request (invalid data, booking not completed, or review already exists)
+        '401':
+          description: Unauthorized
+        '404':
+          description: Booking not found
+
+  /reviews/{id}:
+    get:
+      tags: [review]
+      summary: Get review by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+        '404':
+          description: Review not found
+    put:
+      tags: [review]
+      summary: Update a review
+      description: Only the reviewer can update their own review
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReviewRequest'
+      responses:
+        '200':
+          description: Review updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewResponse'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Review not found
+    delete:
+      tags: [review]
+      summary: Delete a review
+      description: Reviewer or admin can delete a review
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Review deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Review not found
+
+  /reviews/tutor/{tutorId}:
+    get:
+      tags: [review]
+      summary: Get all reviews for a tutor
+      description: Public endpoint to view tutor reviews
+      parameters:
+        - name: tutorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tutor reviews retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewListResponse'
+        '400':
+          description: Invalid tutor ID
+
+  # ============================================
+  # Thread Routes (Study-Hub / Community)
+  # ============================================
+  /threads:
+    get:
+      tags: [thread]
+      summary: Get all threads
+      description: Retrieve all discussion threads with optional filtering
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by category
+        - name: tag
+          in: query
+          schema:
+            type: string
+          description: Filter by tag
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search in title and content
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+          description: Page number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Items per page
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [createdAt, updatedAt, upvotes]
+            default: createdAt
+          description: Sort field
+        - name: order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: Sort order
+      responses:
+        '200':
+          description: Threads retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadListResponse'
+    post:
+      tags: [thread]
+      summary: Create a new thread
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateThreadRequest'
+      responses:
+        '201':
+          description: Thread created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+
+  /threads/{id}:
+    get:
+      tags: [thread]
+      summary: Get thread by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Thread retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadResponse'
+        '404':
+          description: Thread not found
+    put:
+      tags: [thread]
+      summary: Update a thread
+      description: Only the author can update their thread
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateThreadRequest'
+      responses:
+        '200':
+          description: Thread updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThreadResponse'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden - not the author
+        '404':
+          description: Thread not found
+    delete:
+      tags: [thread]
+      summary: Delete a thread
+      description: Author or admin can delete a thread
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Thread deleted successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Thread not found
+
+  /threads/{id}/upvote:
+    post:
+      tags: [thread]
+      summary: Upvote a thread
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Thread upvoted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Thread not found
+
+  /threads/{id}/downvote:
+    post:
+      tags: [thread]
+      summary: Downvote a thread
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Thread downvoted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Thread not found
+
+  /threads/{id}/comments:
+    get:
+      tags: [thread]
+      summary: Get comments for a thread
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Comments retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentListResponse'
+        '404':
+          description: Thread not found
+    post:
+      tags: [thread]
+      summary: Add a comment to a thread
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: Comment added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentResponse'
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '404':
+          description: Thread not found
+
+  /threads/{threadId}/comments/{commentId}:
+    put:
+      tags: [thread]
+      summary: Update a comment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCommentRequest'
+      responses:
+        '200':
+          description: Comment updated successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Comment not found
+    delete:
+      tags: [thread]
+      summary: Delete a comment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Comment deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Comment not found
+
+  /threads/{threadId}/comments/{commentId}/upvote:
+    post:
+      tags: [thread]
+      summary: Upvote a comment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Comment upvoted successfully
+        '401':
+          description: Unauthorized
+
+  /threads/{threadId}/comments/{commentId}/downvote:
+    post:
+      tags: [thread]
+      summary: Downvote a comment
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Comment downvoted successfully
+        '401':
+          description: Unauthorized
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
+    # ============================================
+    # Authentication Schemas
+    # ============================================
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        password:
+          type: string
+          minLength: 6
+          maxLength: 255
+          example: password123
+        confirmPassword:
+          type: string
+          minLength: 6
+          maxLength: 255
+          example: password123
+        role:
+          type: string
+          enum: [student, tutor]
+          default: student
+      required:
+        - name
+        - email
+        - password
+        - confirmPassword
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        password:
+          type: string
+          minLength: 6
+          example: password123
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: User registered successfully
+        data:
+          $ref: '#/components/schemas/User'
+
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: User login successfully
+        mfaRequired:
+          type: boolean
+          example: false
+        user:
+          $ref: '#/components/schemas/User'
+
+    # ============================================
+    # User Schema
+    # ============================================
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [student, tutor, admin]
+        bio:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        reputationScore:
+          type: number
+        googleId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    # ============================================
+    # Booking Schemas
+    # ============================================
     Booking:
       type: object
       properties:
@@ -306,18 +1077,24 @@ components:
       properties:
         tutor:
           type: string
+          description: Tutor's user ID
         subject:
           type: string
+          maxLength: 100
         description:
           type: string
+          maxLength: 500
         scheduledAt:
           type: string
           format: date-time
         duration:
           type: number
+          minimum: 15
+          maximum: 180
           default: 60
         notes:
           type: string
+          maxLength: 1000
       required:
         - tutor
         - subject
@@ -328,15 +1105,20 @@ components:
       properties:
         subject:
           type: string
+          maxLength: 100
         description:
           type: string
+          maxLength: 500
         scheduledAt:
           type: string
           format: date-time
         duration:
           type: number
+          minimum: 15
+          maximum: 180
         notes:
           type: string
+          maxLength: 1000
 
     UpdateAvailabilityRequest:
       type: object
@@ -360,15 +1142,33 @@ components:
         isActive:
           type: boolean
 
+    DateOverrideRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date-time
+        available:
+          type: boolean
+        slots:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeSlot'
+      required:
+        - date
+        - available
+
     TimeSlot:
       type: object
       properties:
         startTime:
           type: string
           pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+          description: Time in HH:mm format
         endTime:
           type: string
           pattern: '^([01]\d|2[0-3]):([0-5]\d)$'
+          description: Time in HH:mm format
 
     BookingResponse:
       type: object
@@ -413,6 +1213,316 @@ components:
               duration:
                 type: number
 
+    # ============================================
+    # Review Schemas
+    # ============================================
+    Review:
+      type: object
+      properties:
+        _id:
+          type: string
+        booking:
+          type: string
+          description: Booking ID
+        reviewer:
+          $ref: '#/components/schemas/User'
+        tutor:
+          $ref: '#/components/schemas/User'
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          maxLength: 1000
+        responseFromTutor:
+          type: string
+          maxLength: 2000
+        flaggedForModeration:
+          type: boolean
+        editedAt:
+          type: string
+          format: date-time
+        isDeleted:
+          type: boolean
+        deletedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateReviewRequest:
+      type: object
+      properties:
+        bookingId:
+          type: string
+          description: ID of the completed booking
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          maxLength: 1000
+      required:
+        - bookingId
+        - rating
+
+    UpdateReviewRequest:
+      type: object
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          maxLength: 1000
+
+    ReviewResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Review'
+
+    ReviewListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Review'
+
+    # ============================================
+    # Thread Schemas
+    # ============================================
+    Thread:
+      type: object
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        author:
+          $ref: '#/components/schemas/User'
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        upvotes:
+          type: integer
+        downvotes:
+          type: integer
+        upvotedBy:
+          type: array
+          items:
+            type: string
+        downvotedBy:
+          type: array
+          items:
+            type: string
+        commentCount:
+          type: integer
+        isLocked:
+          type: boolean
+        isPinned:
+          type: boolean
+        isDeleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateThreadRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        content:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 5
+      required:
+        - title
+        - content
+
+    UpdateThreadRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        content:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+          maxItems: 5
+
+    ThreadResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Thread'
+
+    ThreadListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Thread'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ============================================
+    # Comment Schemas
+    # ============================================
+    Comment:
+      type: object
+      properties:
+        _id:
+          type: string
+        thread:
+          type: string
+        author:
+          $ref: '#/components/schemas/User'
+        content:
+          type: string
+        parentComment:
+          type: string
+          description: Parent comment ID for replies
+        upvotes:
+          type: integer
+        downvotes:
+          type: integer
+        upvotedBy:
+          type: array
+          items:
+            type: string
+        downvotedBy:
+          type: array
+          items:
+            type: string
+        isDeleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateCommentRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+        parentComment:
+          type: string
+          description: Parent comment ID for nested replies
+      required:
+        - content
+
+    UpdateCommentRequest:
+      type: object
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      required:
+        - content
+
+    CommentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/Comment'
+
+    CommentListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ============================================
+    # Common Schemas
+    # ============================================
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
 tags:
+  - name: auth
+    description: Authentication & User Management
   - name: booking
     description: Booking & Scheduling for Peer-Tutoring Sessions
+  - name: review
+    description: Reviews & Ratings for Tutors (Reputation Engine)
+  - name: thread
+    description: Community Discussion Threads (Study-Hub)
