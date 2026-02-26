@@ -1,7 +1,11 @@
 'use strict';
 
 const { BookingModel, BookingStatus } = require('../../database/models/session.model');
+const UserModel = require('../../database/models/user.model');
 const mongoose = require('mongoose');
+const { ReputationService } = require('./reputation.service');
+const { computeBadgeFromReviewCount } = require('./badge.service');
+const { sendEmail } = require('../../common/email/sendgrid.client');
 const {
   BadRequestException,
   NotFoundException,
@@ -9,8 +13,9 @@ const {
 } = require('../../common/utils/errors-utils');
 
 class ReviewService {
-  constructor(reviewRepository) {
+  constructor(reviewRepository, reputationService = new ReputationService()) {
     this.reviewRepository = reviewRepository;
+    this.reputationService = reputationService;
   }
 
   validateObjectId(value, fieldName) {
@@ -72,6 +77,28 @@ class ReviewService {
         editedAt: new Date(),
       });
 
+      await this.reputationService.recalculateTutorReputation(restored.tutor.toString());
+
+      const tutorAfterRestore = await UserModel.findById(restored.tutor).select(
+        'email name badge reviewCount'
+      );
+      if (tutorAfterRestore) {
+        const nextBadge = computeBadgeFromReviewCount(tutorAfterRestore.reviewCount || 0);
+        if (nextBadge !== tutorAfterRestore.badge) {
+          tutorAfterRestore.badge = nextBadge;
+          tutorAfterRestore.badgeUpdatedAt = new Date();
+          await tutorAfterRestore.save();
+
+          if (nextBadge !== 'none') {
+            await sendEmail({
+              to: tutorAfterRestore.email,
+              subject: 'New Badge Unlocked',
+              text: `Congrats ${tutorAfterRestore.name}! You earned the ${nextBadge} badge.`,
+            });
+          }
+        }
+      }
+
       return restored;
     }
 
@@ -85,6 +112,28 @@ class ReviewService {
         isDeleted: false,
         flaggedForModeration: false,
       });
+
+      await this.reputationService.recalculateTutorReputation(created.tutor.toString());
+
+      const tutorAfterCreate = await UserModel.findById(created.tutor).select(
+        'email name badge reviewCount'
+      );
+      if (tutorAfterCreate) {
+        const nextBadge = computeBadgeFromReviewCount(tutorAfterCreate.reviewCount || 0);
+        if (nextBadge !== tutorAfterCreate.badge) {
+          tutorAfterCreate.badge = nextBadge;
+          tutorAfterCreate.badgeUpdatedAt = new Date();
+          await tutorAfterCreate.save();
+
+          if (nextBadge !== 'none') {
+            await sendEmail({
+              to: tutorAfterCreate.email,
+              subject: 'New Badge Unlocked',
+              text: `Congrats ${tutorAfterCreate.name}! You earned the ${nextBadge} badge.`,
+            });
+          }
+        }
+      }
 
       return created;
     } catch (err) {
@@ -110,7 +159,12 @@ class ReviewService {
   }
 
   async getMyReviews(user) {
-    if (user.role === 'tutor') {
+    const dbUser = await UserModel.findById(user.id).select('role');
+    if (!dbUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (dbUser.role === 'tutor') {
       return this.reviewRepository.findByTutor(user.id);
     }
     return this.reviewRepository.findReviewsByReviewer(user.id);
@@ -134,6 +188,8 @@ class ReviewService {
       throw new UnauthorizedException('Only the reviewer can update this review');
     }
 
+    const oldRating = review.rating;
+
     const update = {
       editedAt: new Date(),
       ...(rating !== undefined ? { rating } : {}),
@@ -143,6 +199,30 @@ class ReviewService {
     const updated = await this.reviewRepository.updateById(reviewId, update);
     if (!updated) {
       throw new NotFoundException('Review not found');
+    }
+
+    if (rating !== undefined && rating !== oldRating) {
+      await this.reputationService.recalculateTutorReputation(updated.tutor.toString());
+
+      const tutorAfterUpdate = await UserModel.findById(updated.tutor).select(
+        'email name badge reviewCount'
+      );
+      if (tutorAfterUpdate) {
+        const nextBadge = computeBadgeFromReviewCount(tutorAfterUpdate.reviewCount || 0);
+        if (nextBadge !== tutorAfterUpdate.badge) {
+          tutorAfterUpdate.badge = nextBadge;
+          tutorAfterUpdate.badgeUpdatedAt = new Date();
+          await tutorAfterUpdate.save();
+
+          if (nextBadge !== 'none') {
+            await sendEmail({
+              to: tutorAfterUpdate.email,
+              subject: 'New Badge Unlocked',
+              text: `Congrats ${tutorAfterUpdate.name}! You earned the ${nextBadge} badge.`,
+            });
+          }
+        }
+      }
     }
 
     return updated;
@@ -156,7 +236,12 @@ class ReviewService {
       throw new NotFoundException('Review not found');
     }
 
-    const isAdmin = user.role === 'admin';
+    const dbUser = await UserModel.findById(user.id).select('role');
+    if (!dbUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isAdmin = dbUser.role === 'admin';
     const isReviewer = review.reviewer.toString() === user.id.toString();
 
     if (!isAdmin && !isReviewer) {
@@ -167,6 +252,30 @@ class ReviewService {
       isDeleted: true,
       deletedAt: new Date(),
     });
+
+    if (deleted) {
+      await this.reputationService.recalculateTutorReputation(deleted.tutor.toString());
+
+      const tutorAfterDelete = await UserModel.findById(deleted.tutor).select(
+        'email name badge reviewCount'
+      );
+      if (tutorAfterDelete) {
+        const nextBadge = computeBadgeFromReviewCount(tutorAfterDelete.reviewCount || 0);
+        if (nextBadge !== tutorAfterDelete.badge) {
+          tutorAfterDelete.badge = nextBadge;
+          tutorAfterDelete.badgeUpdatedAt = new Date();
+          await tutorAfterDelete.save();
+
+          if (nextBadge !== 'none') {
+            await sendEmail({
+              to: tutorAfterDelete.email,
+              subject: 'New Badge Unlocked',
+              text: `Congrats ${tutorAfterDelete.name}! You earned the ${nextBadge} badge.`,
+            });
+          }
+        }
+      }
+    }
 
     return deleted;
   }

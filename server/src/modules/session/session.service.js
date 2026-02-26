@@ -11,6 +11,7 @@ const {
 const { ErrorCode } = require("../../common/enums/error-code.enum");
 const { logger } = require("../../common/utils/logger-utils");
 const { googleCalendarService } = require("../../integrations/google-calendar");
+const { sendEmail } = require("../../common/email/sendgrid.client");
 
 class BookingService {
   /**
@@ -366,7 +367,21 @@ class BookingService {
 
     logger.info("Booking completed", { bookingId, userId });
 
-    return await booking.populate(["student", "tutor"]);
+    const populated = await booking.populate(["student", "tutor"]);
+
+    try {
+      if (populated?.student?.email && populated?.tutor?.name) {
+        await sendEmail({
+          to: populated.student.email,
+          subject: "Please leave a review",
+          text: `Your session with ${populated.tutor.name} is completed. Please leave a review. Booking: ${bookingId}`,
+        });
+      }
+    } catch (e) {
+      logger.warn("Failed to send review request email", { bookingId, error: e?.message });
+    }
+
+    return populated;
   }
 
   /**
