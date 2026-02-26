@@ -12,6 +12,7 @@ const registerSchema = z
     email: emailSchema,
     password: passwordSchema,
     confirmPassword: passwordSchema,
+    role: z.enum(["student", "tutor"]).optional().default("student"),
   })
   .refine((val) => val.password === val.confirmPassword, {
     message: "Password does not match",

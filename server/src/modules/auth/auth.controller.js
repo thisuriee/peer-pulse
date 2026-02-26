@@ -1,153 +1,165 @@
 "use strict";
 
-// import { Request, Response } from "express";
-// import { asyncHandler } from "../../middlewares/helpers/async-handler.middleware";
-// import { AuthService } from "./auth.service";
-// import { HTTPSTATUS } from "../../config/http.config";
-// import {
-//   emailSchema,
-//   loginSchema,
-//   registerSchema,
-//   resetPasswordSchema,
-//   verificationEmailSchema,
-// } from "../../common/validators/auth.validator";
-// import {
-//   clearAuthenticationCookies,
-//   getAccessTokenCookieOptions,
-//   getRefreshTokenCookieOptions,
-//   setAuthenticationCookies,
-// } from "../../common/utils/cookie-utils";
-// import {
-//   NotFoundException,
-//   UnauthorizedException,
-// } from "../../common/utils/errors-utils";
+const { asyncHandler } = require("../../middlewares/helpers/async-handler.middleware");
+const { HTTPSTATUS } = require("../../config/http.config");
+const {
+  loginSchema,
+  registerSchema,
+} = require("../../common/validators/auth.validator");
+const {
+  clearAuthenticationCookies,
+  getAccessTokenCookieOptions,
+  getRefreshTokenCookieOptions,
+  setAuthenticationCookies,
+} = require("../../common/utils/cookie-utils");
+const {
+  NotFoundException,
+  UnauthorizedException,
+} = require("../../common/utils/errors-utils");
+const SessionModel = require("../../database/models/authSession.model");
+const { signJwtToken, refreshTokenSignOptions } = require("../../common/utils/token-utils");
+const { config } = require("../../config/app.config");
 
-// class AuthController {
-//   constructor(authService) {
-//     this.authService = authService;
-//   }
+class AuthController {
+  constructor(authService) {
+    this.authService = authService;
+  }
 
-//   register = asyncHandler(
-//     async (req, res) => {
-//       const body = registerSchema.parse({
-//         ...req.body,
-//       });
-//       const { user } = await this.authService.register(body);
-//       return res.status(HTTPSTATUS.CREATED).json({
-//         message: "User registered successfully",
-//         data: user,
-//       });
-//     }
-//   );
+  /**
+   * Register a new user
+   * POST /api/v1/auth/register
+   */
+  register = asyncHandler(async (req, res) => {
+    const body = registerSchema.parse({
+      ...req.body,
+    });
+    const { user } = await this.authService.register(body);
+    return res.status(HTTPSTATUS.CREATED).json({
+      message: "User registered successfully",
+      data: user,
+    });
+  });
 
-//   login = asyncHandler(
-//     async (req, res) => {
-//       const userAgent = req.headers["user-agent"];
-//       const body = loginSchema.parse({
-//         ...req.body,
-//         userAgent,
-//       });
+  /**
+   * Login user
+   * POST /api/v1/auth/login
+   */
+  login = asyncHandler(async (req, res) => {
+    const userAgent = req.headers["user-agent"];
+    const body = loginSchema.parse({
+      ...req.body,
+      userAgent,
+    });
 
-//       const { user, accessToken, refreshToken, mfaRequired } =
-//         await this.authService.login(body);
+    const { user, accessToken, refreshToken, mfaRequired } =
+      await this.authService.login(body);
 
-//       if (mfaRequired) {
-//         return res.status(HTTPSTATUS.OK).json({
-//           message: "Verify MFA authentication",
-//           mfaRequired,
-//           user,
-//         });
-//       }
+    if (mfaRequired) {
+      return res.status(HTTPSTATUS.OK).json({
+        message: "Verify MFA authentication",
+        mfaRequired,
+        user,
+      });
+    }
 
-//       return setAuthenticationCookies({
-//         res,
-//         accessToken,
-//         refreshToken,
-//       })
-//         .status(HTTPSTATUS.OK)
-//         .json({
-//           message: "User login successfully",
-//           mfaRequired,
-//           user,
-//         });
-//     }
-//   );
+    return setAuthenticationCookies({
+      res,
+      accessToken,
+      refreshToken,
+    })
+      .status(HTTPSTATUS.OK)
+      .json({
+        message: "User login successfully",
+        mfaRequired,
+        user,
+      });
+  });
 
-//   refreshToken = asyncHandler(
-//     async (req, res) => {
-//       const refreshToken = req.cookies.refreshToken;
-//       if (!refreshToken) {
-//         throw new UnauthorizedException("Missing refresh token");
-//       }
+  /**
+   * Refresh access token
+   * GET /api/v1/auth/refresh
+   */
+  refreshToken = asyncHandler(async (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      throw new UnauthorizedException("Missing refresh token");
+    }
 
-//       const { accessToken, newRefreshToken } =
-//         await this.authService.refreshToken(refreshToken);
+    const { accessToken, newRefreshToken } =
+      await this.authService.refreshToken(refreshToken);
 
-//       if (newRefreshToken) {
-//         res.cookie(
-//           "refreshToken",
-//           newRefreshToken,
-//           getRefreshTokenCookieOptions()
-//         );
-//       }
+    if (newRefreshToken) {
+      res.cookie(
+        "refreshToken",
+        newRefreshToken,
+        getRefreshTokenCookieOptions()
+      );
+    }
 
-//       return res
-//         .status(HTTPSTATUS.OK)
-//         .cookie("accessToken", accessToken, getAccessTokenCookieOptions())
-//         .json({
-//           message: "Refresh access token successfully",
-//         });
-//     }
-//   );
+    return res
+      .status(HTTPSTATUS.OK)
+      .cookie("accessToken", accessToken, getAccessTokenCookieOptions())
+      .json({
+        message: "Refresh access token successfully",
+      });
+  });
 
-//   verifyEmail = asyncHandler(
-//     async (req, res) => {
-//       const { code } = verificationEmailSchema.parse(req.body);
-//       await this.authService.verifyEmail(code);
+  /**
+   * Logout user
+   * POST /api/v1/auth/logout
+   */
+  logout = asyncHandler(async (req, res) => {
+    const sessionId = req.sessionId;
+    if (!sessionId) {
+      throw new NotFoundException("Session is invalid.");
+    }
+    await this.authService.logout(sessionId);
+    return clearAuthenticationCookies(res).status(HTTPSTATUS.OK).json({
+      message: "User logout successfully",
+    });
+  });
 
-//       return res.status(HTTPSTATUS.OK).json({
-//         message: "Email verified successfully",
-//       });
-//     }
-//   );
+  /**
+   * Get current user
+   * GET /api/v1/auth/me
+   */
+  getCurrentUser = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+    const user = await this.authService.getCurrentUser(userId);
 
-//   forgotPassword = asyncHandler(
-//     async (req, res) => {
-//       const email = emailSchema.parse(req.body.email);
-//       await this.authService.forgotPassword(email);
+    return res.status(HTTPSTATUS.OK).json({
+      message: "User fetched successfully",
+      data: user,
+    });
+  });
 
-//       return res.status(HTTPSTATUS.OK).json({
-//         message: "Password reset email sent",
-//       });
-//     }
-//   );
+  /**
+   * Google OAuth Callback
+   * GET /api/v1/auth/google/callback
+   */
+  googleCallback = asyncHandler(async (req, res) => {
+    const user = req.user;
+    
+    const session = await SessionModel.create({
+      userId: user._id,
+      userAgent: req.headers["user-agent"],
+    });
 
-//   resetPassword = asyncHandler(
-//     async (req, res) => {
-//       const body = resetPasswordSchema.parse(req.body);
+    const accessToken = signJwtToken({
+      userId: user._id,
+      sessionId: session._id,
+    });
 
-//       await this.authService.resePassword(body);
+    const refreshToken = signJwtToken(
+      { sessionId: session._id },
+      refreshTokenSignOptions
+    );
 
-//       return clearAuthenticationCookies(res).status(HTTPSTATUS.OK).json({
-//         message: "Reset Password successfully",
-//       });
-//     }
-//   );
+    // Set cookies and redirect to frontend
+    setAuthenticationCookies({ res, accessToken, refreshToken });
+    
+    return res.redirect(`${config.APP_ORIGIN}/home`);
+  });
+}
 
-//   logout = asyncHandler(
-//     async (req, res) => {
-//       const sessionId = req.sessionId;
-//       if (!sessionId) {
-//         throw new NotFoundException("Session is invalid.");
-//       }
-//       await this.authService.logout(sessionId);
-//       return clearAuthenticationCookies(res).status(HTTPSTATUS.OK).json({
-//         message: "User logout successfully",
-//       });
-//     }
-//   );
-// }
-
-// module.exports = { AuthController };
-
-module.exports = {};
+module.exports = { AuthController };

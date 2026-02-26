@@ -1,9 +1,7 @@
 "use strict";
 
-// const { UserService } = require("./user.service");
+const { UserService } = require("./user.service");
 
-// const userService = new UserService();
+const userService = new UserService();
 
-// module.exports = { userService };
-
-module.exports = {};
+module.exports = { userService };
