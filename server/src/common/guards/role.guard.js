@@ -6,41 +6,38 @@ const UserModel = require("../../database/models/user.model");
 
 /**
  * Middleware factory to require specific roles
+ * IMPORTANT: Must be used AFTER authenticateJWT middleware
  * @param  {...string} allowedRoles - Roles that are allowed to access the route
  */
 const requireRole = (...allowedRoles) => {
   return async (req, res, next) => {
-    try {
-      if (!req.user?.id) {
-        throw new ForbiddenException(
-          "Authentication required",
-          ErrorCode.ACCESS_UNAUTHORIZED
-        );
-      }
-
-      const user = await UserModel.findById(req.user.id).select("role");
-
-      if (!user) {
-        throw new ForbiddenException(
-          "User not found",
-          ErrorCode.AUTH_USER_NOT_FOUND
-        );
-      }
-
-      if (!allowedRoles.includes(user.role)) {
-        throw new ForbiddenException(
-          "You do not have permission to perform this action",
-          ErrorCode.ACCESS_FORBIDDEN
-        );
-      }
-
-      req.user.role = user.role;
-      next();
-    } catch (error) {
-      next(error);
+    // Role is already cached by aithenticateJWT
+    if (!req.user?.id) {
+      throw new ForbiddenException(
+        "Authentication required",
+        ErrorCode.ACCESS_UNAUTHORIZED
+      );
     }
-  };
+
+    if (!req.user.role) {
+      throw new ForbiddenException(
+        "User role not found",
+        ErrorCode.ACCESS_FORBIDDEN
+      );
+    }
+
+    if (!allowedRoles.includes(req.user.role)) {
+      throw new ForbiddenException(
+        "You do not have permission to perform this action",
+        ErrorCode.ACCESS_FORBIDDEN
+      );
+    }
+    
+    next();
+
+  }
 };
+
 
 /**
  * Require tutor or admin role

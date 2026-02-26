@@ -4,6 +4,7 @@ const { verifyJwtToken } = require("../utils/token-utils");
 const { UnauthorizedException } = require("../utils/errors-utils");
 const { ErrorCode } = require("../enums/error-code.enum");
 const SessionModel = require("../../database/models/authSession.model");
+const UserModel = require("../../database/models/user.model");
 
 /**
  * Middleware to authenticate JWT tokens from cookies
@@ -45,7 +46,15 @@ const authenticateJWT = async (req, res, next) => {
       );
     }
 
-    req.user = { id: payload.userId };
+    const user = await UserModel.findById(payload.userId).select("role");
+    if (!user) {
+      throw new UnauthorizedException(
+        "User not found",
+        ErrorCode.AUTH_USER_NOT_FOUND
+      );
+    }
+
+    req.user = { id: payload.userId, role: user.role };
     req.sessionId = payload.sessionId;
 
     next();
@@ -67,8 +76,12 @@ const optionalAuth = async (req, res, next) => {
       if (payload) {
         const session = await SessionModel.findById(payload.sessionId);
         if (session && session.expiredAt > new Date()) {
-          req.user = { id: payload.userId };
-          req.sessionId = payload.sessionId;
+          const user = await UserModel.findById(payload.userId).select("role");
+          if (user) {
+            req.user = { id: payload.userId, role: user.role };
+            req.sessionId = payload.sessionId;
+          }
+          
         }
       }
     }

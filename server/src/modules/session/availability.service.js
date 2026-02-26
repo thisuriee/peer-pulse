@@ -12,6 +12,7 @@ const { logger } = require("../../common/utils/logger-utils");
 class AvailabilityService {
   /**
    * Get or create availability for a tutor
+   * NOTE: Role check is handled at route level via requireTutor guard
    */
   async getAvailability(tutorId) {
     let availability = await AvailabilityModel.findOne({ tutor: tutorId });
@@ -19,9 +20,6 @@ class AvailabilityService {
     if (!availability) {
       // Check if user is a tutor
       const user = await UserModel.findById(tutorId);
-      if (!user || (user.role !== "tutor" && user.role !== "admin")) {
-        throw new ForbiddenException("Only tutors can have availability settings");
-      }
 
       // Create default availability
       availability = await AvailabilityModel.create({
