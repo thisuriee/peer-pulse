@@ -240,7 +240,53 @@ async createThread(authorId, threadData) {
       upvoteCount: thread.upvotes.length,
     };
   }
+  /**
+   * Toggle downvote on thread
+   */
+  async toggleDownvote(threadId, userId) {
+    const thread = await ThreadModel.findOne({
+      _id: threadId,
+      isDeleted: false,
+    });
 
+    if (!thread) {
+      throw new NotFoundException("Thread not found");
+    }
+
+    // Remove from upvotes if exists (user can't upvote and downvote)
+    const upvoteIndex = thread.upvotes.findIndex(
+      (id) => id.toString() === userId.toString()
+    );
+    if (upvoteIndex > -1) {
+      thread.upvotes.splice(upvoteIndex, 1);
+    }
+
+    const downvoteIndex = thread.downvotes
+      ? thread.downvotes.findIndex((id) => id.toString() === userId.toString())
+      : -1;
+
+    if (!thread.downvotes) {
+      thread.downvotes = [];
+    }
+
+    if (downvoteIndex > -1) {
+      // Remove downvote
+      thread.downvotes.splice(downvoteIndex, 1);
+      logger.info("Downvote removed", { threadId, userId });
+    } else {
+      // Add downvote
+      thread.downvotes.push(userId);
+      logger.info("Downvote added", { threadId, userId });
+    }
+
+    await thread.save();
+
+    return {
+      downvoted: downvoteIndex === -1,
+      downvoteCount: thread.downvotes.length,
+      upvoteCount: thread.upvotes.length,
+    };
+  }
   /**
    * Add reply to thread
    */
@@ -321,6 +367,280 @@ async createThread(authorId, threadData) {
       { path: "authorId", select: "name email role" },
       { path: "replies.userId", select: "name email role" },
     ]);
+  }
+
+  // ============================================
+  // Comment Methods
+  // ============================================
+
+  /**
+   * Get comments for a thread with pagination
+   */
+  async getComments(threadId, filters = {}) {
+    const { page = 1, limit = 20 } = filters;
+
+    const thread = await ThreadModel.findOne({
+      _id: threadId,
+      isDeleted: false,
+    });
+
+    if (!thread) {
+      throw new NotFoundException("Thread not found");
+    }
+
+    // Filter out deleted comments
+    const allComments = thread.comments.filter((c) => !c.isDeleted);
+    const total = allComments.length;
+
+    // Paginate
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    const paginatedComments = allComments.slice(start, end);
+
+    // Populate user info
+    await ThreadModel.populate(thread, {
+      path: "comments.userId",
+      select: "name email role",
+    });
+
+    // Get paginated populated comments
+    const comments = thread.comments
+      .filter((c) => !c.isDeleted)
+      .slice(start, end);
+
+    return {
+      comments,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Add comment to thread
+   */
+  async addComment(threadId, userId, commentData) {
+    const thread = await ThreadModel.findOne({
+      _id: threadId,
+      isDeleted: false,
+    });
+
+    if (!thread) {
+      throw new NotFoundException("Thread not found");
+    }
+
+    // Check for profanity
+    const flaggedForReview = await ProfanityFilter.shouldFlag(commentData.content);
+
+    const comment = {
+      userId,
+      content: commentData.content,
+      parentComment: commentData.parentComment || null,
+      upvotes: [],
+      downvotes: [],
+      flaggedForReview,
+    };
+
+    thread.comments.push(comment);
+    await thread.save();
+
+    if (flaggedForReview) {
+      logger.warn("Comment flagged for review", { threadId, userId });
+    }
+
+    logger.info("Comment added", { threadId, userId });
+
+    // Get the newly added comment
+    const newComment = thread.comments[thread.comments.length - 1];
+
+    await ThreadModel.populate(thread, {
+      path: "comments.userId",
+      select: "name email role",
+    });
+
+    return thread.comments.id(newComment._id);
+  }
+
+  /**
+   * Update comment
+   */
+  async updateComment(threadId, commentId, userId, updateData) {
+    const thread = await ThreadModel.findOne({
+      _id: threadId,
+      isDeleted: false,
+    });
+
+    if (!thread) {
+      throw new NotFoundException("Thread not found");
+    }
+
+    const comment = thread.comments.id(commentId);
+
+    if (!comment || comment.isDeleted) {
+      throw new NotFoundException("Comment not found");
+    }
+
+    // Check ownership
+    if (comment.userId.toString() !== userId.toString()) {
+      throw new ForbiddenException("Only the comment author can update this comment");
+    }
+
+    // Check for profanity
+    const flaggedForReview = await ProfanityFilter.shouldFlag(updateData.content);
+
+    comment.content = updateData.content;
+    comment.flaggedForReview = flaggedForReview;
+
+    await thread.save();
+
+    logger.info("Comment updated", { threadId, commentId, userId });
+
+    await ThreadModel.populate(thread, {
+      path: "comments.userId",
+      select: "name email role",
+    });
+
+    return thread.comments.id(commentId);
+  }
+
+  /**
+   * Delete comment (soft delete)
+   */
+  async deleteComment(threadId, commentId, userId, userRole) {
+    const thread = await ThreadModel.findOne({
+      _id: threadId,
+      isDeleted: false,
+    });
+
+    if (!thread) {
+      throw new NotFoundException("Thread not found");
+    }
+
+    const comment = thread.comments.id(commentId);
+
+    if (!comment || comment.isDeleted) {
+      throw new NotFoundException("Comment not found");
+    }
+
+    // Check if user is author or admin
+    const isAuthor = comment.userId.toString() === userId.toString();
+    const isAdmin = userRole === "admin";
+
+    if (!isAuthor && !isAdmin) {
+      throw new ForbiddenException(
+        "Only the comment author or admin can delete this comment"
+      );
+    }
+
+    comment.isDeleted = true;
+    await thread.save();
+
+    logger.info("Comment deleted", { threadId, commentId, userId, userRole });
+
+    return { message: "Comment deleted successfully" };
+  }
+
+  /**
+   * Toggle upvote on comment
+   */
+  async toggleCommentUpvote(threadId, commentId, userId) {
+    const thread = await ThreadModel.findOne({
+      _id: threadId,
+      isDeleted: false,
+    });
+
+    if (!thread) {
+      throw new NotFoundException("Thread not found");
+    }
+
+    const comment = thread.comments.id(commentId);
+
+    if (!comment || comment.isDeleted) {
+      throw new NotFoundException("Comment not found");
+    }
+
+    // Remove from downvotes if exists
+    const downvoteIndex = comment.downvotes.findIndex(
+      (id) => id.toString() === userId.toString()
+    );
+    if (downvoteIndex > -1) {
+      comment.downvotes.splice(downvoteIndex, 1);
+    }
+
+    const upvoteIndex = comment.upvotes.findIndex(
+      (id) => id.toString() === userId.toString()
+    );
+
+    if (upvoteIndex > -1) {
+      // Remove upvote
+      comment.upvotes.splice(upvoteIndex, 1);
+      logger.info("Comment upvote removed", { threadId, commentId, userId });
+    } else {
+      // Add upvote
+      comment.upvotes.push(userId);
+      logger.info("Comment upvoted", { threadId, commentId, userId });
+    }
+
+    await thread.save();
+
+    return {
+      upvoted: upvoteIndex === -1,
+      upvoteCount: comment.upvotes.length,
+      downvoteCount: comment.downvotes.length,
+    };
+  }
+
+  /**
+   * Toggle downvote on comment
+   */
+  async toggleCommentDownvote(threadId, commentId, userId) {
+    const thread = await ThreadModel.findOne({
+      _id: threadId,
+      isDeleted: false,
+    });
+
+    if (!thread) {
+      throw new NotFoundException("Thread not found");
+    }
+
+    const comment = thread.comments.id(commentId);
+
+    if (!comment || comment.isDeleted) {
+      throw new NotFoundException("Comment not found");
+    }
+
+    // Remove from upvotes if exists
+    const upvoteIndex = comment.upvotes.findIndex(
+      (id) => id.toString() === userId.toString()
+    );
+    if (upvoteIndex > -1) {
+      comment.upvotes.splice(upvoteIndex, 1);
+    }
+
+    const downvoteIndex = comment.downvotes.findIndex(
+      (id) => id.toString() === userId.toString()
+    );
+
+    if (downvoteIndex > -1) {
+      // Remove downvote
+      comment.downvotes.splice(downvoteIndex, 1);
+      logger.info("Comment downvote removed", { threadId, commentId, userId });
+    } else {
+      // Add downvote
+      comment.downvotes.push(userId);
+      logger.info("Comment downvoted", { threadId, commentId, userId });
+    }
+
+    await thread.save();
+
+    return {
+      downvoted: downvoteIndex === -1,
+      upvoteCount: comment.upvotes.length,
+      downvoteCount: comment.downvotes.length,
+    };
   }
 }
 

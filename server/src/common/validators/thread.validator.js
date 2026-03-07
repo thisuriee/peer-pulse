@@ -47,9 +47,34 @@ const threadQuerySchema = z.object({
   sort: z.enum(["latest", "mostUpvoted"]).optional().default("latest"),
 });
 
+const createCommentSchema = z.object({
+  content: z
+    .string()
+    .trim()
+    .min(1, "Comment content is required")
+    .max(2000, "Comment cannot exceed 2000 characters"),
+  parentComment: z.string().trim().optional(),
+});
+
+const updateCommentSchema = z.object({
+  content: z
+    .string()
+    .trim()
+    .min(1, "Comment content is required")
+    .max(2000, "Comment cannot exceed 2000 characters"),
+});
+
+const commentQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).optional().default(1),
+  limit: z.coerce.number().int().min(1).max(100).optional().default(20),
+});
+
 module.exports = {
   createThreadSchema,
   updateThreadSchema,
   createReplySchema,
   threadQuerySchema,
+  createCommentSchema,
+  updateCommentSchema,
+  commentQuerySchema,
 };

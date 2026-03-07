@@ -33,6 +33,53 @@ const replySchema = new Schema(
   { timestamps: true }
 );
 
+const commentSchema = new Schema(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 2000,
+    },
+    parentComment: {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
+      default: null,
+    },
+    upvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    downvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    flaggedForReview: {
+      type: Boolean,
+      default: false,
+    },
+    moderation: {
+      toxicityScore: Number,
+      insultScore: Number,
+      threatScore: Number,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { timestamps: true }
+);
+
 const threadSchema = new Schema(
   {
     authorId: {
@@ -64,7 +111,14 @@ const threadSchema = new Schema(
         ref: "User",
       },
     ],
+    downvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     replies: [replySchema],
+    comments: [commentSchema],
     isResolved: {
       type: Boolean,
       default: false,

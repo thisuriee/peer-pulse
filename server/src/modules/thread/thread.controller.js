@@ -7,6 +7,9 @@ const {
   updateThreadSchema,
   createReplySchema,
   threadQuerySchema,
+  createCommentSchema,
+  updateCommentSchema,
+  commentQuerySchema,
 } = require("../../common/validators/thread.validator");
 
 class ThreadController {
@@ -117,6 +120,23 @@ class ThreadController {
   });
 
   /**
+   * Toggle downvote on thread
+   * POST /api/v1/threads/:id/downvote
+   */
+  toggleDownvote = asyncHandler(async (req, res) => {
+    const threadId = req.params.id;
+    const userId = req.user.id;
+
+    const result = await this.threadService.toggleDownvote(threadId, userId);
+
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: result.downvoted ? "Thread downvoted" : "Downvote removed",
+      data: result,
+    });
+  });
+
+  /**
    * Add reply to thread
    * POST /api/v1/threads/:id/replies
    */
@@ -152,6 +172,133 @@ class ThreadController {
       success: true,
       message: "Best answer accepted",
       data: thread,
+    });
+  });
+
+  // ============================================
+  // Comment Handlers
+  // ============================================
+
+  /**
+   * Get comments for a thread
+   * GET /api/v1/threads/:id/comments
+   */
+  getComments = asyncHandler(async (req, res) => {
+    const threadId = req.params.id;
+    const filters = commentQuerySchema.parse(req.query);
+
+    const result = await this.threadService.getComments(threadId, filters);
+
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: "Comments retrieved successfully",
+      data: result.comments,
+      pagination: result.pagination,
+    });
+  });
+
+  /**
+   * Add a comment to a thread
+   * POST /api/v1/threads/:id/comments
+   */
+  addComment = asyncHandler(async (req, res) => {
+    const threadId = req.params.id;
+    const userId = req.user.id;
+    const body = createCommentSchema.parse(req.body);
+
+    const comment = await this.threadService.addComment(threadId, userId, body);
+
+    return res.status(HTTPSTATUS.CREATED).json({
+      success: true,
+      message: "Comment added successfully",
+      data: comment,
+    });
+  });
+
+  /**
+   * Update a comment
+   * PUT /api/v1/threads/:threadId/comments/:commentId
+   */
+  updateComment = asyncHandler(async (req, res) => {
+    const { threadId, commentId } = req.params;
+    const userId = req.user.id;
+    const body = updateCommentSchema.parse(req.body);
+
+    const comment = await this.threadService.updateComment(
+      threadId,
+      commentId,
+      userId,
+      body
+    );
+
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: "Comment updated successfully",
+      data: comment,
+    });
+  });
+
+  /**
+   * Delete a comment
+   * DELETE /api/v1/threads/:threadId/comments/:commentId
+   */
+  deleteComment = asyncHandler(async (req, res) => {
+    const { threadId, commentId } = req.params;
+    const userId = req.user.id;
+    const userRole = req.user.role;
+
+    const result = await this.threadService.deleteComment(
+      threadId,
+      commentId,
+      userId,
+      userRole
+    );
+
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: result.message,
+    });
+  });
+
+  /**
+   * Upvote a comment
+   * POST /api/v1/threads/:threadId/comments/:commentId/upvote
+   */
+  upvoteComment = asyncHandler(async (req, res) => {
+    const { threadId, commentId } = req.params;
+    const userId = req.user.id;
+
+    const result = await this.threadService.toggleCommentUpvote(
+      threadId,
+      commentId,
+      userId
+    );
+
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: result.upvoted ? "Comment upvoted" : "Upvote removed",
+      data: result,
+    });
+  });
+
+  /**
+   * Downvote a comment
+   * POST /api/v1/threads/:threadId/comments/:commentId/downvote
+   */
+  downvoteComment = asyncHandler(async (req, res) => {
+    const { threadId, commentId } = req.params;
+    const userId = req.user.id;
+
+    const result = await this.threadService.toggleCommentDownvote(
+      threadId,
+      commentId,
+      userId
+    );
+
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: result.downvoted ? "Comment downvoted" : "Downvote removed",
+      data: result,
     });
   });
 }

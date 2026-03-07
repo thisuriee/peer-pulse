@@ -32,6 +32,9 @@ threadRoutes.delete("/:id", authenticateJWT, threadController.deleteThread);
 // PATCH /api/v1/threads/:id/upvote - Toggle upvote (authenticated)
 threadRoutes.patch("/:id/upvote", authenticateJWT, threadController.toggleUpvote);
 
+// POST /api/v1/threads/:id/downvote - Toggle downvote (authenticated)
+threadRoutes.post("/:id/downvote", authenticateJWT, threadController.toggleDownvote);
+
 // POST /api/v1/threads/:id/replies - Add a reply (authenticated)
 threadRoutes.post("/:id/replies", authenticateJWT, threadController.addReply);
 
@@ -40,6 +43,44 @@ threadRoutes.patch(
   "/:threadId/replies/:replyId/accept",
   authenticateJWT,
   threadController.acceptBestAnswer
+);
+
+// ============================================
+// Comment Routes
+// ============================================
+
+// GET /api/v1/threads/:id/comments - Get comments for a thread
+threadRoutes.get("/:id/comments", optionalAuth, threadController.getComments);
+
+// POST /api/v1/threads/:id/comments - Add a comment (authenticated)
+threadRoutes.post("/:id/comments", authenticateJWT, threadController.addComment);
+
+// PUT /api/v1/threads/:threadId/comments/:commentId - Update a comment (authenticated)
+threadRoutes.put(
+  "/:threadId/comments/:commentId",
+  authenticateJWT,
+  threadController.updateComment
+);
+
+// DELETE /api/v1/threads/:threadId/comments/:commentId - Delete a comment (authenticated)
+threadRoutes.delete(
+  "/:threadId/comments/:commentId",
+  authenticateJWT,
+  threadController.deleteComment
+);
+
+// POST /api/v1/threads/:threadId/comments/:commentId/upvote - Upvote a comment (authenticated)
+threadRoutes.post(
+  "/:threadId/comments/:commentId/upvote",
+  authenticateJWT,
+  threadController.upvoteComment
+);
+
+// POST /api/v1/threads/:threadId/comments/:commentId/downvote - Downvote a comment (authenticated)
+threadRoutes.post(
+  "/:threadId/comments/:commentId/downvote",
+  authenticateJWT,
+  threadController.downvoteComment
 );
 
 module.exports = threadRoutes;
