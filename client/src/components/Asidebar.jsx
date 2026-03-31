@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  BookOpen,
   EllipsisIcon,
   Home,
   Loader,
@@ -50,6 +51,11 @@ const Asidebar = () => {
       title: "Home",
       url: "/home",
       icon: Home,
+    },
+    {
+      title: "Study Hub",
+      url: "/study-hub",
+      icon: BookOpen,
     },
     {
       title: "Sessions",

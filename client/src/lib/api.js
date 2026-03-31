@@ -29,12 +29,15 @@ export const mfaSetupQueryFn = async () => {
 };
 export const revokeMFAMutationFn = async () => await API.put(`/mfa/revoke`, {});
 
-export const getUserSessionQueryFn = async () => await API.get(`/session/`);
+// Get current authenticated user — server exposes GET /auth/me
+export const getUserSessionQueryFn = async () => await API.get(`/auth/me`);
 
+// Get all auth sessions for current user — server exposes GET /auth/sessions
 export const sessionsQueryFn = async () => {
-  const response = await API.get(`/session/all`);
+  const response = await API.get(`/auth/sessions`);
   return response.data;
 };
 
+// Delete (revoke) a specific auth session
 export const sessionDelMutationFn = async (id) =>
-  await API.delete(`/session/${id}`);
+  await API.delete(`/auth/sessions/${id}`);

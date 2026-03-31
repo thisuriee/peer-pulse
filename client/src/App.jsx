@@ -7,6 +7,8 @@ import ResetPassword from "./pages/auth/reset-password";
 import VerifyMfa from "./pages/auth/verify-mfa";
 import Home from "./pages/home";
 import Session from "./pages/sessions";
+import StudyHubPage from "./pages/study-hub/StudyHubPage";
+import ThreadDetailsPage from "./pages/study-hub/ThreadDetailsPage";
 import AppLayout from "./layout/AppLayout";
 import BaseLayout from "./layout/BaseLayout";
 import AuthRoute from "./routes/auth.route";
@@ -34,6 +36,13 @@ function App() {
             <Route path="sessions" element={<Session />} />
           </Route>
         </Route>
+
+        {/* Public optionally authenticated AppLayout routes */}
+        <Route element={<AppLayout />}>
+          <Route path="study-hub" element={<StudyHubPage />} />
+          <Route path="study-hub/:id" element={<ThreadDetailsPage />} />
+        </Route>
+        
         {/* Catch-all for undefined routes */}
         <Route path="*" />
       </Routes>
