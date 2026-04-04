@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Zap,
   BookOpen,
   Users,
   Star,
@@ -25,8 +24,23 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { PeerPulseLogoMark } from '@/components/peer-pulse-logo';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api-client';
+
+function Starburst({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 120 120"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M60 0L68 42L110 34L78 60L110 86L68 78L60 120L52 78L10 86L42 60L10 34L52 42Z" />
+    </svg>
+  );
+}
 
 // ─── Data fetching ────────────────────────────────────────────────────────────
 
@@ -201,15 +215,18 @@ function Navbar({ user, onLogout }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/80 backdrop-blur-sm">
+    <header className="sticky top-0 z-40 w-full border-b-2 border-border bg-background/90 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center">
-            <Zap className="w-4 h-4 text-primary-foreground" />
-          </div>
-          <span className="text-base font-bold tracking-tight">PeerPulse</span>
-        </div>
+        {/* Logo — layered mark */}
+        <Link to="/home" className="flex items-center gap-2.5 shrink-0 group">
+          <PeerPulseLogoMark
+            size={36}
+            className="shrink-0 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 drop-shadow-[3px_4px_0_rgba(0,0,0,0.12)] dark:drop-shadow-[4px_5px_0_rgba(0,0,0,0.45)]"
+          />
+          <span className="text-base font-display font-extrabold tracking-tight uppercase">
+            PeerPulse
+          </span>
+        </Link>
 
         {/* Nav links */}
         <nav className="hidden md:flex items-center gap-1">
@@ -223,10 +240,10 @@ function Navbar({ user, onLogout }) {
             <Link
               key={label}
               to={href}
-              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
                 active
-                  ? 'text-primary bg-primary/10'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  ? 'text-primary bg-primary/10 border-2 border-primary/25'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent border-2 border-transparent'
               }`}
             >
               {label}
@@ -236,7 +253,8 @@ function Navbar({ user, onLogout }) {
 
         {/* Right actions */}
         <div className="flex items-center gap-2">
-          <button className="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
+          <ThemeToggle />
+          <button className="w-9 h-9 flex items-center justify-center rounded-full border-2 border-transparent text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
             <Bell className="w-4 h-4" />
           </button>
 
@@ -244,7 +262,7 @@ function Navbar({ user, onLogout }) {
           <div className="relative">
             <button
               onClick={() => setOpen((v) => !v)}
-              className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-accent transition-colors"
+              className="flex items-center gap-2 rounded-full px-2 py-1 border-2 border-transparent hover:border-border hover:bg-accent transition-colors"
             >
               <Avatar name={user?.name ?? 'User'} size="sm" />
               <span className="hidden sm:block text-sm font-medium max-w-[120px] truncate">
@@ -253,7 +271,7 @@ function Navbar({ user, onLogout }) {
             </button>
 
             {open && (
-              <div className="absolute right-0 top-full mt-1 w-52 rounded-xl border border-border bg-background shadow-lg py-1 z-50">
+              <div className="absolute right-0 top-full mt-1 w-52 rounded-2xl border-2 border-border bg-background shadow-lg py-1 z-50 pp-brutal-shadow">
                 <div className="px-3 py-2 border-b border-border mb-1">
                   <p className="text-sm font-semibold truncate">{user?.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
@@ -341,56 +359,186 @@ export default function HomePage() {
   if (userLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center animate-pulse">
-            <Zap className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <p className="text-sm text-muted-foreground">Loading your dashboard…</p>
+        <div className="flex flex-col items-center gap-5">
+          <PeerPulseLogoMark
+            size={56}
+            className="animate-pulse drop-shadow-[4px_5px_0_rgba(0,0,0,0.12)] dark:drop-shadow-[5px_6px_0_rgba(0,0,0,0.4)]"
+          />
+          <p className="text-sm font-medium text-muted-foreground font-display uppercase tracking-wide">
+            Loading your dashboard…
+          </p>
         </div>
       </div>
     );
   }
 
+  const heroPill = user?.name?.split(' ')[0] ?? 'Peer';
+  const pillarStrip = isTutor
+    ? [
+        {
+          title: 'Requests',
+          stat: `${pendingRequests.length} pending`,
+          body: 'Stay on top of student bookings and confirmations.',
+          panelClass:
+            'bg-brand-purple text-brand-mint border-black/15 dark:border-white/20 [&_.pp-mini]:text-brand-mint/80',
+        },
+        {
+          title: 'Sessions',
+          stat: `${upcomingSessions.length} upcoming`,
+          body: 'Your calendar and history stay synced in one view.',
+          panelClass:
+            'bg-brand-mint text-brand-ink border-black/20 dark:bg-[hsl(165_25%_12%)] dark:text-brand-mint dark:border-white/15 [&_.pp-mini]:text-brand-ink/65 dark:[&_.pp-mini]:text-brand-mint/75',
+        },
+        {
+          title: 'Reputation',
+          stat: `${reputationScore > 0 ? reputationScore.toFixed(1) : '—'} score`,
+          body: 'Great reviews grow your badge and visibility.',
+          panelClass:
+            'bg-brand-green text-brand-ink border-black/20 dark:text-brand-ink [&_.pp-mini]:text-brand-ink/75',
+        },
+      ]
+    : [
+        {
+          title: 'Sessions',
+          stat: `${upcomingSessions.length} upcoming`,
+          body: 'Book, reschedule, and join from your dashboard.',
+          panelClass:
+            'bg-brand-purple text-brand-mint border-black/15 dark:border-white/20 [&_.pp-mini]:text-brand-mint/80',
+        },
+        {
+          title: 'Resources',
+          stat: `${resources.length} pinned`,
+          body: 'PDFs and videos from tutors — ready when you are.',
+          panelClass:
+            'bg-brand-mint text-brand-ink border-black/20 dark:bg-black dark:text-brand-mint dark:border-white/15 [&_.pp-mini]:text-brand-ink/65 dark:[&_.pp-mini]:text-brand-mint/75',
+        },
+        {
+          title: 'Community',
+          stat: `${threads.length} recent`,
+          body: 'Threads and upvotes keep the study hub moving.',
+          panelClass:
+            'bg-brand-green text-brand-ink border-black/20 dark:text-brand-ink [&_.pp-mini]:text-brand-ink/75',
+        },
+      ];
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar user={user} onLogout={handleLogout} />
 
-      {/* Subtle background glow */}
-      <div className="absolute inset-0 pointer-events-none -z-10 bg-[radial-gradient(ellipse_80%_40%_at_50%_-10%,hsl(var(--primary)/0.08),transparent)]" />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-        {/* ── Hero welcome ──────────────────────────────────────────── */}
-        <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              Welcome back,{' '}
-              <span className="text-primary">{user?.name?.split(' ')[0] ?? 'there'}</span> 👋
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              {isTutor
-                ? 'Heres an overview of your tutoring activity.'
-                : 'Heres whats happening with your learning today.'}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {isTutor ? (
-              <Button size="sm" className="gap-2 h-9">
-                <Plus className="w-4 h-4" />
-                New Resource
-              </Button>
-            ) : (
-              <Button size="sm" className="gap-2 h-9">
-                <Search className="w-4 h-4" />
-                Find a Tutor
-              </Button>
-            )}
-            <Button variant="outline" size="sm" className="gap-2 h-9">
-              <Calendar className="w-4 h-4" />
-              {isTutor ? 'My Schedule' : 'Book Session'}
-            </Button>
+      {/* First screen: hero + three tiles fill viewport below navbar (dashboard scrolls in next) */}
+      <div className="flex flex-col min-h-[calc(100dvh-3.5rem)] shrink-0">
+        {/* Hero — flex-1 so it expands; content vertically centered */}
+        <section className="relative flex-1 flex flex-col min-h-[min(100%,320px)] bg-[hsl(var(--pp-hero-bg))] text-[hsl(var(--pp-hero-fg))] overflow-hidden">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.12]"
+            style={{
+              backgroundImage: `radial-gradient(circle at 90% 15%, var(--brand-mint) 0%, transparent 42%)`,
+            }}
+          />
+          <div className="flex-1 flex items-center max-w-7xl mx-auto w-full px-4 sm:px-6 py-12 sm:py-16 md:py-20 lg:py-24 relative z-[1]">
+            <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center w-full">
+              <div>
+                <p className="text-xs font-display font-bold uppercase tracking-[0.2em] text-[hsl(var(--pp-hero-fg))]/75 mb-4">
+                  Welcome back
+                </p>
+                <h1 className="font-display font-extrabold text-[clamp(1.75rem,4.2vw,3.15rem)] leading-[1.06] uppercase tracking-tight">
+                  <span className="inline-block rounded-full bg-brand-purple/90 backdrop-blur-sm px-4 py-1.5 text-brand-mint border-2 border-[hsl(var(--pp-hero-fg))]/35 shadow-sm">
+                    {heroPill}
+                  </span>
+                  <span className="block mt-3">
+                    {isTutor ? 'Your tutoring command center' : 'Your learning command center'}
+                  </span>
+                </h1>
+                <p className="mt-5 text-sm sm:text-base md:text-lg text-[hsl(var(--pp-hero-fg))]/90 max-w-xl leading-relaxed">
+                  {isTutor
+                    ? 'Pending requests, live sessions, and shared files — all in one loud, friendly workspace.'
+                    : 'Track sessions, jump into discussions, and grab resources without losing the plot.'}
+                </p>
+                <div className="flex flex-wrap gap-3 mt-10">
+                  {isTutor ? (
+                    <Button
+                      size="sm"
+                      className="gap-2 h-10 bg-brand-ink text-brand-mint border-brand-ink hover:bg-brand-ink/90"
+                    >
+                      <Plus className="w-4 h-4" />
+                      New Resource
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="gap-2 h-10 bg-brand-ink text-brand-mint border-brand-ink hover:bg-brand-ink/90"
+                    >
+                      <Search className="w-4 h-4" />
+                      Find a Tutor
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 h-10 border-2 border-[hsl(var(--pp-hero-fg))]/45 bg-transparent text-[hsl(var(--pp-hero-fg))] hover:bg-[hsl(var(--pp-hero-fg))]/10"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    {isTutor ? 'My Schedule' : 'Book Session'}
+                  </Button>
+                </div>
+              </div>
+              <div className="relative hidden sm:flex justify-center lg:justify-end items-center min-h-[200px]">
+                <div className="relative">
+                  <PeerPulseLogoMark
+                    className="w-[clamp(7.5rem,22vw,12.5rem)] aspect-square max-w-[200px] drop-shadow-[8px_10px_0_rgba(0,0,0,0.18)] dark:drop-shadow-[10px_12px_0_rgba(0,0,0,0.35)]"
+                  />
+                  <Starburst className="absolute -bottom-4 -right-2 sm:-right-4 w-24 h-24 sm:w-28 sm:h-28 text-brand-green opacity-95 pointer-events-none drop-shadow-lg" />
+                </div>
+              </div>
+            </div>
           </div>
         </section>
+
+        {/* Breathing room before tiles, then strip anchored to bottom of first screen */}
+        <section className="shrink-0 mt-10 sm:mt-12 md:mt-16 lg:mt-20 px-4 sm:px-6 pb-10 md:pb-12 border-b-2 border-foreground/15">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-0 sm:rounded-2xl sm:border-2 sm:border-foreground/15 sm:overflow-hidden">
+              {pillarStrip.map(({ title, stat, body, panelClass }) => (
+                <div
+                  key={title}
+                  className={`p-6 sm:p-7 rounded-2xl border-2 sm:rounded-none sm:border-0 sm:border-r-2 border-foreground/15 last:border-r-0 sm:last:border-r-0 flex flex-col justify-between gap-4 min-h-[188px] sm:min-h-[220px] ${panelClass}`}
+                >
+                  <div>
+                    <p className="font-display font-extrabold text-sm uppercase tracking-wide">
+                      {title}
+                    </p>
+                    <p className="pp-mini text-xs font-semibold mt-2">{stat}</p>
+                    <p className="text-xs mt-3 leading-relaxed opacity-95">{body}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-2 border-current bg-transparent hover:bg-black/5 dark:hover:bg-white/10"
+                    asChild
+                  >
+                    <Link
+                      to={
+                        title === 'Community'
+                          ? '/threads'
+                          : title === 'Resources'
+                            ? '/resources'
+                            : '/sessions'
+                      }
+                    >
+                      Open
+                      <ChevronRight className="w-3 h-3" />
+                    </Link>
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10 md:py-12 space-y-8 relative w-full">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_70%_45%_at_50%_0%,hsl(var(--primary)/0.07),transparent)]" />
 
         {/* ── Stats row ─────────────────────────────────────────────── */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4">

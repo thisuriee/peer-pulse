@@ -3,10 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, Loader2, BookOpen, Users, Star, Zap } from 'lucide-react';
+import { Eye, EyeOff, Loader2, BookOpen, Users, Star, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { PeerPulseLogoMark } from '@/components/peer-pulse-logo';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api-client';
 
@@ -40,11 +42,24 @@ const features = [
     desc: 'Build reputation through quality contributions and reviews',
   },
   {
-    icon: Zap,
+    icon: Clock,
     title: 'Study on Demand',
     desc: 'Book sessions with expert tutors whenever you need help',
   },
 ];
+
+function Starburst({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 120 120"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M60 0L68 42L110 34L78 60L110 86L68 78L60 120L52 78L10 86L42 60L10 34L52 42Z" />
+    </svg>
+  );
+}
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -94,92 +109,110 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* Left panel – branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative flex-col justify-between p-12 overflow-hidden">
-        {/* Gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/5 to-background" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent" />
+    <div className="min-h-screen flex flex-col lg:flex-row bg-background">
+      {/* Left — same hero system as login/home; no bottom tiles */}
+      <div className="relative lg:w-[46%] min-h-[min(100dvh-3.5rem,560px)] lg:min-h-screen flex flex-col p-8 sm:p-10 lg:p-12 border-b-2 border-foreground/15 lg:border-b-0 lg:border-r-2 overflow-hidden bg-[hsl(var(--pp-hero-bg))] text-[hsl(var(--pp-hero-fg))]">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.1]"
+          style={{
+            backgroundImage: `radial-gradient(circle at 0% 100%, var(--brand-purple) 0%, transparent 50%)`,
+          }}
+        />
+        <ThemeToggle className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 border-[hsl(var(--pp-hero-fg))]/35 bg-black/15 text-[hsl(var(--pp-hero-fg))] hover:bg-black/25" />
 
-        {/* Decorative circles */}
-        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-primary/5 blur-3xl" />
+        <div className="relative z-[1] flex-1 flex flex-col min-h-0">
+          <Link to="/" className="flex items-center gap-3 mb-8 w-fit group">
+            <PeerPulseLogoMark
+              size={40}
+              className="shrink-0 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 drop-shadow-[3px_4px_0_rgba(0,0,0,0.15)]"
+            />
+            <span className="font-display font-extrabold text-xl sm:text-2xl tracking-tight uppercase">
+              PeerPulse
+            </span>
+          </Link>
 
-        <div className="relative z-10">
-          {/* Logo */}
-          <div className="flex items-center gap-3 mb-16">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Zap className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight">PeerPulse</span>
-          </div>
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-6 items-start flex-1">
+            <div className="min-w-0">
+              <h1 className="font-display font-extrabold text-[clamp(1.85rem,4.5vw,2.85rem)] leading-[1.05] uppercase tracking-tight">
+                <span className="inline-block rounded-full bg-brand-purple/90 backdrop-blur-sm px-4 py-2 text-brand-mint border-2 border-[hsl(var(--pp-hero-fg))]/35 shadow-sm">
+                  Join
+                </span>
+                <br />
+                <span className="mt-3 inline-block">the study collective</span>
+              </h1>
+              <p className="mt-5 text-sm sm:text-base leading-relaxed text-[hsl(var(--pp-hero-fg))]/90 max-w-md">
+                Thousands of students and tutors — one loud, friendly platform for collaborative
+                learning.
+              </p>
 
-          {/* Hero text */}
-          <div className="mb-12">
-            <h1 className="text-4xl font-bold leading-tight mb-4">
-              Learn faster, <span className="text-primary">together.</span>
-            </h1>
-            <p className="text-lg text-muted-foreground leading-relaxed max-w-sm">
-              Join thousands of students and tutors on the platform built for collaborative,
-              peer-driven learning.
-            </p>
-          </div>
-
-          {/* Feature list */}
-          <div className="space-y-5">
-            {features.map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="flex items-start gap-4">
-                <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center shrink-0 mt-0.5">
-                  <Icon className="w-4 h-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">{title}</p>
-                  <p className="text-sm text-muted-foreground">{desc}</p>
-                </div>
+              <div className="mt-8 space-y-4 sm:space-y-5 max-w-lg">
+                {features.map(({ icon: Icon, title, desc }) => (
+                  <div key={title} className="flex items-start gap-3 sm:gap-4">
+                    <div className="w-10 h-10 rounded-full bg-[hsl(var(--pp-hero-fg))]/12 border-2 border-[hsl(var(--pp-hero-fg))]/25 flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4 text-[hsl(var(--pp-hero-fg))]" />
+                    </div>
+                    <div>
+                      <p className="font-display font-bold text-xs sm:text-sm uppercase tracking-wide">
+                        {title}
+                      </p>
+                      <p className="text-xs sm:text-sm text-[hsl(var(--pp-hero-fg))]/85 mt-0.5">{desc}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* Bottom quote */}
-        <div className="relative z-10">
-          <blockquote className="border-l-2 border-primary/40 pl-4">
-            <p className="text-sm text-muted-foreground italic">
-              "PeerPulse helped me go from struggling to top of my class in just one semester."
+            <div className="relative hidden sm:flex justify-center lg:justify-end items-center min-h-[140px] lg:min-h-[200px]">
+              <PeerPulseLogoMark className="w-[clamp(6rem,18vw,9.5rem)] aspect-square max-w-[152px] drop-shadow-[8px_10px_0_rgba(0,0,0,0.18)] dark:drop-shadow-[10px_12px_0_rgba(0,0,0,0.35)]" />
+              <Starburst className="absolute -bottom-1 -right-1 lg:right-2 w-20 h-20 sm:w-24 sm:h-24 text-brand-green opacity-95 pointer-events-none drop-shadow-lg" />
+            </div>
+          </div>
+
+          <blockquote className="relative z-[1] mt-8 lg:mt-10 pt-6 border-t border-[hsl(var(--pp-hero-fg))]/25">
+            <p className="text-sm text-[hsl(var(--pp-hero-fg))]/90 italic leading-relaxed max-w-lg">
+              &ldquo;PeerPulse helped me go from struggling to top of my class in one semester.&rdquo;
             </p>
-            <footer className="mt-2 text-xs text-muted-foreground font-medium">
-              — Amara K., Computer Science student
+            <footer className="mt-2 text-xs font-semibold text-[hsl(var(--pp-hero-fg))]/75">
+              — Amara K., Computer Science
             </footer>
           </blockquote>
         </div>
+
+        <Starburst className="absolute -bottom-10 -right-8 w-36 h-36 text-brand-green opacity-40 pointer-events-none sm:hidden" />
       </div>
 
-      {/* Right panel – form */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12 overflow-y-auto">
-        <div className="w-full max-w-md">
-          {/* Mobile logo */}
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <Zap className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold">PeerPulse</span>
+      {/* Form */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 lg:p-12 overflow-y-auto relative min-h-[min(100dvh-3.5rem,640px)] lg:min-h-screen bg-background">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_40%_at_80%_0%,hsl(var(--primary)/0.1),transparent)] pointer-events-none" />
+
+        <div className="relative w-full max-w-md">
+          <div className="flex items-center justify-between mb-8 lg:hidden">
+            <Link to="/" className="flex items-center gap-2 group">
+              <PeerPulseLogoMark
+                size={36}
+                className="shrink-0 drop-shadow-[2px_3px_0_rgba(0,0,0,0.1)]"
+              />
+              <span className="font-display font-extrabold text-lg uppercase">PeerPulse</span>
+            </Link>
+            <ThemeToggle />
           </div>
 
           <div className="mb-8">
-            <h2 className="text-2xl font-bold tracking-tight">Create your account</h2>
-            <p className="text-muted-foreground mt-1 text-sm">
+            <h2 className="font-display text-2xl font-bold tracking-tight uppercase">
+              Create your account
+            </h2>
+            <p className="text-muted-foreground mt-2 text-sm">
               Already have an account?{' '}
-              <Link to="/login" className="text-primary hover:underline font-medium">
+              <Link to="/login" className="text-primary hover:underline font-semibold">
                 Sign in
               </Link>
             </p>
           </div>
 
-          {/* Google signup */}
           <Button
             type="button"
             variant="outline"
-            className="w-full mb-6 gap-3 h-10"
+            className="w-full mb-6 gap-3 h-11 border-2"
             onClick={handleGoogleSignup}
           >
             <svg viewBox="0 0 24 24" className="w-4 h-4" aria-hidden="true">
@@ -205,18 +238,16 @@ export default function RegisterPage() {
 
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
+              <div className="w-full border-t-2 border-border" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-background px-3 text-muted-foreground">
+              <span className="bg-background px-3 text-muted-foreground font-medium">
                 or sign up with email
               </span>
             </div>
           </div>
 
-          {/* Registration form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {/* Full name */}
             <div className="space-y-1.5">
               <Label htmlFor="name">Full name</Label>
               <Input
@@ -228,7 +259,6 @@ export default function RegisterPage() {
               {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
 
-            {/* Email */}
             <div className="space-y-1.5">
               <Label htmlFor="email">Email address</Label>
               <Input
@@ -241,21 +271,20 @@ export default function RegisterPage() {
               {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
             </div>
 
-            {/* Role selector */}
             <div className="space-y-1.5">
               <Label>I want to join as</Label>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => handleRoleSelect('student')}
-                  className={`flex flex-col items-center gap-2 rounded-lg border p-4 text-sm transition-colors cursor-pointer ${
+                  className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-sm transition-colors cursor-pointer ${
                     selectedRole === 'student'
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border hover:border-primary/50 hover:bg-accent'
+                      ? 'border-brand-green bg-brand-green/10 text-foreground dark:border-brand-green dark:bg-brand-green/15'
+                      : 'border-border hover:border-primary/40 hover:bg-accent'
                   }`}
                 >
                   <BookOpen className="w-5 h-5" />
-                  <span className="font-medium">Student</span>
+                  <span className="font-semibold">Student</span>
                   <span className="text-xs text-muted-foreground text-center leading-tight">
                     Learn from peers & tutors
                   </span>
@@ -263,14 +292,14 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => handleRoleSelect('tutor')}
-                  className={`flex flex-col items-center gap-2 rounded-lg border p-4 text-sm transition-colors cursor-pointer ${
+                  className={`flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-sm transition-colors cursor-pointer ${
                     selectedRole === 'tutor'
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border hover:border-primary/50 hover:bg-accent'
+                      ? 'border-brand-green bg-brand-green/10 text-foreground dark:border-brand-green dark:bg-brand-green/15'
+                      : 'border-border hover:border-primary/40 hover:bg-accent'
                   }`}
                 >
                   <Star className="w-5 h-5" />
-                  <span className="font-medium">Tutor</span>
+                  <span className="font-semibold">Tutor</span>
                   <span className="text-xs text-muted-foreground text-center leading-tight">
                     Share knowledge & earn
                   </span>
@@ -279,7 +308,6 @@ export default function RegisterPage() {
               {errors.role && <p className="text-xs text-destructive">{errors.role.message}</p>}
             </div>
 
-            {/* Password */}
             <div className="space-y-1.5">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -287,14 +315,14 @@ export default function RegisterPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Min. 6 characters"
-                  className="pr-10"
+                  className="pr-11"
                   {...register('password')}
                   aria-invalid={!!errors.password}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors rounded-full p-1"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -305,7 +333,6 @@ export default function RegisterPage() {
               )}
             </div>
 
-            {/* Confirm password */}
             <div className="space-y-1.5">
               <Label htmlFor="confirmPassword">Confirm password</Label>
               <div className="relative">
@@ -313,14 +340,14 @@ export default function RegisterPage() {
                   id="confirmPassword"
                   type={showConfirm ? 'text' : 'password'}
                   placeholder="Re-enter your password"
-                  className="pr-10"
+                  className="pr-11"
                   {...register('confirmPassword')}
                   aria-invalid={!!errors.confirmPassword}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirm((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors rounded-full p-1"
                   aria-label={showConfirm ? 'Hide password' : 'Show password'}
                 >
                   {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -331,7 +358,11 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <Button type="submit" className="w-full h-10 mt-2" disabled={isLoading}>
+            <Button
+              type="submit"
+              className="w-full h-11 mt-2 bg-brand-green text-brand-ink border-brand-green hover:bg-brand-green/90 dark:text-brand-ink"
+              disabled={isLoading}
+            >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -343,7 +374,7 @@ export default function RegisterPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-xs text-muted-foreground">
+          <p className="mt-6 text-center text-xs text-muted-foreground leading-relaxed">
             By creating an account you agree to our{' '}
             <span className="underline cursor-pointer hover:text-foreground">Terms of Service</span>{' '}
             and{' '}
