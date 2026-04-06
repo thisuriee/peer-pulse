@@ -130,7 +130,16 @@ async createThread(authorId, threadData) {
       throw new NotFoundException("Thread not found");
     }
 
-    return thread;
+    const threadObj = thread.toObject();
+
+    if (threadObj.replies) {
+      threadObj.replies = threadObj.replies.filter(r => !r.isDeleted);
+    }
+    if (threadObj.comments) {
+      threadObj.comments = threadObj.comments.filter(c => !c.isDeleted);
+    }
+
+    return threadObj;
   }
 
   /**

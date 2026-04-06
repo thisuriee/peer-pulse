@@ -168,7 +168,7 @@ threadSchema.virtual("upvoteCount").get(function () {
 
 // Virtual for reply count
 threadSchema.virtual("replyCount").get(function () {
-  return this.replies ? this.replies.length : 0;
+  return this.replies ? this.replies.filter(r => !r.isDeleted).length : 0;
 });
 
 // Ensure virtuals are included in JSON output

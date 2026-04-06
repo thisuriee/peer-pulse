@@ -1,7 +1,7 @@
 const fs = require('fs');
 let code = fs.readFileSync('thread.service.js', 'utf8');
 
-const injectionCode = \
+const injectionCode = `
   /**
    * Update reply
    */
@@ -188,7 +188,10 @@ const injectionCode = \
       }
     };
   }
-\;
+`;
+
+code = code.replace('  async addComment', injectionCode + '\\n  async addComment');
+fs.writeFileSync('thread.service.js', code);
 
 code = code.replace('  async addComment', injectionCode + '\\n  async addComment');
 fs.writeFileSync('thread.service.js', code);

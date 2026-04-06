@@ -1,7 +1,7 @@
 const fs = require('fs');
 let code = fs.readFileSync('thread.controller.js', 'utf8');
 
-const injectionCode = \
+const injectionCode =
   updateReply = asyncHandler(async (req, res) => {
     const threadId = req.params.id;
     const replyId = req.params.replyId;
@@ -67,7 +67,7 @@ const injectionCode = \
 
     return res.status(HTTPSTATUS.OK).json(result);
   });
-\;
+  ;
 
 code = code.replace('  addComment =', injectionCode + '\\n  addComment =');
 fs.writeFileSync('thread.controller.js', code);

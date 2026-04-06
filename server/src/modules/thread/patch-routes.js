@@ -1,7 +1,7 @@
 const fs = require('fs');
 let code = fs.readFileSync('thread.routes.js', 'utf8');
 
-const injectionCode = \
+const injectionCode = 
 // PUT /api/v1/threads/:id/replies/:replyId - Update a reply (authenticated)
 threadRoutes.put(
   "/:id/replies/:replyId",
@@ -29,7 +29,7 @@ threadRoutes.post(
   authenticateJWT,
   threadController.downvoteReply
 );
-\;
+;
 
 code = code.replace('// ============================================', injectionCode + '\\n\\n// ============================================');
 fs.writeFileSync('thread.routes.js', code);

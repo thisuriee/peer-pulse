@@ -1,7 +1,7 @@
 const fs = require('fs');
 let code = fs.readFileSync('thread.service.js', 'utf8');
 
-const getThreadByIdPatch = \sync getThreadById(threadId) {
+const getThreadByIdPatch = async function getThreadById(threadId) {
     const thread = await ThreadModel.findOne({
       _id: threadId,
       isDeleted: false,
@@ -21,7 +21,7 @@ const getThreadByIdPatch = \sync getThreadById(threadId) {
     }
     
     return threadObj;
-  }\;
+  };
 
 code = code.replace(
     /async getThreadById\(threadId\) \{[\s\S]*?return thread;\s*?\}/,
