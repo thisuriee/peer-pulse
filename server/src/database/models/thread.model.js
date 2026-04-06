@@ -20,6 +20,22 @@ const replySchema = new Schema(
       type: Boolean,
       default: false,
     },
+    upvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    downvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
     flaggedForReview: {
       type: Boolean,
       default: false,

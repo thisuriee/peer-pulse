@@ -45,6 +45,34 @@ threadRoutes.patch(
   threadController.acceptBestAnswer
 );
 
+// PUT /api/v1/threads/:id/replies/:replyId - Update a reply (authenticated)
+threadRoutes.put(
+  "/:id/replies/:replyId",
+  authenticateJWT,
+  threadController.updateReply
+);
+
+// DELETE /api/v1/threads/:id/replies/:replyId - Delete a reply (authenticated)
+threadRoutes.delete(
+  "/:id/replies/:replyId",
+  authenticateJWT,
+  threadController.deleteReply
+);
+
+// POST /api/v1/threads/:id/replies/:replyId/upvote - Upvote a reply (authenticated)
+threadRoutes.post(
+  "/:id/replies/:replyId/upvote",
+  authenticateJWT,
+  threadController.upvoteReply
+);
+
+// POST /api/v1/threads/:id/replies/:replyId/downvote - Downvote a reply (authenticated)
+threadRoutes.post(
+  "/:id/replies/:replyId/downvote",
+  authenticateJWT,
+  threadController.downvoteReply
+);
+
 // ============================================
 // Comment Routes
 // ============================================

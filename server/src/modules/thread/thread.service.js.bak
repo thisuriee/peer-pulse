@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 const { ThreadModel } = require("../../database/models/thread.model");
 const UserModel = require("../../database/models/user.model");
@@ -18,7 +18,7 @@ class ThreadService {
 async createThread(authorId, threadData) {
   const { title, content, subject } = threadData;
 
-  // 🔹 Analyze text using Perspective API
+  // ðŸ”¹ Analyze text using Perspective API
   const titleAnalysis = await ProfanityFilter.analyzeText(title);
   const contentAnalysis = await ProfanityFilter.analyzeText(content);
 
@@ -51,7 +51,7 @@ async createThread(authorId, threadData) {
     );
   }
 
-  // ✅ Only create if safe
+  // âœ… Only create if safe
   const thread = await ThreadModel.create({
     authorId,
     title,
@@ -156,13 +156,13 @@ async createThread(authorId, threadData) {
 
     if (updateData.title) {
       const titleFlagged = await ProfanityFilter.shouldFlag(updateData.title);
-      if (titleFlagged) throw new BadRequestException("Your content violates community guidelines. Please revise and try again.");
+      if (titleFlagged) flaggedForReview = true;
       thread.title = updateData.title;
     }
 
     if (updateData.content) {
       const contentFlagged = await ProfanityFilter.shouldFlag(updateData.content);
-      if (contentFlagged) throw new BadRequestException("Your content violates community guidelines. Please revise and try again.");
+      if (contentFlagged) flaggedForReview = true;
       thread.content = updateData.content;
     }
 
@@ -302,15 +302,12 @@ async createThread(authorId, threadData) {
 
     // Check for profanity
     const flaggedForReview = await ProfanityFilter.shouldFlag(replyData.text);
-    if (flaggedForReview) throw new BadRequestException("Your content violates community guidelines. Please revise and try again.");
 
     const reply = {
       userId,
       text: replyData.text,
       isBestAnswer: false,
-      flaggedForReview: false,
-      upvotes: [],
-      downvotes: []
+      flaggedForReview,
     };
 
     thread.replies.push(reply);
@@ -423,202 +420,6 @@ async createThread(authorId, threadData) {
   }
 
   /**
-   * Update reply
-   */
-  async updateReply(threadId, replyId, userId, updateData) {
-    const thread = await ThreadModel.findOne({
-      _id: threadId,
-      isDeleted: false,
-    });
-
-    if (!thread) {
-      throw new NotFoundException('Thread not found');
-    }
-
-    const reply = thread.replies.id(replyId);
-
-    if (!reply || reply.isDeleted) {
-      throw new NotFoundException('Reply not found');
-    }
-
-    // Check ownership
-    if (reply.userId.toString() !== userId.toString()) {
-      throw new ForbiddenException('Only the reply author can update this reply');
-    }
-
-    // Check for profanity
-    const flaggedForReview = await ProfanityFilter.shouldFlag(updateData.text);
-    if (flaggedForReview) throw new BadRequestException("Your content violates community guidelines. Please revise and try again.");
-
-    reply.text = updateData.text;
-    reply.flaggedForReview = false;
-
-    await thread.save();
-
-    logger.info('Reply updated', { threadId, replyId, userId });
-
-    return await thread.populate([
-      { path: 'authorId', select: 'name email role' },
-      { path: 'replies.userId', select: 'name email role' },
-    ]);
-  }
-
-  /**
-   * Delete reply (soft delete)
-   */
-  async deleteReply(threadId, replyId, userId, userRole) {
-    const thread = await ThreadModel.findOne({
-      _id: threadId,
-      isDeleted: false,
-    });
-
-    if (!thread) {
-      throw new NotFoundException('Thread not found');
-    }
-
-    const reply = thread.replies.id(replyId);
-
-    if (!reply || reply.isDeleted) {
-      throw new NotFoundException('Reply not found');
-    }
-
-    // Check if user is author or admin
-    const isAuthor = reply.userId.toString() === userId.toString();
-    const isAdmin = userRole === 'admin';
-
-    if (!isAuthor && !isAdmin) {
-      throw new ForbiddenException(
-        'Only the reply author or admin can delete this reply'
-      );
-    }
-
-    reply.isDeleted = true;
-    await thread.save();
-
-    logger.info('Reply deleted', { threadId, replyId, userId, userRole });
-
-    return { message: 'Reply deleted successfully' };
-  }
-
-  /**
-   * Toggle upvote on reply
-   */
-  async toggleReplyUpvote(threadId, replyId, userId) {
-    const thread = await ThreadModel.findOne({
-      _id: threadId,
-      isDeleted: false,
-    });
-
-    if (!thread) {
-      throw new NotFoundException('Thread not found');
-    }
-
-    const reply = thread.replies.id(replyId);
-
-    if (!reply || reply.isDeleted) {
-      throw new NotFoundException('Reply not found');
-    }
-
-    // Remove from downvotes if exists
-    if (!reply.downvotes) reply.downvotes = [];
-    if (!reply.downvotes) reply.downvotes = [];
-    const downvoteIndex = reply.downvotes.findIndex(
-      (id) => id.toString() === userId.toString()
-    );
-    if (downvoteIndex > -1) {
-      reply.downvotes.splice(downvoteIndex, 1);
-    }
-
-    if (!reply.upvotes) reply.upvotes = [];
-    if (!reply.upvotes) reply.upvotes = [];
-    const upvoteIndex = reply.upvotes.findIndex(
-      (id) => id.toString() === userId.toString()
-    );
-
-    if (upvoteIndex > -1) {
-      // Remove upvote
-      reply.upvotes.splice(upvoteIndex, 1);
-      logger.info('Reply upvote removed', { threadId, replyId, userId });
-    } else {
-      // Add upvote
-      reply.upvotes.push(userId);
-      logger.info('Reply upvoted', { threadId, replyId, userId });
-    }
-
-    await thread.save();
-
-    return {
-      success: true,
-      message: upvoteIndex > -1 ? 'Reply upvote removed' : 'Reply upvoted',
-      data: {
-        upvoted: upvoteIndex === -1,
-        downvoted: false,
-        upvoteCount: reply.upvotes.length,
-        downvoteCount: reply.downvotes.length,
-      }
-    };
-  }
-
-  /**
-   * Toggle downvote on reply
-   */
-  async toggleReplyDownvote(threadId, replyId, userId) {
-    const thread = await ThreadModel.findOne({
-      _id: threadId,
-      isDeleted: false,
-    });
-
-    if (!thread) {
-      throw new NotFoundException('Thread not found');
-    }
-
-    const reply = thread.replies.id(replyId);
-
-    if (!reply || reply.isDeleted) {
-      throw new NotFoundException('Reply not found');
-    }
-
-    // Remove from upvotes if exists
-    if (!reply.upvotes) reply.upvotes = [];
-    if (!reply.upvotes) reply.upvotes = [];
-    const upvoteIndex = reply.upvotes.findIndex(
-      (id) => id.toString() === userId.toString()
-    );
-    if (upvoteIndex > -1) {
-      reply.upvotes.splice(upvoteIndex, 1);
-    }
-
-    if (!reply.downvotes) reply.downvotes = [];
-    if (!reply.downvotes) reply.downvotes = [];
-    const downvoteIndex = reply.downvotes.findIndex(
-      (id) => id.toString() === userId.toString()
-    );
-
-    if (downvoteIndex > -1) {
-      // Remove downvote
-      reply.downvotes.splice(downvoteIndex, 1);
-      logger.info('Reply downvote removed', { threadId, replyId, userId });
-    } else {
-      // Add downvote
-      reply.downvotes.push(userId);
-      logger.info('Reply downvoted', { threadId, replyId, userId });
-    }
-
-    await thread.save();
-
-    return {
-      success: true,
-      message: downvoteIndex > -1 ? 'Reply downvote removed' : 'Reply downvoted',
-      data: {
-        upvoted: false,
-        downvoted: downvoteIndex === -1,
-        upvoteCount: reply.upvotes.length,
-        downvoteCount: reply.downvotes.length,
-      }
-    };
-  }
-
-  /**
    * Add comment to thread
    */
   async addComment(threadId, userId, commentData) {
@@ -633,7 +434,6 @@ async createThread(authorId, threadData) {
 
     // Check for profanity
     const flaggedForReview = await ProfanityFilter.shouldFlag(commentData.content);
-    if (flaggedForReview) throw new BadRequestException("Your content violates community guidelines. Please revise and try again.");
 
     const comment = {
       userId,
@@ -641,7 +441,7 @@ async createThread(authorId, threadData) {
       parentComment: commentData.parentComment || null,
       upvotes: [],
       downvotes: [],
-      flaggedForReview: false,
+      flaggedForReview,
     };
 
     thread.comments.push(comment);
@@ -690,10 +490,9 @@ async createThread(authorId, threadData) {
 
     // Check for profanity
     const flaggedForReview = await ProfanityFilter.shouldFlag(updateData.content);
-    if (flaggedForReview) throw new BadRequestException("Your content violates community guidelines. Please revise and try again.");
 
     comment.content = updateData.content;
-    comment.flaggedForReview = false;
+    comment.flaggedForReview = flaggedForReview;
 
     await thread.save();
 
