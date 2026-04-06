@@ -175,6 +175,28 @@ class ThreadController {
     });
   });
 
+  upvoteReply = asyncHandler(async (req, res) => {
+    const { threadId, replyId } = req.params;
+    const userId = req.user.id;
+    const result = await this.threadService.toggleReplyUpvote(threadId, replyId, userId);
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: result.upvoted ? "Reply upvoted successfully" : "Upvote removed from reply",
+      data: result,
+    });
+  });
+
+  downvoteReply = asyncHandler(async (req, res) => {
+    const { threadId, replyId } = req.params;
+    const userId = req.user.id;
+    const result = await this.threadService.toggleReplyDownvote(threadId, replyId, userId);
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: result.downvoted ? "Reply downvoted successfully" : "Downvote removed from reply",
+      data: result,
+    });
+  });
+
   // ============================================
   // Comment Handlers
   // ============================================

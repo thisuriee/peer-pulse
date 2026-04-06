@@ -45,6 +45,20 @@ threadRoutes.patch(
   threadController.acceptBestAnswer
 );
 
+// POST /api/v1/threads/:threadId/replies/:replyId/upvote - Upvote a reply
+threadRoutes.post(
+  "/:threadId/replies/:replyId/upvote",
+  authenticateJWT,
+  threadController.upvoteReply
+);
+
+// POST /api/v1/threads/:threadId/replies/:replyId/downvote - Downvote a reply
+threadRoutes.post(
+  "/:threadId/replies/:replyId/downvote",
+  authenticateJWT,
+  threadController.downvoteReply
+);
+
 // ============================================
 // Comment Routes
 // ============================================

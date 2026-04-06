@@ -1,4 +1,4 @@
-import API from "./axios-client";
+import API from "./api-client";
 
 // ============================================================
 // Study-Hub Thread API Service
@@ -89,6 +89,28 @@ export const addReplyMutationFn = async ({ threadId, text }) => {
 export const acceptReplyMutationFn = async ({ threadId, replyId }) => {
   const response = await API.patch(
     `/threads/${threadId}/replies/${replyId}/accept`
+  );
+  return response.data;
+};
+
+/**
+ * Upvote a reply
+ * @param {{ threadId: string, replyId: string }} data
+ */
+export const upvoteReplyMutationFn = async ({ threadId, replyId }) => {
+  const response = await API.post(
+    `/threads/${threadId}/replies/${replyId}/upvote`
+  );
+  return response.data;
+};
+
+/**
+ * Downvote a reply
+ * @param {{ threadId: string, replyId: string }} data
+ */
+export const downvoteReplyMutationFn = async ({ threadId, replyId }) => {
+  const response = await API.post(
+    `/threads/${threadId}/replies/${replyId}/downvote`
   );
   return response.data;
 };

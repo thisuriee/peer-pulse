@@ -369,6 +369,74 @@ async createThread(authorId, threadData) {
     ]);
   }
 
+  async toggleReplyUpvote(threadId, replyId, userId) {
+    const thread = await ThreadModel.findOne({ _id: threadId, isDeleted: false });
+    if (!thread) {
+      throw new NotFoundException("Thread not found");
+    }
+    const reply = thread.replies.id(replyId);
+    if (!reply) {
+      throw new NotFoundException("Reply not found");
+    }
+
+    if (!reply.upvotes) {
+      reply.upvotes = [];
+    }
+    if (!reply.downvotes) {
+      reply.downvotes = [];
+    }
+
+    const hasUpvoted = reply.upvotes.includes(userId);
+    if (hasUpvoted) {
+      reply.upvotes.pull(userId);
+    } else {
+      reply.upvotes.push(userId);
+      reply.downvotes.pull(userId);
+    }
+    await thread.save();
+
+    return {
+      replyId: reply._id,
+      upvoted: !hasUpvoted,
+      upvoteCount: reply.upvotes.length,
+      downvoteCount: reply.downvotes.length,
+    };
+  }
+
+  async toggleReplyDownvote(threadId, replyId, userId) {
+    const thread = await ThreadModel.findOne({ _id: threadId, isDeleted: false });
+    if (!thread) {
+      throw new NotFoundException("Thread not found");
+    }
+    const reply = thread.replies.id(replyId);
+    if (!reply) {
+      throw new NotFoundException("Reply not found");
+    }
+
+    if (!reply.upvotes) {
+      reply.upvotes = [];
+    }
+    if (!reply.downvotes) {
+      reply.downvotes = [];
+    }
+
+    const hasDownvoted = reply.downvotes.includes(userId);
+    if (hasDownvoted) {
+      reply.downvotes.pull(userId);
+    } else {
+      reply.downvotes.push(userId);
+      reply.upvotes.pull(userId);
+    }
+    await thread.save();
+
+    return {
+      replyId: reply._id,
+      downvoted: !hasDownvoted,
+      upvoteCount: reply.upvotes.length,
+      downvoteCount: reply.downvotes.length,
+    };
+  }
+
   // ============================================
   // Comment Methods
   // ============================================

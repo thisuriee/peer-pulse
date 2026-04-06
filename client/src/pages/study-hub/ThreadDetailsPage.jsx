@@ -7,6 +7,7 @@ import { z } from "zod";
 import { formatDistanceToNow } from "date-fns";
 import {
   ArrowUp,
+  ArrowDown,
   ArrowLeft,
   CheckCircle2,
   Loader,
@@ -26,9 +27,12 @@ import { useAuthContext } from "@/context/auth-provider";
 import {
   getThreadByIdQueryFn,
   upvoteThreadMutationFn,
+  downvoteThreadMutationFn,
   addReplyMutationFn,
   acceptReplyMutationFn,
   deleteThreadMutationFn,
+  upvoteReplyMutationFn,
+  downvoteReplyMutationFn,
 } from "@/lib/thread-api";
 import { cn } from "@/lib/utils";
 
@@ -50,82 +54,148 @@ const getInitials = (name = "") =>
     .slice(0, 2) || "?";
 
 // ─── ReplyCard ────────────────────────────────────────────────────────────────
-const ReplyCard = ({ reply, isAuthor, isThreadResolved, onAccept, onUpvote }) => {
-  const { _id, text, userId, isBestAnswer, createdAt, upvotes = [] } = reply;
+const ReplyCard = ({ threadId, reply, isAuthor, isThreadResolved, onAccept, onReplyClick }) => {
+  const { _id, text, userId, isBestAnswer, createdAt, upvotes = [], downvotes = [] } = reply;
+  const { user } = useAuthContext();
+  const queryClient = useQueryClient();
+  
   const authorName = userId?.name || "Unknown";
   const timeAgo = createdAt
     ? formatDistanceToNow(new Date(createdAt), { addSuffix: true })
     : "";
 
+  const isUpvoted = user && upvotes.includes(user._id);
+
+  const { mutate: upvoteReply, isPending: upvoting } = useMutation({
+    mutationFn: () => upvoteReplyMutationFn({ threadId, replyId: _id }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["thread", threadId] }),
+  });
+
+  const { mutate: downvoteReply, isPending: downvoting } = useMutation({
+    mutationFn: () => downvoteReplyMutationFn({ threadId, replyId: _id }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["thread", threadId] }),
+  });
+
+  const handleReplyClick = () => {
+    if (onReplyClick) {
+      onReplyClick(authorName);
+    } else {
+      const textarea = document.getElementById("reply-textarea");
+      if (textarea) {
+        textarea.focus();
+      }
+    }
+  };
+
   return (
     <div
       id={`reply-${_id}`}
       className={cn(
-        "bg-card border border-border rounded-xl p-5 transition-all duration-200",
+        "flex flex-row gap-3 sm:gap-4 bg-card border border-border rounded-xl p-4 sm:p-5 transition-all duration-200",
         isBestAnswer &&
           "border-green-500/40 bg-green-500/5 dark:bg-green-900/10 shadow-sm shadow-green-500/10"
       )}
     >
-      {/* Best Answer Banner */}
-      {isBestAnswer && (
-        <div className="flex items-center gap-2 mb-3 text-green-600 dark:text-green-400">
-          <Award size={15} />
-          <span className="text-xs font-bold uppercase tracking-wide">
-            Best Answer
-          </span>
-        </div>
-      )}
-
-      {/* Author + time */}
-      <div className="flex items-center gap-2.5 mb-3">
-        <Avatar className="h-7 w-7 shrink-0">
-          <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
-            {getInitials(authorName)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
-          <span className="font-semibold text-foreground truncate">
-            {authorName}
-          </span>
-          <span className="text-muted-foreground/50">·</span>
-          <Clock size={11} className="shrink-0" />
-          <span className="truncate">{timeAgo}</span>
-        </div>
+      {/* Left Column: Votes */}
+      <div className="flex flex-col items-center gap-1 sm:px-1 shrink-0 pt-1">
+        <button 
+          onClick={() => user && upvoteReply()}
+          disabled={upvoting || !user}
+          className={cn(
+            "p-1 sm:p-1.5 rounded-md transition-colors focus:ring-2 focus:ring-primary focus:outline-none",
+            isUpvoted 
+              ? "bg-primary/20 text-primary hover:bg-primary/30" 
+              : "text-muted-foreground hover:bg-primary/10 hover:text-primary",
+            (!user || upvoting) && "opacity-50 cursor-not-allowed"
+          )}
+          aria-label="Upvote Reply"
+        >
+          {upvoting ? <Loader size={20} className="animate-spin" /> : <ArrowUp size={20} strokeWidth={2.5} />}
+        </button>
+        <span className="font-semibold text-sm text-foreground my-0.5">
+          {upvotes?.length ?? 0}
+        </span>
+        <button 
+          onClick={() => user && downvoteReply()}
+          disabled={downvoting || !user}
+          className={cn(
+            "p-1 sm:p-1.5 rounded-md text-muted-foreground transition-colors focus:ring-2 focus:ring-destructive focus:outline-none",
+            (!user || downvoting) ? "opacity-50 cursor-not-allowed" : "hover:bg-destructive/10 hover:text-destructive"
+          )}
+          aria-label="Downvote Reply"
+        >
+          {downvoting ? <Loader size={20} className="animate-spin" /> : <ArrowDown size={20} strokeWidth={2.5} />}
+        </button>
       </div>
 
-      {/* Reply text */}
-      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap mb-4">
-        {text}
-      </p>
-
-      {/* Footer actions */}
-      <div className="flex items-center justify-between gap-3">
-        {/* Upvote count (display only on detail page) */}
-        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <ArrowUp size={13} className="text-primary" />
-          <span className="font-semibold">{upvotes?.length ?? 0}</span>
-        </span>
-
-        {/* Accept as best answer */}
-        {isAuthor && !isThreadResolved && (
-          <Button
-            id={`accept-reply-${_id}`}
-            size="sm"
-            variant="outline"
-            className="h-7 text-xs gap-1.5 text-green-600 border-green-500/30 hover:bg-green-500/10 hover:text-green-600"
-            onClick={() => onAccept(_id)}
-          >
-            <Star size={12} />
-            Accept Answer
-          </Button>
+      {/* Right Column: Content */}
+      <div className="flex-1 min-w-0 flex flex-col pt-1 sm:pt-1.5">
+        {/* Best Answer Banner */}
+        {isBestAnswer && (
+          <div className="flex items-center gap-2 mb-3 text-green-600 dark:text-green-400">
+            <Award size={15} />
+            <span className="text-xs font-bold uppercase tracking-wide">
+              Best Answer
+            </span>
+          </div>
         )}
 
-        {isAuthor && isThreadResolved && isBestAnswer && (
-          <span className="text-xs font-semibold text-green-600 dark:text-green-400 flex items-center gap-1.5">
-            <CheckCircle2 size={13} />
-            Accepted Answer
-          </span>
-        )}
+        {/* Author + time */}
+        <div className="flex items-center gap-2.5 mb-3">
+          <Avatar className="h-7 w-7 shrink-0">
+            <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
+              {getInitials(authorName)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+            <span className="font-semibold text-foreground truncate">
+              {authorName}
+            </span>
+            <span className="text-muted-foreground/50 hidden sm:inline">·</span>
+            <Clock size={11} className="shrink-0 hidden sm:inline" />
+            <span className="truncate hidden sm:inline">{timeAgo}</span>
+          </div>
+        </div>
+
+        {/* Reply text */}
+        <p className="text-[14px] text-foreground leading-relaxed whitespace-pre-wrap mb-4">
+          {text}
+        </p>
+
+        {/* Footer actions */}
+        <div className="flex items-center justify-between gap-3 mt-auto border-t border-border/50 pt-3">
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleReplyClick}
+              className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[13px] font-medium text-muted-foreground hover:bg-secondary/80 hover:text-foreground transition-colors focus:ring-2 focus:ring-secondary focus:outline-none"
+              aria-label={`Reply to ${authorName}`}
+            >
+              <MessageSquare size={14} />
+              <span>Reply</span>
+            </button>
+          </div>
+
+          {/* Accept as best answer */}
+          {isAuthor && !isThreadResolved && (
+            <Button
+              id={`accept-reply-${_id}`}
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs gap-1.5 text-green-600 border-green-500/30 hover:bg-green-500/10 hover:text-green-600"
+              onClick={() => onAccept(_id)}
+            >
+              <Star size={12} />
+              Accept Answer
+            </Button>
+          )}
+
+          {isAuthor && isThreadResolved && isBestAnswer && (
+            <span className="text-xs font-semibold text-green-600 dark:text-green-400 flex items-center gap-1.5 bg-green-500/10 px-2 py-1 rounded-full">
+              <CheckCircle2 size={13} />
+              Accepted
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -137,7 +207,6 @@ const ThreadDetailsPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuthContext();
-  const [isUpvoted, setIsUpvoted] = useState(false);
 
   // ── Data fetching ──────────────────────────────────────────────────────────
   const {
@@ -153,18 +222,32 @@ const ThreadDetailsPage = () => {
 
   const thread = data?.data;
   const isAuthor = user && thread && user._id === thread.authorId?._id;
+  const isUpvoted = user && thread?.upvotes?.includes(user._id);
+  const upvoteCount = thread?.upvotes?.length || 0;
 
   // ── Mutations ──────────────────────────────────────────────────────────────
   const { mutate: upvote, isPending: upvoting } = useMutation({
     mutationFn: () => upvoteThreadMutationFn(id),
-    onSuccess: (res) => {
-      setIsUpvoted(res.data?.upvoted ?? !isUpvoted);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["thread", id] });
     },
     onError: (err) =>
       toast({
         title: "Error",
         description: err?.message || "Could not upvote.",
+        variant: "destructive",
+      }),
+  });
+
+  const { mutate: downvote, isPending: downvoting } = useMutation({
+    mutationFn: () => downvoteThreadMutationFn(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["thread", id] });
+    },
+    onError: (err) =>
+      toast({
+        title: "Error",
+        description: err?.message || "Could not downvote.",
         variant: "destructive",
       }),
   });
@@ -223,6 +306,8 @@ const ThreadDetailsPage = () => {
     register,
     handleSubmit,
     reset,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(replySchema),
@@ -231,6 +316,15 @@ const ThreadDetailsPage = () => {
 
   const onSubmitReply = ({ text }) => {
     addReply({ threadId: id, text });
+  };
+
+  const handleReplyToUser = (authorName) => {
+    const currentText = getValues("text");
+    const mention = `@${authorName} `;
+    if (!currentText.startsWith(mention)) {
+      setValue("text", `${mention}${currentText}`, { shouldValidate: true });
+    }
+    document.getElementById("reply-textarea")?.focus();
   };
 
   // ── Loading / Error states ─────────────────────────────────────────────────
@@ -274,7 +368,6 @@ const ThreadDetailsPage = () => {
   } = thread;
 
   const timeAgo = formatDistanceToNow(new Date(createdAt), { addSuffix: true });
-  const upvoteCount = upvotes.length;
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
@@ -308,109 +401,125 @@ const ThreadDetailsPage = () => {
         <div
           id="thread-main-card"
           className={cn(
-            "bg-card border border-border rounded-xl p-6",
+            "flex flex-row gap-4 sm:gap-6 bg-card border border-border rounded-xl p-4 sm:p-6",
             isResolved && "border-l-4 border-l-green-500"
           )}
         >
-          {/* Tags row */}
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-              <BookOpen size={11} />
-              {subject}
+          {/* Left Column: Votes */}
+          <div className="flex flex-col items-center gap-1 sm:px-1 shrink-0 pt-1">
+            <button 
+              id="upvote-thread-btn"
+              onClick={() => user && upvote()}
+              disabled={upvoting || !user}
+              className={cn(
+                "p-2 rounded-full transition-colors focus:ring-2 focus:ring-primary focus:outline-none",
+                isUpvoted 
+                  ? "bg-primary/20 text-primary hover:bg-primary/30" 
+                  : "bg-secondary/50 text-muted-foreground hover:bg-primary/10 hover:text-primary",
+                (upvoting || !user) && "opacity-50 cursor-not-allowed"
+              )}
+              aria-label="Upvote Thread"
+            >
+              {upvoting ? <Loader size={20} className="animate-spin" /> : <ArrowUp size={20} strokeWidth={2.5} />}
+            </button>
+            <span className="text-xl font-bold text-foreground my-1">
+              {upvoteCount}
             </span>
-            {isResolved && (
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
-                <CheckCircle2 size={11} />
-                Resolved
-              </span>
-            )}
+            <button 
+              className={cn(
+                "p-2 rounded-full bg-secondary/50 text-muted-foreground transition-colors focus:ring-2 focus:ring-destructive focus:outline-none",
+                !user ? "opacity-50 cursor-not-allowed" : "hover:bg-destructive/10 hover:text-destructive"
+              )}
+              aria-label="Downvote Thread"
+              disabled={downvoting || !user}
+              onClick={() => user && downvote()}
+            >
+              {downvoting ? <Loader size={20} className="animate-spin" /> : <ArrowDown size={20} strokeWidth={2.5} />}
+            </button>
           </div>
 
-          {/* Title */}
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight mb-3">
-            {title}
-          </h1>
-
-          {/* Author + date */}
-          <div className="flex items-center gap-2.5 mb-5 pb-5 border-b border-border">
-            <Avatar className="h-8 w-8 shrink-0">
-              <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
-                {getInitials(authorId?.name)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="text-sm min-w-0">
-              <span className="font-semibold text-foreground">
-                {authorId?.name || "Unknown"}
+          {/* Right Column: Content */}
+          <div className="flex-1 min-w-0 flex flex-col">
+            {/* Tags row */}
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-secondary/80 text-secondary-foreground border border-border/50">
+                <BookOpen size={12} />
+                {subject}
               </span>
-              <span className="text-muted-foreground text-xs ml-2">
-                · {timeAgo}
-              </span>
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="prose prose-sm dark:prose-invert max-w-none mb-6">
-            <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">
-              {content}
-            </p>
-          </div>
-
-          {/* Action bar */}
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex items-center gap-2">
-              {/* Upvote button */}
-              <Button
-                id="upvote-thread-btn"
-                variant={isUpvoted ? "default" : "outline"}
-                size="sm"
-                onClick={() => upvote()}
-                disabled={upvoting || !user}
-                className="gap-2"
-              >
-                {upvoting ? (
-                  <Loader size={14} className="animate-spin" />
-                ) : (
-                  <ArrowUp size={14} />
-                )}
-                <span className="font-semibold">{upvoteCount}</span>
-                <span className="hidden sm:inline">
-                  {upvoteCount === 1 ? "Upvote" : "Upvotes"}
+              {isResolved && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
+                  <CheckCircle2 size={12} />
+                  Resolved
                 </span>
-              </Button>
-
-              {/* Reply count indicator */}
-              <span className="flex items-center gap-1.5 text-sm text-muted-foreground px-3">
-                <MessageSquare size={14} />
-                <span className="font-semibold">{replies.length}</span>
-                <span className="hidden sm:inline">
-                  {replies.length === 1 ? "Reply" : "Replies"}
-                </span>
-              </span>
+              )}
             </div>
 
-            {/* Owner actions */}
-            {isAuthor && (
-              <Button
-                id="delete-thread-btn"
-                variant="ghost"
-                size="sm"
-                onClick={() => deleteThread(id)}
-                disabled={deleting}
-                className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-              >
-                {deleting ? (
-                  <Loader size={14} className="animate-spin" />
-                ) : (
-                  <Trash2 size={14} />
-                )}
-                Delete
-              </Button>
-            )}
+            {/* Title */}
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight mb-3">
+              {title}
+            </h1>
+
+            {/* Author + date */}
+            <div className="flex items-center gap-2.5 mb-5 pb-5 border-b border-border/50">
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
+                  {getInitials(authorId?.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="text-[14px] min-w-0">
+                <span className="font-semibold text-foreground">
+                  {authorId?.name || "Unknown"}
+                </span>
+                <span className="text-muted-foreground text-[13px] ml-2">
+                  · {timeAgo}
+                </span>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="prose prose-sm dark:prose-invert max-w-none mb-6">
+              <p className="text-[15px] text-foreground leading-relaxed whitespace-pre-wrap">
+                {content}
+              </p>
+            </div>
+
+            {/* Action bar */}
+            <div className="flex items-center justify-between gap-3 flex-wrap mt-auto">
+              <div className="flex items-center gap-2">
+                {/* Reply count indicator */}
+                <span className="flex items-center gap-1.5 text-[14px] font-medium text-muted-foreground">
+                  <MessageSquare size={16} />
+                  <span className="font-semibold">{replies.length}</span>
+                  <span className="hidden sm:inline">
+                    {replies.length === 1 ? "Comment" : "Comments"}
+                  </span>
+                </span>
+              </div>
+
+              {/* Owner actions */}
+              {isAuthor && (
+                <Button
+                  id="delete-thread-btn"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deleteThread(id)}
+                  disabled={deleting}
+                  className="gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                >
+                  {deleting ? (
+                    <Loader size={14} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={14} />
+                  )}
+                  Delete
+                </Button>
+              )}
+            </div>
           </div>
         </div>
 
         {/* ── Replies Section ─────────────────────────────────────────────── */}
-        <div>
+        <div id="comments">
           <h2 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
             <MessageSquare size={17} className="text-primary" />
             {replies.length} {replies.length === 1 ? "Reply" : "Replies"}
@@ -426,12 +535,14 @@ const ThreadDetailsPage = () => {
               {replies.map((reply) => (
                 <ReplyCard
                   key={reply._id}
+                  threadId={id}
                   reply={reply}
                   isAuthor={isAuthor}
                   isThreadResolved={isResolved}
                   onAccept={(replyId) =>
                     acceptAnswer({ threadId: id, replyId })
                   }
+                  onReplyClick={handleReplyToUser}
                 />
               ))}
             </div>
@@ -442,69 +553,82 @@ const ThreadDetailsPage = () => {
         {user ? (
           <div
             id="add-reply-section"
-            className="bg-card border border-border rounded-xl p-5"
+            className="flex flex-row gap-3 sm:gap-4 bg-card border border-border rounded-xl p-4 sm:p-5"
           >
-            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <Send size={15} className="text-primary" />
-              Your Reply
-            </h3>
-
-            <form onSubmit={handleSubmit(onSubmitReply)} className="space-y-3">
-              <div>
-                <textarea
-                  id="reply-textarea"
-                  rows={5}
-                  placeholder="Share your knowledge or ask for clarification…"
-                  {...register("text")}
-                  disabled={replyPending || accepting}
-                  className={cn(
-                    "w-full px-3 py-2 rounded-md border text-sm bg-background resize-none",
-                    "focus:outline-none focus:ring-1 focus:ring-ring",
-                    "disabled:opacity-50 disabled:cursor-not-allowed",
-                    "placeholder:text-muted-foreground",
-                    errors.text ? "border-destructive" : "border-input"
+            <div className="hidden sm:block shrink-0">
+              <Avatar className="h-9 w-9">
+                <AvatarFallback className="text-xs font-semibold bg-primary/10 text-primary">
+                  {getInitials(user?.name)}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <form onSubmit={handleSubmit(onSubmitReply)} className="space-y-3">
+                <div>
+                  <textarea
+                    id="reply-textarea"
+                    rows={4}
+                    placeholder="Share your knowledge, ask for clarification, or contribute to the discussion..."
+                    {...register("text")}
+                    disabled={replyPending || accepting}
+                    className={cn(
+                      "w-full px-3.5 py-3 rounded-lg border text-[14px] bg-background resize-none transition-colors",
+                      "focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring",
+                      "disabled:opacity-50 disabled:cursor-not-allowed",
+                      "placeholder:text-muted-foreground",
+                      errors.text ? "border-destructive focus:ring-destructive/50" : "border-input"
+                    )}
+                  />
+                  {errors.text && (
+                    <p className="text-xs font-medium text-destructive mt-1.5 flex items-center gap-1">
+                      <AlertCircle size={12} />
+                      {errors.text.message}
+                    </p>
                   )}
-                />
-                {errors.text && (
-                  <p className="text-xs text-destructive mt-1">
-                    {errors.text.message}
-                  </p>
-                )}
-              </div>
+                </div>
 
-              <div className="flex justify-end">
-                <Button
-                  id="submit-reply-btn"
-                  type="submit"
-                  size="sm"
-                  disabled={replyPending || accepting}
-                  className="gap-2 min-w-[110px]"
-                >
-                  {replyPending ? (
-                    <>
-                      <Loader size={14} className="animate-spin" />
-                      Posting…
-                    </>
-                  ) : (
-                    <>
-                      <Send size={14} />
-                      Post Reply
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
+                <div className="flex items-center justify-between">
+                  <span className="text-[12px] text-muted-foreground hidden sm:inline-block">
+                    Markdown is disabled. Keep comments respectful and kind.
+                  </span>
+                  <Button
+                    id="submit-reply-btn"
+                    type="submit"
+                    size="sm"
+                    disabled={replyPending || accepting}
+                    className="gap-2 min-w-[120px] font-semibold"
+                  >
+                    {replyPending ? (
+                      <>
+                        <Loader size={14} className="animate-spin" />
+                        Posting...
+                      </>
+                    ) : (
+                      <>
+                        <Send size={15} />
+                        Post Comment
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
         ) : (
-          <div className="bg-card border border-border rounded-xl p-5 text-center">
-            <p className="text-sm text-muted-foreground">
+          <div className="bg-card border border-border rounded-xl p-6 text-center">
+            <MessageSquare size={32} className="mx-auto opacity-20 mb-3" />
+            <p className="text-[15px] font-medium text-foreground mb-1">
+              Join the conversation
+            </p>
+            <p className="text-[14px] text-muted-foreground">
               <Link
                 to="/"
                 className="text-primary font-semibold hover:underline"
               >
                 Sign in
               </Link>{" "}
-              to join the discussion.
+              to leave a comment and help others.
             </p>
           </div>
         )}

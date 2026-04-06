@@ -1,20 +1,10 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import ForgotPassword from "./pages/auth/forgot-password";
-import ConfirmAccount from "./pages/auth/confirm-account";
-import ResetPassword from "./pages/auth/reset-password";
-import VerifyMfa from "./pages/auth/verify-mfa";
-import Home from "./pages/home";
-import Session from "./pages/sessions";
-import StudyHubPage from "./pages/study-hub/StudyHubPage";
-import ThreadDetailsPage from "./pages/study-hub/ThreadDetailsPage";
-import AppLayout from "./layout/AppLayout";
-import BaseLayout from "./layout/BaseLayout";
-import AuthRoute from "./routes/auth.route";
-import PublicRoute from "./routes/public.route";
 import { BrowserRouter, Route, Routes, Navigate } from 'react-router-dom';
 import RegisterPage from '@/pages/auth/register';
 import LoginPage from '@/pages/auth/login';
 import HomePage from '@/pages/home';
+import StudyHubPage from '@/pages/study-hub/StudyHubPage';
+import ThreadDetailsPage from '@/pages/study-hub/ThreadDetailsPage';
+import AppLayout from '@/components/layout/AppLayout';
 
 function App() {
   return (

@@ -16,6 +16,18 @@ const replySchema = new Schema(
       trim: true,
       maxlength: 2000,
     },
+    upvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    downvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     isBestAnswer: {
       type: Boolean,
       default: false,
