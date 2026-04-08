@@ -1,6 +1,6 @@
 cd server
-npm run test:unit -- --testPathPattern=auth
-npm run test:unit -- --testPathPattern=session
+npm run test:unit:auth
+npm run test:unit:session
 
 
 ### all members done
