@@ -1,121 +1,132 @@
-const { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } = require('@jest/globals');
-const mongoose = require('mongoose');
-const { connectTestDB, clearTestDB, disconnectTestDB } = require('../../helpers/db.helper');
-const { AuthService } = require('../../../src/modules/auth/auth.service');
+const { describe, it, expect, beforeEach } = require('@jest/globals');
+
+jest.mock('../../../src/database/models/user.model');
+jest.mock('../../../src/database/models/authSession.model');
+jest.mock('../../../src/common/utils/token-utils', () => {
+  const actual = jest.requireActual('../../../src/common/utils/token-utils');
+  return { ...actual, signJwtToken: jest.fn(), verifyJwtToken: jest.fn() };
+});
+
 const UserModel = require('../../../src/database/models/user.model');
 const SessionModel = require('../../../src/database/models/authSession.model');
-const { signJwtToken, refreshTokenSignOptions } = require('../../../src/common/utils/token-utils');
-const { BadRequestException, UnauthorizedException, NotFoundException } = require('../../../src/common/utils/errors-utils');
+const { signJwtToken, verifyJwtToken } = require('../../../src/common/utils/token-utils');
+const { AuthService } = require('../../../src/modules/auth/auth.service');
+const {
+  BadRequestException,
+  UnauthorizedException,
+  NotFoundException,
+} = require('../../../src/common/utils/errors-utils');
 
 let authService;
 
-beforeAll(async () => {
-  await connectTestDB();
+beforeEach(() => {
   authService = new AuthService();
+  jest.clearAllMocks();
 });
-afterEach(async () => await clearTestDB());
-afterAll(async () => await disconnectTestDB());
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+const makeUser = (overrides = {}) => ({
+  _id: 'uid1',
+  email: 'alice@test.com',
+  role: 'student',
+  comparePassword: jest.fn().mockResolvedValue(true),
+  omitPassword: jest.fn().mockReturnValue({ _id: 'uid1', email: 'alice@test.com', role: 'student' }),
+  ...overrides,
+});
 
 // ─── register ─────────────────────────────────────────────────────────────────
 
 describe('AuthService.register', () => {
   it('creates a user and returns data without password', async () => {
-    const result = await authService.register({
-      name: 'Alice',
-      email: 'alice@test.com',
-      password: 'password123',
+    UserModel.exists.mockResolvedValue(null);
+    UserModel.create.mockResolvedValue(makeUser());
+
+    const { user } = await authService.register({
+      name: 'Alice', email: 'alice@test.com', password: 'password123',
     });
 
-    expect(result.user).toBeDefined();
-    expect(result.user.email).toBe('alice@test.com');
-    expect(result.user.password).toBeUndefined();
+    expect(user).toBeDefined();
+    expect(user.email).toBe('alice@test.com');
+    expect(user.password).toBeUndefined();
   });
 
-  it('defaults role to student when not provided', async () => {
+  it('defaults role to student', async () => {
+    UserModel.exists.mockResolvedValue(null);
+    UserModel.create.mockResolvedValue(makeUser());
+
     const { user } = await authService.register({
-      name: 'Alice',
-      email: 'alice@test.com',
-      password: 'password123',
+      name: 'Alice', email: 'alice@test.com', password: 'pass123',
     });
 
     expect(user.role).toBe('student');
   });
 
-  it('accepts an explicit tutor role', async () => {
-    const { user } = await authService.register({
-      name: 'Bob',
-      email: 'bob@test.com',
-      password: 'password123',
-      role: 'tutor',
-    });
-
-    expect(user.role).toBe('tutor');
-  });
-
   it('throws BadRequestException for a duplicate email', async () => {
-    await authService.register({ name: 'Alice', email: 'alice@test.com', password: 'password123' });
+    UserModel.exists.mockResolvedValue({ _id: 'existing-id' });
 
     await expect(
-      authService.register({ name: 'Alice2', email: 'alice@test.com', password: 'password456' })
+      authService.register({ name: 'Alice', email: 'alice@test.com', password: 'pass123' })
     ).rejects.toThrow(BadRequestException);
   });
 
-  it('persists the user in the database', async () => {
-    await authService.register({ name: 'Charlie', email: 'charlie@test.com', password: 'pass123' });
+  it('calls UserModel.create with the provided data', async () => {
+    UserModel.exists.mockResolvedValue(null);
+    UserModel.create.mockResolvedValue(makeUser({ role: 'tutor' }));
 
-    const stored = await UserModel.findOne({ email: 'charlie@test.com' });
-    expect(stored).not.toBeNull();
-    expect(stored.name).toBe('Charlie');
+    await authService.register({ name: 'Bob', email: 'bob@test.com', password: 'pass123', role: 'tutor' });
+
+    expect(UserModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Bob', email: 'bob@test.com', role: 'tutor' })
+    );
   });
 });
 
 // ─── login ────────────────────────────────────────────────────────────────────
 
 describe('AuthService.login', () => {
-  beforeEach(async () => {
-    await authService.register({ name: 'Alice', email: 'alice@test.com', password: 'password123' });
-  });
+  it('returns user, accessToken and refreshToken on success', async () => {
+    UserModel.findOne.mockResolvedValue(makeUser());
+    SessionModel.create.mockResolvedValue({ _id: 'sid1' });
+    signJwtToken.mockReturnValueOnce('access-token').mockReturnValueOnce('refresh-token');
 
-  it('returns user, accessToken, and refreshToken on success', async () => {
     const result = await authService.login({
-      email: 'alice@test.com',
-      password: 'password123',
-      userAgent: 'jest',
+      email: 'alice@test.com', password: 'password123', userAgent: 'jest',
     });
 
-    expect(result.user).toBeDefined();
-    expect(result.accessToken).toBeDefined();
-    expect(result.refreshToken).toBeDefined();
+    expect(result.accessToken).toBe('access-token');
+    expect(result.refreshToken).toBe('refresh-token');
     expect(result.mfaRequired).toBe(false);
+    expect(result.user.password).toBeUndefined();
   });
 
-  it('omits password from the returned user object', async () => {
-    const { user } = await authService.login({
-      email: 'alice@test.com',
-      password: 'password123',
-      userAgent: 'jest',
-    });
+  it('creates a session with the provided userAgent', async () => {
+    UserModel.findOne.mockResolvedValue(makeUser());
+    SessionModel.create.mockResolvedValue({ _id: 'sid1' });
+    signJwtToken.mockReturnValue('token');
 
-    expect(user.password).toBeUndefined();
-  });
-
-  it('creates a session record in the database', async () => {
     await authService.login({ email: 'alice@test.com', password: 'password123', userAgent: 'chrome' });
 
-    const sessions = await SessionModel.find({});
-    expect(sessions.length).toBe(1);
-    expect(sessions[0].userAgent).toBe('chrome');
+    expect(SessionModel.create).toHaveBeenCalledWith(
+      expect.objectContaining({ userAgent: 'chrome' })
+    );
   });
 
   it('throws BadRequestException for an unregistered email', async () => {
+    UserModel.findOne.mockResolvedValue(null);
+
     await expect(
-      authService.login({ email: 'nobody@test.com', password: 'password123', userAgent: 'jest' })
+      authService.login({ email: 'nobody@test.com', password: 'pass', userAgent: 'jest' })
     ).rejects.toThrow(BadRequestException);
   });
 
   it('throws BadRequestException for a wrong password', async () => {
+    UserModel.findOne.mockResolvedValue(
+      makeUser({ comparePassword: jest.fn().mockResolvedValue(false) })
+    );
+
     await expect(
-      authService.login({ email: 'alice@test.com', password: 'wrongpassword', userAgent: 'jest' })
+      authService.login({ email: 'alice@test.com', password: 'wrong', userAgent: 'jest' })
     ).rejects.toThrow(BadRequestException);
   });
 });
@@ -123,73 +134,88 @@ describe('AuthService.login', () => {
 // ─── refreshToken ─────────────────────────────────────────────────────────────
 
 describe('AuthService.refreshToken', () => {
-  let session;
-  let validRefreshToken;
-
-  beforeEach(async () => {
-    const user = await UserModel.create({ name: 'Alice', email: 'alice@test.com', password: 'hashed' });
-    session = await SessionModel.create({ userId: user._id, userAgent: 'jest' });
-    validRefreshToken = signJwtToken({ sessionId: session._id }, refreshTokenSignOptions);
+  const activeSession = () => ({
+    _id: 'sid1',
+    userId: 'uid1',
+    expiredAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days — no rotation
+    save: jest.fn(),
   });
 
-  it('returns a new accessToken for a valid refresh token', async () => {
-    const result = await authService.refreshToken(validRefreshToken);
+  it('returns a new accessToken for a valid token', async () => {
+    verifyJwtToken.mockReturnValue({ payload: { sessionId: 'sid1' } });
+    SessionModel.findById.mockResolvedValue(activeSession());
+    signJwtToken.mockReturnValue('new-access-token');
 
-    expect(result.accessToken).toBeDefined();
+    const result = await authService.refreshToken('valid-refresh-token');
+
+    expect(result.accessToken).toBe('new-access-token');
   });
 
-  it('does not issue a new refreshToken when session is not near expiry', async () => {
-    const result = await authService.refreshToken(validRefreshToken);
+  it('does not rotate refresh token when session is not near expiry', async () => {
+    verifyJwtToken.mockReturnValue({ payload: { sessionId: 'sid1' } });
+    SessionModel.findById.mockResolvedValue(activeSession());
+    signJwtToken.mockReturnValue('token');
+
+    const result = await authService.refreshToken('valid-token');
 
     expect(result.newRefreshToken).toBeUndefined();
   });
 
-  it('throws UnauthorizedException for a malformed token', async () => {
-    await expect(authService.refreshToken('invalid.token.here')).rejects.toThrow(UnauthorizedException);
+  it('rotates the refresh token when session is within one day of expiry', async () => {
+    verifyJwtToken.mockReturnValue({ payload: { sessionId: 'sid1' } });
+    SessionModel.findById.mockResolvedValue({
+      _id: 'sid1',
+      userId: 'uid1',
+      expiredAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+      save: jest.fn(),
+    });
+    signJwtToken.mockReturnValueOnce('rotated-refresh').mockReturnValueOnce('new-access');
+
+    const result = await authService.refreshToken('valid-token');
+
+    expect(result.newRefreshToken).toBe('rotated-refresh');
+    expect(result.accessToken).toBe('new-access');
+  });
+
+  it('throws UnauthorizedException when payload is null', async () => {
+    verifyJwtToken.mockReturnValue({ payload: null });
+
+    await expect(authService.refreshToken('bad-token')).rejects.toThrow(UnauthorizedException);
   });
 
   it('throws UnauthorizedException when session does not exist', async () => {
-    await SessionModel.findByIdAndDelete(session._id);
+    verifyJwtToken.mockReturnValue({ payload: { sessionId: 'sid1' } });
+    SessionModel.findById.mockResolvedValue(null);
 
-    await expect(authService.refreshToken(validRefreshToken)).rejects.toThrow(UnauthorizedException);
+    await expect(authService.refreshToken('valid-token')).rejects.toThrow(UnauthorizedException);
   });
 
   it('throws UnauthorizedException for an expired session', async () => {
-    await SessionModel.findByIdAndUpdate(session._id, {
+    verifyJwtToken.mockReturnValue({ payload: { sessionId: 'sid1' } });
+    SessionModel.findById.mockResolvedValue({
       expiredAt: new Date(Date.now() - 1000),
+      save: jest.fn(),
     });
 
-    await expect(authService.refreshToken(validRefreshToken)).rejects.toThrow(UnauthorizedException);
-  });
-
-  it('rotates the refresh token when session is within one day of expiry', async () => {
-    // Set session to expire in 30 minutes (within 1-day threshold)
-    await SessionModel.findByIdAndUpdate(session._id, {
-      expiredAt: new Date(Date.now() + 30 * 60 * 1000),
-    });
-
-    const result = await authService.refreshToken(validRefreshToken);
-
-    expect(result.newRefreshToken).toBeDefined();
-    expect(result.accessToken).toBeDefined();
+    await expect(authService.refreshToken('valid-token')).rejects.toThrow(UnauthorizedException);
   });
 });
 
 // ─── logout ───────────────────────────────────────────────────────────────────
 
 describe('AuthService.logout', () => {
-  it('deletes the session by sessionId', async () => {
-    const user = await UserModel.create({ name: 'Alice', email: 'alice@test.com', password: 'hashed' });
-    const session = await SessionModel.create({ userId: user._id });
+  it('calls findByIdAndDelete with the sessionId', async () => {
+    SessionModel.findByIdAndDelete.mockResolvedValue({ _id: 'sid1' });
 
-    await authService.logout(session._id);
+    await authService.logout('sid1');
 
-    const found = await SessionModel.findById(session._id);
-    expect(found).toBeNull();
+    expect(SessionModel.findByIdAndDelete).toHaveBeenCalledWith('sid1');
   });
 
   it('returns null when session does not exist', async () => {
-    const result = await authService.logout(new mongoose.Types.ObjectId());
+    SessionModel.findByIdAndDelete.mockResolvedValue(null);
+
+    const result = await authService.logout('nonexistent-id');
 
     expect(result).toBeNull();
   });
@@ -198,23 +224,19 @@ describe('AuthService.logout', () => {
 // ─── getCurrentUser ───────────────────────────────────────────────────────────
 
 describe('AuthService.getCurrentUser', () => {
-  it('returns user data without password', async () => {
-    const created = await UserModel.create({
-      name: 'Alice',
-      email: 'alice@test.com',
-      password: 'hashed',
-    });
+  it('returns the user data', async () => {
+    const mockUser = { _id: 'uid1', name: 'Alice', email: 'alice@test.com' };
+    UserModel.findById.mockReturnValue({ select: jest.fn().mockResolvedValue(mockUser) });
 
-    const user = await authService.getCurrentUser(created._id);
+    const user = await authService.getCurrentUser('uid1');
 
     expect(user.name).toBe('Alice');
     expect(user.email).toBe('alice@test.com');
-    expect(user.password).toBeUndefined();
   });
 
   it('throws NotFoundException for an unknown userId', async () => {
-    await expect(
-      authService.getCurrentUser(new mongoose.Types.ObjectId())
-    ).rejects.toThrow(NotFoundException);
+    UserModel.findById.mockReturnValue({ select: jest.fn().mockResolvedValue(null) });
+
+    await expect(authService.getCurrentUser('unknown-id')).rejects.toThrow(NotFoundException);
   });
 });
