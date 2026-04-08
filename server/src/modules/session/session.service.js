@@ -234,7 +234,7 @@ class BookingService {
       throw new BadRequestException("Only pending bookings can be accepted");
     }
 
-    // Update booking status
+    // Accept the booking
     booking.status = BookingStatus.ACCEPTED;
     if (acceptData.meetingLink) {
       booking.meetingLink = acceptData.meetingLink;
@@ -247,19 +247,18 @@ class BookingService {
 
     logger.info("Booking accepted", { bookingId, tutorId });
 
-    // Try to sync with Google Calendar
+    // Try to sync with Google Calendar (enrichment only — does not affect status)
     try {
       const calendarEvent = await googleCalendarService.createEvent(booking);
       if (calendarEvent) {
         booking.googleCalendarEventId = calendarEvent.id;
-        booking.status = BookingStatus.CONFIRMED;
 
-        // Use auto-generated Google Meet link if available
-        if (calendarEvent.meetLink) {
+        // Use auto-generated Google Meet link if no manual link was provided
+        if (calendarEvent.meetLink && !acceptData.meetingLink) {
           booking.meetingLink = calendarEvent.meetLink;
           logger.info("Auto-generated Google Meet link", { meetLink: calendarEvent.meetLink });
         }
-        
+
         await booking.save();
         logger.info("Booking synced with Google Calendar", {
           bookingId,
@@ -268,7 +267,7 @@ class BookingService {
       }
     } catch (error) {
       logger.warn("Failed to sync with Google Calendar", { bookingId, error: error.message });
-      // Continue without calendar sync - booking is still accepted
+      // Booking is already accepted — calendar sync failure is non-fatal
     }
 
     return booking;

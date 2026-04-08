@@ -94,7 +94,7 @@ export default function SessionCard({ booking, role }) {
         </>
       );
     }
-  } else if (status === 'confirmed') {
+  } else if (status === 'accepted' || status === 'confirmed') {
     if (!isTutor) {
       actions = (
         <Button

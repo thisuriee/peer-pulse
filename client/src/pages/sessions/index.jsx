@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 const TABS = [
   { label: 'All', value: '' },
   { label: 'Pending', value: 'pending' },
-  { label: 'Confirmed', value: 'confirmed' },
+  { label: 'Accepted', value: 'accepted' },
   { label: 'Completed', value: 'completed' },
   { label: 'Cancelled', value: 'cancelled' },
 ];
@@ -199,7 +199,7 @@ function Pagination({ currentPage, totalPages, onPageChange }) {
 const EMPTY_MESSAGES = {
   '': 'No sessions yet.',
   pending: 'No pending sessions.',
-  confirmed: 'No confirmed sessions.',
+  accepted: 'No accepted sessions.',
   completed: 'No completed sessions.',
   cancelled: 'No cancelled sessions.',
 };
