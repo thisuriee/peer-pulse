@@ -109,12 +109,26 @@ class BookingService {
       }
     }
 
-    const bookings = await BookingModel.find(query)
-      .populate("student", "name email")
-      .populate("tutor", "name email skills")
-      .sort({ scheduledAt: -1 });
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
+    const skip = (page - 1) * limit;
 
-    return bookings;
+    const [bookings, total] = await Promise.all([
+      BookingModel.find(query)
+        .populate("student", "name email")
+        .populate("tutor", "name email skills")
+        .sort({ scheduledAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      BookingModel.countDocuments(query),
+    ]);
+
+    return {
+      bookings,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   /**
