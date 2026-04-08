@@ -19,7 +19,13 @@
     "typecheck": "npm run typecheck:client && npm run typecheck:server",
     "typecheck:client": "npm --workspace client run typecheck",
     "typecheck:server": "npm --workspace server run typecheck",
-    "install:all": "npm install --workspaces"
+    "install:all": "npm install --workspaces",
+    "test": "NODE_ENV=test jest",
+    "test:unit": "NODE_ENV=test jest tests/unit",
+    "test:integration": "NODE_ENV=test jest tests/integration",
+    "test:coverage": "NODE_ENV=test jest --coverage",
+    "test:watch": "NODE_ENV=test jest --watch",
+    "test:perf": "artillery run"
   },
   "devDependencies": {
     "concurrently": "^8.2.0",
