@@ -25,14 +25,18 @@ const DEFAULT_SLOT = { enabled: false, startTime: '09:00', endTime: '17:00' };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function buildScheduleState(weeklySchedule = []) {
+function buildScheduleState(weeklySchedule = {}) {
+  // weeklySchedule comes from the API as a plain object: { Monday: [{startTime, endTime}], ... }
+  const scheduleObj = Array.isArray(weeklySchedule)
+    ? Object.fromEntries(weeklySchedule.map((s) => [s.day, [{ startTime: s.startTime, endTime: s.endTime }]]))
+    : (weeklySchedule ?? {});
+
   return DAYS.map((day) => {
-    const existing = weeklySchedule.find(
-      (s) => s.day?.toLowerCase() === day.toLowerCase(),
-    );
-    return existing
-      ? { enabled: true, startTime: existing.startTime ?? '09:00', endTime: existing.endTime ?? '17:00' }
-      : { ...DEFAULT_SLOT };
+    const slots = scheduleObj[day];
+    if (slots && slots.length > 0) {
+      return { enabled: true, startTime: slots[0].startTime ?? '09:00', endTime: slots[0].endTime ?? '17:00' };
+    }
+    return { ...DEFAULT_SLOT };
   });
 }
 
@@ -191,9 +195,10 @@ function DateOverridesSection({ overrides, onAdd, onRemove, isAdding, isRemoving
 
   const handleAdd = () => {
     if (!date) return;
-    const payload = { date, isAvailable };
+    // Backend uses `available` and `slots` field names
+    const payload = { date, available: isAvailable };
     if (isAvailable) {
-      payload.customSlots = [{ startTime, endTime }];
+      payload.slots = [{ startTime, endTime }];
     }
     onAdd(payload, () => {
       setDate('');
@@ -218,21 +223,22 @@ function DateOverridesSection({ overrides, onAdd, onRemove, isAdding, isRemoving
             >
               <div className="flex items-center gap-3">
                 <span
-                  className={`w-2 h-2 rounded-full shrink-0 ${o.isAvailable ? 'bg-green-500' : 'bg-red-400'}`}
+                  className={`w-2 h-2 rounded-full shrink-0 ${o.available ? 'bg-green-500' : 'bg-red-400'}`}
                 />
                 <div>
                   <p className="text-sm font-medium">
-                    {new Date(o.date + 'T00:00:00').toLocaleDateString('en-US', {
+                    {new Date(o.date).toLocaleDateString('en-US', {
                       weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
+                      timeZone: 'UTC',
                     })}
                   </p>
-                  {o.isAvailable && o.customSlots?.length > 0 && (
+                  {o.available && o.slots?.length > 0 && (
                     <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                       <Clock className="w-3 h-3" />
-                      {o.customSlots[0].startTime} – {o.customSlots[0].endTime}
+                      {o.slots[0].startTime} – {o.slots[0].endTime}
                     </p>
                   )}
-                  {!o.isAvailable && (
+                  {!o.available && (
                     <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">Unavailable</p>
                   )}
                 </div>
@@ -469,11 +475,13 @@ export default function AvailabilityManager() {
   };
 
   const handleSaveSchedule = async () => {
-    const weeklySchedule = schedule
-      .map((slot, i) =>
-        slot.enabled ? { day: DAYS[i], startTime: slot.startTime, endTime: slot.endTime } : null,
-      )
-      .filter(Boolean);
+    // Backend expects: { Monday: [{ startTime, endTime }], ... }
+    const weeklySchedule = {};
+    schedule.forEach((slot, i) => {
+      if (slot.enabled) {
+        weeklySchedule[DAYS[i]] = [{ startTime: slot.startTime, endTime: slot.endTime }];
+      }
+    });
     try {
       await updateAvail({ weeklySchedule });
       toast({ title: 'Schedule saved', description: 'Your weekly availability has been updated.' });
