@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { LogOut, Settings, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LogOut, Settings, Bell, ChevronLeft, ChevronRight, List, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PeerPulseLogoMark } from '@/components/peer-pulse-logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 import SessionCard from '@/components/booking/session-card';
+import BookingCalendar from '@/components/booking/booking-calendar';
+import AvailabilityManager from '@/components/booking/availability-manager';
 import { useBookings } from '@/hooks/use-bookings';
 import apiClient from '@/lib/api-client';
 import { useToast } from '@/hooks/use-toast';
@@ -231,6 +233,9 @@ export default function SessionsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
 
+  const [view, setView] = useState('list'); // 'list' | 'calendar'
+  const [pageSection, setPageSection] = useState('sessions'); // 'sessions' | 'availability'
+
   // Read initial status from URL
   const [activeTab, setActiveTab] = useState(() => searchParams.get('status') ?? '');
   const [page, setPage] = useState(() => Number(searchParams.get('page') ?? 1));
@@ -303,18 +308,45 @@ export default function SessionsPage() {
         {/* Page header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-display font-extrabold tracking-tight">My Sessions</h1>
-          {/* Slot for Calendar/List view toggle — Step 8 */}
-          <div className="view-toggle-slot" />
+
+          {/* List / Calendar view toggle — hidden in Availability section */}
+          {pageSection === 'sessions' && (
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-muted border-2 border-border">
+              <button
+                onClick={() => setView('list')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                  view === 'list'
+                    ? 'bg-background text-foreground shadow-sm border-2 border-border'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <List className="w-3.5 h-3.5" />
+                List
+              </button>
+              <button
+                onClick={() => setView('calendar')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors ${
+                  view === 'calendar'
+                    ? 'bg-background text-foreground shadow-sm border-2 border-border'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+                Calendar
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Status tab bar */}
+        {/* Section tab bar — status filters + Availability tab for tutors */}
         <div className="flex items-center gap-1 p-1 rounded-2xl bg-muted border-2 border-border mb-6 overflow-x-auto">
+          {/* Sessions section trigger */}
           {TABS.map(({ label, value }) => (
             <button
               key={value}
-              onClick={() => handleTabChange(value)}
+              onClick={() => { setPageSection('sessions'); handleTabChange(value); }}
               className={`flex-shrink-0 px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors ${
-                activeTab === value
+                pageSection === 'sessions' && activeTab === value
                   ? 'bg-background text-foreground shadow-sm border-2 border-border'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
@@ -322,40 +354,65 @@ export default function SessionsPage() {
               {label}
             </button>
           ))}
-        </div>
 
-        {/* Session list */}
-        <div className="space-y-3">
-          {bookingsLoading ? (
+          {/* Availability tab — tutors only */}
+          {role === 'tutor' && (
             <>
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
+              <div className="w-px h-5 bg-border mx-1 shrink-0" />
+              <button
+                onClick={() => setPageSection('availability')}
+                className={`flex-shrink-0 px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors ${
+                  pageSection === 'availability'
+                    ? 'bg-background text-foreground shadow-sm border-2 border-border'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Availability
+              </button>
             </>
-          ) : bookings.length === 0 ? (
-            <EmptyState status={activeTab} />
-          ) : (
-            bookings.map((booking) => (
-              <SessionCard
-                key={booking._id ?? booking.id}
-                booking={booking}
-                role={role}
-                onCancel={handleCancel}
-                onAccept={handleAccept}
-                onDecline={handleDecline}
-                onComplete={handleComplete}
-              />
-            ))
           )}
         </div>
 
-        {/* Pagination */}
-        {!bookingsLoading && bookings.length > 0 && (
-          <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
+        {pageSection === 'availability' ? (
+          <AvailabilityManager />
+        ) : view === 'calendar' ? (
+          <BookingCalendar role={role} />
+        ) : (
+          <>
+            {/* Session list */}
+            <div className="space-y-3">
+              {bookingsLoading ? (
+                <>
+                  <SkeletonCard />
+                  <SkeletonCard />
+                  <SkeletonCard />
+                </>
+              ) : bookings.length === 0 ? (
+                <EmptyState status={activeTab} />
+              ) : (
+                bookings.map((booking) => (
+                  <SessionCard
+                    key={booking._id ?? booking.id}
+                    booking={booking}
+                    role={role}
+                    onCancel={handleCancel}
+                    onAccept={handleAccept}
+                    onDecline={handleDecline}
+                    onComplete={handleComplete}
+                  />
+                ))
+              )}
+            </div>
+
+            {/* Pagination */}
+            {!bookingsLoading && bookings.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setPage}
+              />
+            )}
+          </>
         )}
       </main>
     </div>

@@ -11,6 +11,8 @@ import {
   cancelBooking,
   completeBooking,
   updateAvailability,
+  addDateOverride,
+  removeDateOverride,
 } from '../lib/booking-api';
 
 
@@ -121,6 +123,26 @@ export const useUpdateAvailability = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data) => updateAvailability(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.availability() });
+    },
+  });
+};
+
+export const useAddDateOverride = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => addDateOverride(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingKeys.availability() });
+    },
+  });
+};
+
+export const useRemoveDateOverride = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (date) => removeDateOverride(date),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: bookingKeys.availability() });
     },
