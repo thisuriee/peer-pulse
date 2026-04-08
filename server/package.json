@@ -4,9 +4,15 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node --watch src/index.js",
-    "start": "node src/index.js"
+  "start": "node src/index.js",
+  "test": "cross-env NODE_ENV=test jest",
+  "test:unit": "cross-env NODE_ENV=test jest tests/unit",
+  "test:integration": "cross-env NODE_ENV=test jest tests/integration",
+  "test:coverage": "cross-env NODE_ENV=test jest --coverage",
+  "test:watch": "cross-env NODE_ENV=test jest --watch",
+  "test:perf": "artillery run"
+
   },
   "keywords": [],
   "author": "",
