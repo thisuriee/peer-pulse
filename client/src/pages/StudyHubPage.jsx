@@ -26,21 +26,34 @@ const StudyHubPage = () => {
       <Navbar />
 
       <main className="flex-1 max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 md:py-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-display font-bold tracking-tight">Community Hub</h1>
-            <p className="text-muted-foreground mt-1">Connect, ask questions, and share knowledge.</p>
+        <div className="bg-card pp-brutal-shadow border-2 border-border rounded-2xl p-6 md:p-10 relative overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8">
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary border-2 border-primary/20 text-xs font-bold tracking-wide uppercase mb-3">
+              <MessageSquare className="w-4 h-4" /> Community Hub
+            </div>
+            <h1 className="text-3xl md:text-5xl font-display font-black tracking-tight mb-3">Join the Discussion</h1>
+            <p className="text-muted-foreground md:text-lg max-w-xl font-medium leading-relaxed">
+              Connect with peers, ask challenging questions, and share your knowledge with the student community.
+            </p>
           </div>
           <Button 
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 pp-brutal-shadow shrink-0"
+            size="lg"
+            className="relative z-10 flex items-center gap-2 pp-brutal-shadow shrink-0 h-12 px-6 font-bold text-base bg-primary hover:bg-primary/90 text-primary-foreground transition-transform hover:-translate-y-1"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-5 h-5" />
             New Thread
           </Button>
+
+          {/* Decorative Pattern */}
+          <div className="absolute -right-8 -top-8 text-primary/5 pointer-events-none rotate-12">
+            <svg width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+            </svg>
+          </div>
         </div>
 
-        <div className="bg-card border-2 border-border rounded-xl p-4 pp-brutal-shadow">
+        <div className="bg-card border-2 border-border rounded-xl p-4 pp-brutal-shadow mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -69,7 +82,7 @@ const StudyHubPage = () => {
               onChange={(e) => setSort(e.target.value)}
             >
               <option value="latest">Latest</option>
-              <option value="upvotes">Most Upvoted</option>
+              <option value="mostUpvoted">Most Upvoted</option>
             </select>
           </div>
         </div>

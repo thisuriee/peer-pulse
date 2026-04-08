@@ -24,7 +24,8 @@ export const ReplyItem = ({ reply, isOwner, onAccept, threadId, currentUserId, o
       toast({ title: 'Success', description: 'Reply updated successfully' });
       if (onReplyUpdated) onReplyUpdated();
     } catch (err) {
-      toast({ title: 'Error', description: 'Failed to update reply', variant: 'destructive' });
+      const errorMsg = err.response?.data?.message || 'Failed to update reply';
+      toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -37,7 +38,8 @@ export const ReplyItem = ({ reply, isOwner, onAccept, threadId, currentUserId, o
       toast({ title: 'Success', description: 'Reply deleted' });
       if (onReplyUpdated) onReplyUpdated();
     } catch (err) {
-      toast({ title: 'Error', description: 'Failed to delete reply', variant: 'destructive' });
+      const errorMsg = err.response?.data?.message || 'Failed to delete reply';
+      toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -49,7 +51,8 @@ export const ReplyItem = ({ reply, isOwner, onAccept, threadId, currentUserId, o
       await threadService.upvoteReply(threadId, reply.id || reply._id);
       if (onReplyUpdated) onReplyUpdated();
     } catch (err) {
-      toast({ title: 'Error', description: 'Failed to upvote reply', variant: 'destructive' });
+      const errorMsg = err.response?.data?.message || 'Failed to upvote reply';
+      toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -61,7 +64,8 @@ export const ReplyItem = ({ reply, isOwner, onAccept, threadId, currentUserId, o
       await threadService.downvoteReply(threadId, reply.id || reply._id);
       if (onReplyUpdated) onReplyUpdated();
     } catch (err) {
-      toast({ title: 'Error', description: 'Failed to downvote reply', variant: 'destructive' });
+      const errorMsg = err.response?.data?.message || 'Failed to downvote reply';
+      toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -91,7 +95,7 @@ export const ReplyItem = ({ reply, isOwner, onAccept, threadId, currentUserId, o
           {isEditing ? (
             <div className="mt-2 space-y-2">
               <textarea 
-                className="w-full p-2 text-sm border-2 rounded-md"
+                className="w-full p-2 text-sm border-2 rounded-md bg-background text-foreground"
                 value={editContent}
                 onChange={e => setEditContent(e.target.value)}
                 disabled={loading}

@@ -69,46 +69,64 @@ async createThread(authorId, threadData) {
    * Get threads with pagination and filtering
    */
   async getThreads(filters = {}) {
-    const { page = 1, limit = 10, subject, sort = "latest" } = filters;
+    const { page = 1, limit = 10, subject, search, sort = "latest" } = filters;
 
     const query = { isDeleted: false };
 
     if (subject) {
       query.subject = subject;
     }
+    
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { content: { $regex: search, $options: "i" } },
+      ];
+    }
 
     const skip = (page - 1) * limit;
 
-    // Determine sort order
-    let sortOption = {};
+    let threads = [];
+    let total = 0;
+
     if (sort === "mostUpvoted") {
-      // Sort by number of upvotes (requires aggregation or virtual)
-      // For simplicity, we'll use a workaround
-      sortOption = { createdAt: -1 }; // Fallback to latest
+      // Use aggregation for sorting by array length
+      const pipeline = [
+        { $match: query },
+        { $addFields: { upvoteCount: { $size: { $ifNull: ["$upvotes", []] } } } },
+        { $sort: { upvoteCount: -1, createdAt: -1 } },
+        { $skip: skip },
+        { $limit: limit }
+      ];
+
+      const [aggResults, countResult] = await Promise.all([
+        ThreadModel.aggregate(pipeline),
+        ThreadModel.countDocuments(query)
+      ]);
+      
+      threads = await ThreadModel.populate(aggResults, { path: "authorId", select: "name email role" });
+      total = countResult;
     } else {
-      sortOption = { createdAt: -1 };
-    }
-
-    const [threads, total] = await Promise.all([
-      ThreadModel.find(query)
-        .populate("authorId", "name email role")
-        .sort(sortOption)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      ThreadModel.countDocuments(query),
-    ]);
-
-    // If sorting by upvotes, do it in memory
-    if (sort === "mostUpvoted") {
-      threads.sort((a, b) => b.upvotes.length - a.upvotes.length);
+      // Default latest
+      const sortOption = { createdAt: -1 };
+      const [findResults, countResult] = await Promise.all([
+        ThreadModel.find(query)
+          .populate("authorId", "name email role")
+          .sort(sortOption)
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        ThreadModel.countDocuments(query),
+      ]);
+      threads = findResults;
+      total = countResult;
     }
 
     return {
       threads,
       pagination: {
-        page,
-        limit,
+        page: Number(page),
+        limit: Number(limit),
         total,
         pages: Math.ceil(total / limit),
       },
@@ -311,7 +329,7 @@ async createThread(authorId, threadData) {
 
     // Check for profanity
     const flaggedForReview = await ProfanityFilter.shouldFlag(replyData.text);
-    if (flaggedForReview) throw new BadRequestException("Your content violates community guidelines. Please revise and try again.");
+    if (flaggedForReview) throw new BadRequestException("This is violating the community guideline and disable the post.");
 
     const reply = {
       userId,
@@ -457,7 +475,7 @@ async createThread(authorId, threadData) {
 
     // Check for profanity
     const flaggedForReview = await ProfanityFilter.shouldFlag(updateData.text);
-    if (flaggedForReview) throw new BadRequestException("Your content violates community guidelines. Please revise and try again.");
+    if (flaggedForReview) throw new BadRequestException("This is violating the community guideline and disable the post.");
 
     reply.text = updateData.text;
     reply.flaggedForReview = false;

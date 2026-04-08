@@ -43,7 +43,8 @@ const ThreadDetailsPage = () => {
       await upvoteThread(id);
       toast({ title: 'Success', description: 'Thread upvoted' });
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to upvote', variant: 'destructive' });
+      const errorMsg = error.response?.data?.message || 'Failed to upvote';
+      toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
     }
   };
 
@@ -57,7 +58,8 @@ const ThreadDetailsPage = () => {
       fetchThreadById(id);
       toast({ title: 'Success', description: 'Reply added successfully' });
     } catch (err) {
-      toast({ title: 'Error', description: 'Failed to add reply', variant: 'destructive' });
+      const errorMsg = err.response?.data?.message || 'Failed to add reply';
+      toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
@@ -69,7 +71,8 @@ const ThreadDetailsPage = () => {
       fetchThreadById(id);
       toast({ title: 'Success', description: 'Marked as best answer' });
     } catch (err) {
-      toast({ title: 'Error', description: 'Failed to accept reply', variant: 'destructive' });
+      const errorMsg = err.response?.data?.message || 'Failed to accept reply';
+      toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
     }
   };
 
@@ -80,7 +83,8 @@ const ThreadDetailsPage = () => {
       toast({ title: 'Success', description: 'Thread deleted' });
       navigate('/threads');
     } catch (err) {
-      toast({ title: 'Error', description: 'Failed to delete thread', variant: 'destructive' });
+      const errorMsg = err.response?.data?.message || 'Failed to delete thread';
+      toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
     }
   };
 

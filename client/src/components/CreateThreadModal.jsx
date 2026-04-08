@@ -32,7 +32,8 @@ export const CreateThreadModal = ({ isOpen, onClose }) => {
       setFormData({ title: '', content: '', subject: '' });
       onClose();
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to create thread', variant: 'destructive' });
+      const errorMsg = error.response?.data?.message || 'Failed to create thread';
+      toast({ title: 'Error', description: errorMsg, variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
