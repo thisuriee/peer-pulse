@@ -9,6 +9,7 @@
   "test": "cross-env NODE_ENV=test jest",
   "test:unit": "cross-env NODE_ENV=test jest tests/unit",
   "test:unit:auth": "cross-env NODE_ENV=test jest tests/unit/auth",
+  "test:unit:session": "cross-env NODE_ENV=test jest tests/unit/session",
   "test:integration": "cross-env NODE_ENV=test jest tests/integration",
   "test:coverage": "cross-env NODE_ENV=test jest --coverage",
   "test:watch": "cross-env NODE_ENV=test jest --watch",
