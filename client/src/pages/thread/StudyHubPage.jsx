@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { useThreadContext } from '../context/ThreadContext';
-import { ThreadCard } from '../components/ThreadCard';
-import { Loader } from '../components/Loader';
-import { Input } from '../components/ui/input';
-import { Button } from '../components/ui/button';
-import { THREAD_SUBJECTS } from '../utils/constants';
-import { CreateThreadModal } from '../components/CreateThreadModal';
-import { Navbar } from '../components/Navbar';
+import { useThreadContext } from '../../context/ThreadContext';
+import { ThreadCard } from '../../components/thread/ThreadCard';
+import { Loader } from '../../components/thread/Loader';
+import { Input } from '../../components/ui/input';
+import { Button } from '../../components/ui/button';
+import { THREAD_SUBJECTS } from '../../utils/constants';
+import { CreateThreadModal } from '../../components/thread/CreateThreadModal';
+import { Navbar } from '../../components/thread/Navbar';
 import { MessageSquare, Plus, Search } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 const StudyHubPage = () => {
   const { threads, loading, fetchThreads } = useThreadContext();

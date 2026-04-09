@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useThreadContext } from '../context/ThreadContext';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { THREAD_SUBJECTS } from '../utils/constants';
-import { useToast } from '../hooks/use-toast';
-import { getTutors } from '../lib/booking-api';
+import { useThreadContext } from '../../context/ThreadContext';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { THREAD_SUBJECTS } from '../../utils/constants';
+import { useToast } from '../../hooks/use-toast';
+import { getTutors } from '../../lib/booking-api';
 
 export const CreateThreadModal = ({ isOpen, onClose }) => {
   const { createThread } = useThreadContext();

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { PeerPulseLogoMark } from './peer-pulse-logo';
-import { ThemeToggle } from './theme-toggle';
+import { PeerPulseLogoMark } from "../peer-pulse-logo";
+import { ThemeToggle } from "../theme-toggle";
 import { Bell, LogOut, Settings } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 function initials(name = '') {
   return name

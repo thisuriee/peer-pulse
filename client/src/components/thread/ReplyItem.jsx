@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Card, CardContent } from './ui/card';
-import { Button } from './ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { CheckCircle, Edit, Trash, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { useToast } from '../hooks/use-toast';
-import { threadService } from '../services/threadService';
+import { useToast } from '@/hooks/use-toast';
+import { threadService } from '@/services/threadService';
 
 export const ReplyItem = ({ reply, isOwner, onAccept, threadId, currentUserId, onReplyUpdated }) => {
   const [isEditing, setIsEditing] = useState(false);

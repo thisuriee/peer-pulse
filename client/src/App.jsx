@@ -6,8 +6,8 @@ import HomePage from '@/pages/home';
 import { AuthProvider } from '@/context/AuthContext';
 import { ThreadProvider } from '@/context/ThreadContext';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
-import StudyHubPage from '@/pages/StudyHubPage';
-import ThreadDetailsPage from '@/pages/ThreadDetailsPage';
+import StudyHubPage from '@/pages/thread/StudyHubPage';
+import ThreadDetailsPage from '@/pages/thread/ThreadDetailsPage';
 import { Toaster } from '@/components/ui/toaster';
 
 const SessionsPage = lazy(() => import('@/pages/sessions'));

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from './ui/card';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card';
+import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 import { ThumbsUp, MessageCircle, FileText } from 'lucide-react';
 
 export const ThreadCard = ({ thread }) => {

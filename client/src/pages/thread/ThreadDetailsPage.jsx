@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useThreadContext } from '../context/ThreadContext';
-import { useAuth } from '../context/AuthContext';
-import { Loader } from '../components/Loader';
-import { ReplyItem } from '../components/ReplyItem';
-import { Button } from '../components/ui/button';
+import { useThreadContext } from '../../context/ThreadContext';
+import { useAuth } from '../../context/AuthContext';
+import { Loader } from '../../components/thread/Loader';
+import { ReplyItem } from '../../components/thread/ReplyItem';
+import { Button } from '../../components/ui/button';
 import { ArrowLeft, ThumbsUp } from 'lucide-react';
-import { threadService } from '../services/threadService';
-import { useToast } from '../hooks/use-toast';
-import { Navbar } from '../components/Navbar';
+import { threadService } from '../../services/threadService';
+import { useToast } from '../../hooks/use-toast';
+import { Navbar } from '../../components/thread/Navbar';
 
 const ThreadDetailsPage = () => {
   const { id } = useParams();
