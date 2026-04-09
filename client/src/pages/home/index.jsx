@@ -52,6 +52,7 @@ const fetchResources = () => apiClient.get('/resources?limit=4').then((r) => r.d
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const BADGE_STYLES = {
+  rookie: 'text-emerald-700 bg-emerald-50 border-emerald-200',
   gold: 'text-yellow-600 bg-yellow-50 border-yellow-200',
   silver: 'text-slate-500 bg-slate-50 border-slate-200',
   bronze: 'text-orange-600 bg-orange-50 border-orange-200',
@@ -96,6 +97,14 @@ function initials(name = '') {
     .slice(0, 2)
     .join('')
     .toUpperCase();
+}
+
+function badgeFromReviewCount(count = 0) {
+  if (count >= 40) return 'gold';
+  if (count >= 20) return 'silver';
+  if (count >= 10) return 'bronze';
+  if (count >= 1) return 'rookie';
+  return 'none';
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -343,7 +352,8 @@ export default function HomePage() {
   );
   const pendingRequests = sessions.filter((s) => s.status === 'PENDING');
   const completedSessions = sessions.filter((s) => s.status === 'COMPLETED');
-  const badge = user?.badge ?? 'none';
+  const reviewCount = user?.reviewCount ?? 0;
+  const badge = user?.badge ?? badgeFromReviewCount(reviewCount);
   const reputationScore = user?.reputationScore ?? 0;
 
   const handleLogout = async () => {
@@ -522,6 +532,8 @@ export default function HomePage() {
                       to={
                         title === 'Community'
                           ? '/threads'
+                          : title === 'Reputation'
+                            ? '/reviews'
                           : title === 'Resources'
                             ? '/resources'
                             : '/sessions'
@@ -574,7 +586,7 @@ export default function HomePage() {
             icon={TrendingUp}
             label="Reputation"
             value={reputationScore > 0 ? reputationScore.toFixed(1) : '—'}
-            sub={`${user?.reviewCount ?? 0} reviews`}
+            sub={`${reviewCount} reviews`}
           />
           <StatCard
             icon={Award}
@@ -589,7 +601,9 @@ export default function HomePage() {
                           ? 'bg-yellow-400'
                           : badge === 'silver'
                             ? 'bg-slate-400'
-                            : 'bg-orange-400'
+                            : badge === 'bronze'
+                              ? 'bg-orange-400'
+                              : 'bg-emerald-400'
                       }`}
                     />
                     {badge}
@@ -599,7 +613,7 @@ export default function HomePage() {
                 )}
               </span>
             }
-            sub="earn via great reviews"
+            sub={`badge by ${reviewCount} reviews`}
           />
         </section>
 
@@ -807,6 +821,7 @@ export default function HomePage() {
                     />
                     <QuickAction icon={FileText} label="Upload Resource" href="/resources/new" />
                     <QuickAction icon={Users} label="View Students" href="/sessions" />
+                    <QuickAction icon={TrendingUp} label="Review Analytics" href="/reviews" />
                     <QuickAction icon={MessageSquare} label="Community Hub" href="/threads" />
                   </>
                 ) : (
