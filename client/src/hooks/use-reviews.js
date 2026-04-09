@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   createReview,
   deleteReview,
+  getLeaderboard,
   getMyReviews,
   updateReview,
 } from '@/lib/review-api';
@@ -10,6 +11,7 @@ import { bookingKeys } from '@/hooks/use-bookings';
 export const reviewKeys = {
   all: ['reviews'],
   mine: ['reviews', 'mine'],
+  leaderboard: ['reviews', 'leaderboard'],
 };
 
 export const useMyReviews = (enabled = true) =>
@@ -17,6 +19,14 @@ export const useMyReviews = (enabled = true) =>
     queryKey: reviewKeys.mine,
     queryFn: getMyReviews,
     enabled,
+  });
+
+export const useLeaderboard = (enabled = true) =>
+  useQuery({
+    queryKey: reviewKeys.leaderboard,
+    queryFn: getLeaderboard,
+    enabled,
+    staleTime: 60_000,
   });
 
 export const useCreateReview = () => {

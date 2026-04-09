@@ -20,3 +20,8 @@ export const deleteReview = async (reviewId) => {
   return response.data.data;
 };
 
+export const getLeaderboard = async () => {
+  const response = await apiClient.get('/reviews/leaderboard');
+  return response.data.data;
+};
+

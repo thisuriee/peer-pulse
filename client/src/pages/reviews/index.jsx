@@ -5,6 +5,7 @@ import {
   ArrowUpRight,
   Bell,
   ChevronDown,
+  Crown,
   LogOut,
   Search,
   Settings,
@@ -286,6 +287,25 @@ export default function ReviewsPage() {
             </div>
           </div>
           <BadgeProgress badge={user?.badge} reviewCount={user?.reviewCount ?? 0} />
+        </section>
+
+        <section className="rounded-2xl border-2 border-border bg-card p-4 md:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold flex items-center gap-2">
+                <Crown className="w-4 h-4 text-primary" />
+                Community Leaderboard
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Compare top tutors, rising tutors, and most helpful students.
+              </p>
+            </div>
+            <Button asChild size="sm" className="gap-1.5">
+              <Link to="/leaderboard">
+                Open Leaderboard <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            </Button>
+          </div>
         </section>
 
         <section className="rounded-2xl border-2 border-border bg-card p-4 md:p-5 space-y-4">
