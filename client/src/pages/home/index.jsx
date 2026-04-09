@@ -24,8 +24,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PeerPulseLogoMark } from '@/components/peer-pulse-logo';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { PeerPulseLogoMark } from "@/components/peer-pulse-logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api-client';
 

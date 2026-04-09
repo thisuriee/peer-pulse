@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { PeerPulseLogoMark } from '@/components/peer-pulse-logo';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
 import apiClient from '@/lib/api-client';
 
 const loginSchema = z.object({
@@ -33,6 +34,7 @@ function Starburst({ className }) {
 export default function LoginPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -45,7 +47,7 @@ export default function LoginPage() {
   const onSubmit = async (data) => {
     setIsLoading(true);
     try {
-      await apiClient.post('/auth/login', {
+      await login({
         ...data,
         userAgent: navigator.userAgent,
       });
@@ -54,7 +56,7 @@ export default function LoginPage() {
       toast({
         variant: 'destructive',
         title: 'Sign in failed',
-        description: error.message,
+        description: error.response?.data?.message || error.message || 'Something went wrong',
       });
     } finally {
       setIsLoading(false);
