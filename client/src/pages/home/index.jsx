@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   BookOpen,
   Users,
+  Trophy,
   Star,
   Calendar,
   MessageSquare,
@@ -24,8 +25,9 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { PeerPulseLogoMark } from "@/components/peer-pulse-logo";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { PeerPulseLogoMark } from '@/components/peer-pulse-logo';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { useLeaderboard } from '@/hooks/use-reviews';
 import { useToast } from '@/hooks/use-toast';
 import apiClient from '@/lib/api-client';
 
@@ -52,6 +54,7 @@ const fetchResources = () => apiClient.get('/resources?limit=4').then((r) => r.d
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const BADGE_STYLES = {
+  rookie: 'text-emerald-700 bg-emerald-50 border-emerald-200',
   gold: 'text-yellow-600 bg-yellow-50 border-yellow-200',
   silver: 'text-slate-500 bg-slate-50 border-slate-200',
   bronze: 'text-orange-600 bg-orange-50 border-orange-200',
@@ -96,6 +99,14 @@ function initials(name = '') {
     .slice(0, 2)
     .join('')
     .toUpperCase();
+}
+
+function badgeFromReviewCount(count = 0) {
+  if (count >= 40) return 'gold';
+  if (count >= 20) return 'silver';
+  if (count >= 10) return 'bronze';
+  if (count >= 1) return 'rookie';
+  return 'none';
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -328,6 +339,7 @@ export default function HomePage() {
     queryFn: fetchResources,
     enabled: !!user,
   });
+  const { data: leaderboard } = useLeaderboard(true);
 
   // Normalise array vs paginated envelope
   const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.sessions ?? []);
@@ -343,8 +355,10 @@ export default function HomePage() {
   );
   const pendingRequests = sessions.filter((s) => s.status === 'PENDING');
   const completedSessions = sessions.filter((s) => s.status === 'COMPLETED');
-  const badge = user?.badge ?? 'none';
+  const reviewCount = user?.reviewCount ?? 0;
+  const badge = user?.badge ?? badgeFromReviewCount(reviewCount);
   const reputationScore = user?.reputationScore ?? 0;
+  const topTutors = leaderboard?.topTutors ?? [];
 
   const handleLogout = async () => {
     try {
@@ -522,6 +536,8 @@ export default function HomePage() {
                       to={
                         title === 'Community'
                           ? '/threads'
+                          : title === 'Reputation'
+                            ? '/reviews'
                           : title === 'Resources'
                             ? '/resources'
                             : '/sessions'
@@ -574,7 +590,7 @@ export default function HomePage() {
             icon={TrendingUp}
             label="Reputation"
             value={reputationScore > 0 ? reputationScore.toFixed(1) : '—'}
-            sub={`${user?.reviewCount ?? 0} reviews`}
+            sub={`${reviewCount} reviews`}
           />
           <StatCard
             icon={Award}
@@ -589,7 +605,9 @@ export default function HomePage() {
                           ? 'bg-yellow-400'
                           : badge === 'silver'
                             ? 'bg-slate-400'
-                            : 'bg-orange-400'
+                            : badge === 'bronze'
+                              ? 'bg-orange-400'
+                              : 'bg-emerald-400'
                       }`}
                     />
                     {badge}
@@ -599,7 +617,7 @@ export default function HomePage() {
                 )}
               </span>
             }
-            sub="earn via great reviews"
+            sub={`badge by ${reviewCount} reviews`}
           />
         </section>
 
@@ -807,6 +825,7 @@ export default function HomePage() {
                     />
                     <QuickAction icon={FileText} label="Upload Resource" href="/resources/new" />
                     <QuickAction icon={Users} label="View Students" href="/sessions" />
+                    <QuickAction icon={TrendingUp} label="Review Analytics" href="/reviews" />
                     <QuickAction icon={MessageSquare} label="Community Hub" href="/threads" />
                   </>
                 ) : (
@@ -816,6 +835,45 @@ export default function HomePage() {
                     <QuickAction icon={BookOpen} label="Browse Resources" href="/resources" />
                     <QuickAction icon={MessageSquare} label="Ask Community" href="/threads/new" />
                   </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Leaderboard teaser */}
+            <Card className="relative overflow-hidden border-primary/25">
+              <div className="absolute inset-x-0 top-0 h-14 bg-gradient-to-r from-primary/18 via-primary/8 to-transparent" />
+              <CardHeader className="pb-2 relative">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-primary" />
+                    Leaderboard
+                  </CardTitle>
+                  <Link to="/leaderboard">
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                      Open <ChevronRight className="w-3 h-3" />
+                    </Button>
+                  </Link>
+                </div>
+                <CardDescription className="text-xs">
+                  Top tutors by reputation and review weight
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-6 pb-5 space-y-2 relative">
+                {topTutors.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Leaderboard data is loading...</p>
+                ) : (
+                  topTutors.slice(0, 3).map((tutor, idx) => (
+                    <div
+                      key={tutor._id}
+                      className="flex items-center gap-2.5 py-1.5 border-b border-border/50 last:border-0"
+                    >
+                      <span className="text-xs font-semibold text-muted-foreground w-5">#{idx + 1}</span>
+                      <span className="text-sm font-medium truncate flex-1">{tutor.name}</span>
+                      <span className="text-xs text-primary font-semibold">
+                        {Number(tutor.reputationScore || 0).toFixed(1)}
+                      </span>
+                    </div>
+                  ))
                 )}
               </CardContent>
             </Card>

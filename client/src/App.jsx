@@ -12,6 +12,8 @@ import { Toaster } from '@/components/ui/toaster';
 
 const SessionsPage = lazy(() => import('@/pages/sessions'));
 const TutorsPage = lazy(() => import('@/pages/tutors'));
+const ReviewsPage = lazy(() => import('@/pages/reviews'));
+const LeaderboardPage = lazy(() => import('@/pages/leaderboard'));
 
 function App() {
   return (
@@ -35,6 +37,8 @@ function App() {
             {/* Booking फीature routes */}
             <Route path="/sessions" element={<SessionsPage />} />
             <Route path="/tutors" element={<TutorsPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
           </Route>
         </Routes>
       </Suspense>

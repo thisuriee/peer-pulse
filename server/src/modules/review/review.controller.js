@@ -61,6 +61,16 @@ class ReviewController {
     });
   });
 
+  getLeaderboard = asyncHandler(async (_req, res) => {
+    const leaderboard = await this.reviewService.getLeaderboard();
+
+    return res.status(HTTPSTATUS.OK).json({
+      success: true,
+      message: "Leaderboard retrieved successfully",
+      data: leaderboard,
+    });
+  });
+
   updateReview = asyncHandler(async (req, res) => {
     const user = req.user;
     const { id } = req.params;
