@@ -41,6 +41,22 @@ class ReviewService {
     }
   }
 
+  canReviewBooking(booking) {
+    if (!booking) return false;
+
+    if (booking.status === BookingStatus.COMPLETED) {
+      return true;
+    }
+
+    const startableStatuses = [BookingStatus.ACCEPTED, BookingStatus.CONFIRMED];
+    if (!startableStatuses.includes(booking.status)) {
+      return false;
+    }
+
+    // Session is considered started once scheduled time is reached.
+    return new Date(booking.scheduledAt) <= new Date();
+  }
+
   async createReview(user, { bookingId, rating, comment }) {
     if (!bookingId) {
       throw new BadRequestException('bookingId is required');
@@ -55,8 +71,10 @@ class ReviewService {
       throw new NotFoundException('Booking not found');
     }
 
-    if (booking.status !== BookingStatus.COMPLETED) {
-      throw new BadRequestException('You can only review a completed booking');
+    if (!this.canReviewBooking(booking)) {
+      throw new BadRequestException(
+        'You can review only after the session has started'
+      );
     }
 
     if (booking.student.toString() !== user.id.toString()) {
