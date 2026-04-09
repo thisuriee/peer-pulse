@@ -72,6 +72,30 @@ function PageNav() {
           </span>
         </Link>
 
+        {/* Nav links */}
+        <nav className="hidden md:flex items-center gap-1">
+          {[
+            { label: 'Home', href: '/home' },
+            { label: 'Sessions', href: '/sessions' },
+            { label: 'Resources', href: '/resources' },
+            { label: 'Reviews', href: '/reviews' },
+            { label: 'Community', href: '/threads' },
+            { label: 'Tutors', href: '/tutors', active: true },
+          ].map(({ label, href, active }) => (
+            <Link
+              key={label}
+              to={href}
+              className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                active
+                  ? 'text-primary bg-primary/10 border-2 border-primary/25'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent border-2 border-transparent'
+              }`}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <Button

@@ -245,6 +245,7 @@ function Navbar({ user, onLogout }) {
             { label: 'Home', href: '/home', active: true },
             { label: 'Sessions', href: '/sessions' },
             { label: 'Resources', href: '/resources' },
+            { label: 'Reviews', href: '/reviews' },
             { label: 'Community', href: '/threads' },
             { label: 'Tutors', href: '/tutors' },
           ].map(({ label, href, active }) => (

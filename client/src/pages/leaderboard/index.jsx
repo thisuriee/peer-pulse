@@ -50,8 +50,11 @@ function Navbar({ user, onLogout }) {
         <nav className="hidden md:flex items-center gap-1">
           {[
             { label: 'Home', href: '/home' },
-            { label: 'Leaderboard', href: '/leaderboard', active: true },
+            { label: 'Sessions', href: '/sessions' },
+            { label: 'Resources', href: '/resources' },
             { label: 'Reviews', href: '/reviews' },
+            { label: 'Community', href: '/threads' },
+            { label: 'Tutors', href: '/tutors' },
           ].map(({ label, href, active }) => (
             <Link
               key={label}

@@ -63,7 +63,10 @@ function Navbar({ user, onLogout }) {
           {[
             { label: 'Home', href: '/home' },
             { label: 'Sessions', href: '/sessions' },
+            { label: 'Resources', href: '/resources' },
             { label: 'Reviews', href: '/reviews', active: true },
+            { label: 'Community', href: '/threads' },
+            { label: 'Tutors', href: '/tutors' },
           ].map(({ label, href, active }) => (
             <Link
               key={label}
