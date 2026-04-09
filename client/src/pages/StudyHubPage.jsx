@@ -8,18 +8,30 @@ import { THREAD_SUBJECTS } from '../utils/constants';
 import { CreateThreadModal } from '../components/CreateThreadModal';
 import { Navbar } from '../components/Navbar';
 import { MessageSquare, Plus, Search } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const StudyHubPage = () => {
   const { threads, loading, fetchThreads } = useThreadContext();
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
   const [subject, setSubject] = useState('');
   const [sort, setSort] = useState('latest');
+  const [assignmentFilter, setAssignmentFilter] = useState('all'); 
   const [page, setPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const isTutor = user?.role === 'tutor' || user?.role === 'admin';
+
   useEffect(() => {
-    fetchThreads({ search, subject, sort, page });
-  }, [fetchThreads, search, subject, sort, page]);
+    let assignedTutor;
+    if (assignmentFilter === 'me') {
+      assignedTutor = user?._id || user?.id;
+    } else if (assignmentFilter === 'unassigned') {
+      assignedTutor = 'unassigned';
+    }
+
+    fetchThreads({ search, subject, sort, assignedTutor, page });
+  }, [fetchThreads, search, subject, sort, assignmentFilter, page, user]);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -84,6 +96,18 @@ const StudyHubPage = () => {
               <option value="latest">Latest</option>
               <option value="mostUpvoted">Most Upvoted</option>
             </select>
+
+            {isTutor && (
+              <select 
+                className="flex h-10 w-full rounded-md border-2 border-input bg-background px-3 py-2 text-sm md:w-48 font-medium focus:outline-none"
+                value={assignmentFilter} 
+                onChange={(e) => setAssignmentFilter(e.target.value)}
+              >
+                <option value="all">All Threads</option>
+                <option value="me">Assigned to Me</option>
+                <option value="unassigned">Community Only</option>
+              </select>
+            )}
           </div>
         </div>
 

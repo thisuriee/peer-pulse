@@ -16,7 +16,7 @@ class ThreadService {
    * Create a new thread
    */
 async createThread(authorId, threadData) {
-  const { title, content, subject } = threadData;
+  const { title, content, subject, assignedTutor } = threadData;
 
   // 🔹 Analyze text using Perspective API
   const titleAnalysis = await ProfanityFilter.analyzeText(title);
@@ -57,6 +57,7 @@ async createThread(authorId, threadData) {
     title,
     content,
     subject,
+    assignedTutor: assignedTutor || null,
     flaggedForReview: false,
     moderation,
   });
@@ -69,7 +70,7 @@ async createThread(authorId, threadData) {
    * Get threads with pagination and filtering
    */
   async getThreads(filters = {}) {
-    const { page = 1, limit = 10, subject, search, sort = "latest" } = filters;
+    const { page = 1, limit = 10, subject, search, sort = "latest", assignedTutor } = filters;
 
     const query = { isDeleted: false };
 
@@ -77,6 +78,14 @@ async createThread(authorId, threadData) {
       query.subject = subject;
     }
     
+    if (assignedTutor !== undefined) {
+      if (assignedTutor === 'unassigned') {
+        query.assignedTutor = null;
+      } else {
+        query.assignedTutor = assignedTutor;
+      }
+    }
+
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
@@ -104,7 +113,10 @@ async createThread(authorId, threadData) {
         ThreadModel.countDocuments(query)
       ]);
       
-      threads = await ThreadModel.populate(aggResults, { path: "authorId", select: "name email role" });
+      threads = await ThreadModel.populate(aggResults, [
+        { path: "authorId", select: "name email role" },
+        { path: "assignedTutor", select: "name email" }
+      ]);
       total = countResult;
     } else {
       // Default latest
@@ -112,6 +124,7 @@ async createThread(authorId, threadData) {
       const [findResults, countResult] = await Promise.all([
         ThreadModel.find(query)
           .populate("authorId", "name email role")
+          .populate("assignedTutor", "name email")
           .sort(sortOption)
           .skip(skip)
           .limit(limit)

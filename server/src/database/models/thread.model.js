@@ -116,6 +116,11 @@ const threadSchema = new Schema(
       trim: true,
       maxlength: 5000,
     },
+    assignedTutor: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     subject: {
       type: String,
       trim: true,

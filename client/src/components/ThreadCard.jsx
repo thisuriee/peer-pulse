@@ -28,6 +28,15 @@ export const ThreadCard = ({ thread }) => {
           </div>
           <span className="text-muted-foreground/50">•</span>
           <span className="px-2.5 py-0.5 bg-accent text-accent-foreground border border-border rounded-full font-bold text-xs tracking-wide">{thread.subject}</span>
+          
+          {thread.assignedTutor && (
+            <>
+              <span className="text-muted-foreground/50">•</span>
+              <span className="px-2.5 py-0.5 bg-blue-100 text-blue-800 border border-blue-300 rounded-full font-bold text-xs tracking-wide flex items-center gap-1">
+                Assigned to: {thread.assignedTutor?.name || 'Tutor'}
+              </span>
+            </>
+          )}
         </div>
       </CardHeader>
       

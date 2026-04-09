@@ -1,18 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useThreadContext } from '../context/ThreadContext';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { THREAD_SUBJECTS } from '../utils/constants';
 import { useToast } from '../hooks/use-toast';
+import { getTutors } from '../lib/booking-api';
 
 export const CreateThreadModal = ({ isOpen, onClose }) => {
   const { createThread } = useThreadContext();
   const { toast } = useToast();
   
+  const [tutors, setTutors] = useState([]);
+  const [loadingTutors, setLoadingTutors] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const fetchTutors = async () => {
+        setLoadingTutors(true);
+        try {
+          const fetchedTutors = await getTutors();
+          setTutors(fetchedTutors || []);
+        } catch (error) {
+          console.error("Failed to fetch tutors", error);
+        } finally {
+          setLoadingTutors(false);
+        }
+      };
+      fetchTutors();
+    }
+  }, [isOpen]);
+
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    subject: ''
+    subject: '',
+    assignedTutor: ''
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,9 +49,12 @@ export const CreateThreadModal = ({ isOpen, onClose }) => {
     
     setSubmitting(true);
     try {
-      await createThread(formData);
+      await createThread({
+        ...formData,
+        assignedTutor: formData.assignedTutor || undefined,
+      });
       toast({ title: 'Success', description: 'Thread created successfully' });
-      setFormData({ title: '', content: '', subject: '' });
+      setFormData({ title: '', content: '', subject: '', assignedTutor: '' });
       onClose();
     } catch (error) {
       const errorMsg = error.response?.data?.message || 'Failed to create thread';
@@ -79,6 +104,21 @@ export const CreateThreadModal = ({ isOpen, onClose }) => {
               placeholder="Explain your problem..."
               disabled={submitting}
             />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-1 block">Assign to Tutor (Optional)</label>
+            <select 
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={formData.assignedTutor}
+              onChange={e => setFormData({ ...formData, assignedTutor: e.target.value })}
+              disabled={submitting || loadingTutors}
+            >
+              <option value="">Community Post (No Tutor)</option>
+              {tutors.map(t => (
+                <option key={t._id} value={t._id}>{t.name}</option>
+              ))}
+            </select>
           </div>
           
           <div className="flex justify-end gap-2 mt-4">

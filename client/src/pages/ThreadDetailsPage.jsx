@@ -140,6 +140,11 @@ const ThreadDetailsPage = () => {
                 Resolved
               </span>
             )}
+            {selectedThread.assignedTutor && (
+              <span className="bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full font-medium text-xs uppercase tracking-wide border border-blue-200">
+                Assigned to: {selectedThread.assignedTutor?.name || 'Tutor'}
+              </span>
+            )}
             <span className="ml-auto text-xs">
               {new Date(selectedThread.createdAt).toLocaleDateString()}
             </span>

@@ -14,6 +14,7 @@ const createThreadSchema = z.object({
     .min(10, "Content must be at least 10 characters")
     .max(5000, "Content cannot exceed 5000 characters"),
   subject: z.string().trim().max(100).optional(),
+  assignedTutor: z.string().trim().optional().nullable(),
 });
 
 const updateThreadSchema = z.object({
@@ -45,6 +46,7 @@ const threadQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional().default(10),
   search: z.string().trim().optional(),
   subject: z.string().trim().optional(),
+  assignedTutor: z.string().trim().optional(),
   sort: z.enum(["latest", "mostUpvoted"]).optional().default("latest"),
 });
 
