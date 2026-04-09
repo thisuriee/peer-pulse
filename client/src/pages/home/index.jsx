@@ -467,6 +467,7 @@ export default function HomePage() {
                     <Button
                       size="sm"
                       className="gap-2 h-10 bg-brand-ink text-brand-mint border-brand-ink hover:bg-brand-ink/90"
+                      onClick={() => navigate('/tutors')}
                     >
                       <Search className="w-4 h-4" />
                       Find a Tutor
@@ -549,13 +550,18 @@ export default function HomePage() {
             sub={`${completedSessions.length} completed`}
           />
           {isTutor ? (
-            <StatCard
-              icon={AlertCircle}
-              label="Pending Requests"
-              value={pendingRequests.length}
-              sub="awaiting your response"
-              accent={pendingRequests.length > 0 ? 'text-yellow-600' : undefined}
-            />
+            <div
+              className="cursor-pointer"
+              onClick={() => navigate('/sessions?status=pending')}
+            >
+              <StatCard
+                icon={AlertCircle}
+                label="Pending Requests"
+                value={pendingRequests.length}
+                sub="awaiting your response"
+                accent={pendingRequests.length > 0 ? 'text-yellow-600' : undefined}
+              />
+            </div>
           ) : (
             <StatCard
               icon={BookOpen}

@@ -43,12 +43,14 @@ class BookingController {
   getBookings = asyncHandler(async (req, res) => {
     const userId = req.user.id;
     const role = req.user.role;
-    const { status, startDate, endDate } = req.query;
+    const { status, startDate, endDate, page, limit } = req.query;
 
     const bookings = await this.bookingService.getBookings(userId, role, {
       status,
       startDate,
       endDate,
+      page: page ? parseInt(page, 10) : 1,
+      limit: limit ? parseInt(limit, 10) : 10,
     });
 
     return res.status(HTTPSTATUS.OK).json({
