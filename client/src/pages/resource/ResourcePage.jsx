@@ -3,6 +3,10 @@ import { ResourceCard } from '@/components/resource/resource-card';
 import { ResourceFilters } from '@/components/resource/resource-filters';
 import { UploadResourceModal } from '@/components/resource/upload-resource-modal';
 import { Navbar } from '@/components/thread/Navbar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StudentLibraryTab } from '@/components/resource/student-library-tab';
+import { DiscoverTutorsTab } from '@/components/resource/discover-tutors-tab';
+import { StudentRequestsTab } from '@/components/resource/student-requests-tab';
 import { useAuth } from '@/context/AuthContext';
 import { useResources } from '@/hooks/use-resources';
 import {
@@ -70,6 +74,29 @@ const ResourcePage = () => {
   const approvedTutors = useMemo(
     () => tutorDirectory.filter((tutor) => tutor.accessStatus === 'approved'),
     [tutorDirectory],
+  );
+
+  const pendingTutors = useMemo(
+    () => tutorDirectory.filter((tutor) => tutor.accessStatus === 'pending'),
+    [tutorDirectory],
+  );
+
+  const availableTutors = useMemo(
+    () => tutorDirectory.filter((tutor) => tutor.accessStatus === 'none'),
+    [tutorDirectory],
+  );
+
+  const rejectedTutors = useMemo(
+    () =>
+      tutorDirectory.filter(
+        (tutor) => tutor.accessStatus === 'rejected' || tutor.accessStatus === 'revoked',
+      ),
+    [tutorDirectory],
+  );
+
+  const selectedTutor = useMemo(
+    () => approvedTutors.find((tutor) => tutor._id === selectedTutorId) || null,
+    [approvedTutors, selectedTutorId],
   );
 
   useEffect(() => {
@@ -207,117 +234,95 @@ const ResourcePage = () => {
         )}
 
         {isStudent && (
-          <section className="mb-8 rounded-lg border p-4 md:p-6">
-            <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">Tutor Libraries</h2>
-                <p className="text-sm text-muted-foreground">
-                  Request access to a tutor's library. Approved libraries appear in your resource
-                  view.
-                </p>
-              </div>
-              <input
-                type="text"
-                value={tutorSearch}
-                onChange={(e) => setTutorSearch(e.target.value)}
-                placeholder="Search tutors"
-                className="h-10 rounded-md border px-3 text-sm md:w-64"
+          <Tabs
+            defaultValue={approvedTutors.length > 0 ? 'library' : 'discover'}
+            className="w-full space-y-6"
+          >
+            <TabsList className="grid w-full sm:w-[400px] grid-cols-3">
+              <TabsTrigger value="library">My Library</TabsTrigger>
+              <TabsTrigger value="discover">Discover</TabsTrigger>
+              <TabsTrigger value="requests">
+                Requests{' '}
+                <span className="ml-2 bg-amber-100 text-amber-700 rounded-full px-2 py-0.5 text-xs">
+                  {pendingTutors.length}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="library" className="space-y-6 outline-none">
+              <StudentLibraryTab
+                approvedTutors={approvedTutors}
+                selectedTutorId={selectedTutorId}
+                setSelectedTutorId={setSelectedTutorId}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                activeFilter={activeFilter}
+                setActiveFilter={setActiveFilter}
+                filteredResources={filteredResources}
+                isLoadingResources={isLoadingResources}
+                isResourcesError={isResourcesError}
               />
-            </div>
+            </TabsContent>
 
-            {isLoadingTutorDirectory ? (
-              <p className="text-sm text-muted-foreground">Loading tutor directory...</p>
-            ) : tutorDirectory.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No tutors found.</p>
+            <TabsContent value="discover" className="outline-none">
+              <DiscoverTutorsTab
+                availableTutors={availableTutors}
+                isLoadingTutorDirectory={isLoadingTutorDirectory}
+                tutorSearch={tutorSearch}
+                setTutorSearch={setTutorSearch}
+                isRequestingAccess={isRequestingAccess}
+                requestLibraryAccess={requestLibraryAccess}
+              />
+            </TabsContent>
+
+            <TabsContent value="requests" className="outline-none">
+              <StudentRequestsTab
+                pendingTutors={pendingTutors}
+                rejectedTutors={rejectedTutors}
+                isRequestingAccess={isRequestingAccess}
+                requestLibraryAccess={requestLibraryAccess}
+              />
+            </TabsContent>
+          </Tabs>
+        )}
+
+        {isTutor && (
+          <>
+            {(!isStudent || selectedTutorId) && (
+              <>
+                <ResourceFilters
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  activeFilter={activeFilter}
+                  onFilterChange={setActiveFilter}
+                />
+              </>
+            )}
+
+            {isLoadingResources ? (
+              <div className="flex justify-center items-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            ) : isResourcesError ? (
+              <div className="text-center py-20 text-destructive">
+                <p className="text-lg">Error loading resources. Please try again.</p>
+              </div>
+            ) : filteredResources.length === 0 ? (
+              <div className="text-center py-20 text-muted-foreground">
+                <p className="text-lg">No resources in your library yet.</p>
+              </div>
             ) : (
-              <div className="space-y-3">
-                {tutorDirectory.map((tutor) => (
-                  <div
-                    key={tutor._id}
-                    className="flex flex-col gap-3 rounded-md border p-3 md:flex-row md:items-center md:justify-between"
-                  >
-                    <div className="min-w-0">
-                      <p className="font-medium">{tutor.name}</p>
-                      <p className="text-sm text-muted-foreground">{tutor.email}</p>
-                      {tutor.bio && (
-                        <p className="mt-1 text-sm text-muted-foreground">{tutor.bio}</p>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${getStatusLabelClass(tutor.accessStatus)}`}
-                      >
-                        {tutor.accessStatus}
-                      </span>
-
-                      {tutor.accessStatus === 'none' || tutor.accessStatus === 'rejected' ? (
-                        <button
-                          type="button"
-                          disabled={isRequestingAccess}
-                          onClick={() => requestLibraryAccess(tutor._id)}
-                          className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-60"
-                        >
-                          Request Access
-                        </button>
-                      ) : null}
-
-                      {tutor.accessStatus === 'approved' && (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedTutorId(tutor._id)}
-                          className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted"
-                        >
-                          View Library
-                        </button>
-                      )}
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredResources.map((resource) => (
+                  <ResourceCard
+                    key={resource._id}
+                    resource={resource}
+                    isOwner={user?._id === (resource.tutor_id?._id || resource.tutor_id)}
+                  />
                 ))}
               </div>
             )}
-          </section>
-        )}
-
-        <ResourceFilters
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
-        />
-
-        {isLoadingResources ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : isResourcesError ? (
-          <div className="text-center py-20 text-destructive">
-            <p className="text-lg">Error loading resources. Please try again.</p>
-          </div>
-        ) : isStudent && !selectedTutorId ? (
-          <div className="text-center py-20 text-muted-foreground">
-            <p className="text-lg">
-              Request and get approval to at least one tutor library to view resources.
-            </p>
-          </div>
-        ) : filteredResources.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
-            <p className="text-lg">
-              {isTutor
-                ? 'No resources in your library yet.'
-                : 'No resources found for the selected tutor and filters.'}
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredResources.map((resource) => (
-              <ResourceCard
-                key={resource._id}
-                resource={resource}
-                isOwner={user?._id === (resource.tutor_id?._id || resource.tutor_id)}
-              />
-            ))}
-          </div>
+          </>
         )}
       </main>
     </div>
