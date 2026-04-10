@@ -97,6 +97,13 @@ open coverage/lcov-report/index.html
 explorer.exe coverage\\lcov-report\\index.html
 ```
 
+```bash
+# Windows (PowerShell or CMD)
+start coverage\lcov-report\index.html
+# or
+explorer coverage\lcov-report\index.html
+```
+
 ## Test Coverage
 
 **Auth Coverage:**
