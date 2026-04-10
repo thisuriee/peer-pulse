@@ -20,7 +20,10 @@ class ResourceController {
       skip,
     };
 
-    const result = await resourceService.getAllResources(filters);
+    const userId = req.user._id || req.user.id;
+    const userRole = req.user.role;
+
+    const result = await resourceService.getAllResources(userId, userRole, filters);
 
     return res.status(HTTPSTATUS.OK).json({
       message: 'Resources retrieved successfully',
@@ -35,8 +38,10 @@ class ResourceController {
    */
   getResourceById = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    const userId = req.user._id || req.user.id;
+    const userRole = req.user.role;
 
-    const resource = await resourceService.getResourceById(id);
+    const resource = await resourceService.getResourceById(id, userId, userRole);
 
     return res.status(HTTPSTATUS.OK).json({
       message: 'Resource retrieved successfully',
