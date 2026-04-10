@@ -103,8 +103,8 @@ export const UploadResourceModal = () => {
               className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="document">Document (PDF/Notes)</option>
+              <option value="image">Image</option>
               <option value="video">Video</option>
-              <option value="link">External Link</option>
             </select>
           </div>
 
