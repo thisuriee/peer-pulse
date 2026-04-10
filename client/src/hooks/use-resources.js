@@ -2,11 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { resourceApi } from '@/lib/resource-api';
 import { useToast } from './use-toast';
 
-export const useResources = (filters = {}) => {
+export const useResources = (filters = {}, options = {}) => {
   return useQuery({
     queryKey: ['resources', filters],
     queryFn: () => resourceApi.getAll(filters),
     keepPreviousData: true,
+    ...options,
   });
 };
 

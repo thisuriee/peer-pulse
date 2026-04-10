@@ -12,21 +12,41 @@ cloudinary.config({
 });
 
 /**
+ * Normalize app-level file category or Cloudinary resource type.
+ * Supported inputs: image, video, document, raw
+ * Supported outputs: image, video, raw
+ */
+const normalizeResourceType = (resourceType) => {
+  const normalized = String(resourceType || '')
+    .trim()
+    .toLowerCase();
+
+  if (normalized === 'image') return 'image';
+  if (normalized === 'video') return 'video';
+  if (normalized === 'document' || normalized === 'raw') return 'raw';
+
+  throw new Error(`Unsupported resource type: ${resourceType}`);
+};
+
+/**
  * Upload file to Cloudinary
  * @param {string} filePath - Path to the file to upload
  * @param {string} folder - Folder name in Cloudinary
- * @param {string} resourceType - Type of resource (image, video, raw, auto)
+ * @param {string} resourceType - Type of resource (image, video, document/raw)
  * @returns {Promise} Upload result
  */
 const uploadToCloudinary = async (
   filePath,
   folder = 'peer-pulse/resources',
-  resourceType = 'auto',
+  resourceType = 'raw',
 ) => {
   try {
+    const normalizedResourceType = normalizeResourceType(resourceType);
+
     const result = await cloudinary.uploader.upload(filePath, {
       folder,
-      resource_type: resourceType,
+      resource_type: normalizedResourceType,
+      upload_preset: 'peer-learn',
       use_filename: true,
       unique_filename: true,
     });
@@ -82,4 +102,5 @@ module.exports = {
   uploadToCloudinary,
   deleteFromCloudinary,
   extractPublicId,
+  normalizeResourceType,
 };
