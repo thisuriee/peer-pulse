@@ -1,0 +1,210 @@
+{
+  "aggregate": {
+    "counters": {
+      "vusers.created_by_name.Read Single Thread": 877,
+      "vusers.created": 4500,
+      "http.requests": 4500,
+      "plugins.metrics-by-endpoint./api/v1/threads.errors.ECONNREFUSED": 4500,
+      "errors.ECONNREFUSED": 4500,
+      "vusers.failed": 4500,
+      "vusers.created_by_name.Create and Upvote Thread Simulation (Assume Auth Context or public access)": 475,
+      "vusers.created_by_name.Thread List and Aggregation Bottleneck": 3148
+    },
+    "rates": {
+      "http.request_rate": 70
+    },
+    "firstCounterAt": 1775817319771,
+    "lastCounterAt": 1775817380745,
+    "firstMetricAt": 1775817319771,
+    "lastMetricAt": 1775817380745,
+    "period": 1775817380000,
+    "summaries": {},
+    "histograms": {}
+  },
+  "intermediate": [
+    {
+      "counters": {
+        "vusers.created_by_name.Read Single Thread": 2,
+        "vusers.created": 6,
+        "http.requests": 5,
+        "plugins.metrics-by-endpoint./api/v1/threads.errors.ECONNREFUSED": 4,
+        "errors.ECONNREFUSED": 4,
+        "vusers.failed": 4,
+        "vusers.created_by_name.Create and Upvote Thread Simulation (Assume Auth Context or public access)": 1,
+        "vusers.created_by_name.Thread List and Aggregation Bottleneck": 3
+      },
+      "rates": {
+        "http.request_rate": 5
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775817319771,
+      "lastCounterAt": 1775817319998,
+      "firstMetricAt": 1775817319771,
+      "lastMetricAt": 1775817319998,
+      "period": "1775817310000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Read Single Thread": 110,
+        "vusers.created": 529,
+        "http.requests": 530,
+        "plugins.metrics-by-endpoint./api/v1/threads.errors.ECONNREFUSED": 531,
+        "errors.ECONNREFUSED": 531,
+        "vusers.failed": 531,
+        "vusers.created_by_name.Thread List and Aggregation Bottleneck": 357,
+        "vusers.created_by_name.Create and Upvote Thread Simulation (Assume Auth Context or public access)": 62
+      },
+      "rates": {
+        "http.request_rate": 54
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775817320002,
+      "lastCounterAt": 1775817329965,
+      "firstMetricAt": 1775817320002,
+      "lastMetricAt": 1775817329965,
+      "period": "1775817320000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Thread List and Aggregation Bottleneck": 423,
+        "vusers.created": 617,
+        "http.requests": 617,
+        "plugins.metrics-by-endpoint./api/v1/threads.errors.ECONNREFUSED": 615,
+        "errors.ECONNREFUSED": 615,
+        "vusers.failed": 615,
+        "vusers.created_by_name.Create and Upvote Thread Simulation (Assume Auth Context or public access)": 69,
+        "vusers.created_by_name.Read Single Thread": 125
+      },
+      "rates": {
+        "http.request_rate": 63
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775817330014,
+      "lastCounterAt": 1775817339996,
+      "firstMetricAt": 1775817330014,
+      "lastMetricAt": 1775817339996,
+      "period": "1775817330000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Create and Upvote Thread Simulation (Assume Auth Context or public access)": 84,
+        "vusers.created": 701,
+        "http.requests": 701,
+        "plugins.metrics-by-endpoint./api/v1/threads.errors.ECONNREFUSED": 701,
+        "errors.ECONNREFUSED": 701,
+        "vusers.failed": 701,
+        "vusers.created_by_name.Thread List and Aggregation Bottleneck": 492,
+        "vusers.created_by_name.Read Single Thread": 125
+      },
+      "rates": {
+        "http.request_rate": 71
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775817340000,
+      "lastCounterAt": 1775817349998,
+      "firstMetricAt": 1775817340000,
+      "lastMetricAt": 1775817349998,
+      "period": "1775817340000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Thread List and Aggregation Bottleneck": 556,
+        "vusers.created": 782,
+        "http.requests": 782,
+        "plugins.metrics-by-endpoint./api/v1/threads.errors.ECONNREFUSED": 783,
+        "errors.ECONNREFUSED": 783,
+        "vusers.failed": 783,
+        "vusers.created_by_name.Read Single Thread": 154,
+        "vusers.created_by_name.Create and Upvote Thread Simulation (Assume Auth Context or public access)": 72
+      },
+      "rates": {
+        "http.request_rate": 80
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775817350000,
+      "lastCounterAt": 1775817359997,
+      "firstMetricAt": 1775817350000,
+      "lastMetricAt": 1775817359997,
+      "period": "1775817350000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Create and Upvote Thread Simulation (Assume Auth Context or public access)": 87,
+        "vusers.created": 868,
+        "http.requests": 866,
+        "plugins.metrics-by-endpoint./api/v1/threads.errors.ECONNREFUSED": 863,
+        "errors.ECONNREFUSED": 863,
+        "vusers.failed": 863,
+        "vusers.created_by_name.Thread List and Aggregation Bottleneck": 603,
+        "vusers.created_by_name.Read Single Thread": 178
+      },
+      "rates": {
+        "http.request_rate": 87
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775817360003,
+      "lastCounterAt": 1775817369999,
+      "firstMetricAt": 1775817360003,
+      "lastMetricAt": 1775817369999,
+      "period": "1775817360000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "plugins.metrics-by-endpoint./api/v1/threads.errors.ECONNREFUSED": 954,
+        "errors.ECONNREFUSED": 954,
+        "vusers.failed": 954,
+        "vusers.created_by_name.Thread List and Aggregation Bottleneck": 677,
+        "vusers.created": 949,
+        "http.requests": 950,
+        "vusers.created_by_name.Create and Upvote Thread Simulation (Assume Auth Context or public access)": 95,
+        "vusers.created_by_name.Read Single Thread": 177
+      },
+      "rates": {
+        "http.request_rate": 96
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775817370001,
+      "lastCounterAt": 1775817379999,
+      "firstMetricAt": 1775817370001,
+      "lastMetricAt": 1775817379999,
+      "period": "1775817370000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Thread List and Aggregation Bottleneck": 37,
+        "vusers.created": 48,
+        "http.requests": 49,
+        "plugins.metrics-by-endpoint./api/v1/threads.errors.ECONNREFUSED": 49,
+        "errors.ECONNREFUSED": 49,
+        "vusers.failed": 49,
+        "vusers.created_by_name.Create and Upvote Thread Simulation (Assume Auth Context or public access)": 5,
+        "vusers.created_by_name.Read Single Thread": 6
+      },
+      "rates": {
+        "http.request_rate": 49
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775817380001,
+      "lastCounterAt": 1775817380745,
+      "firstMetricAt": 1775817380001,
+      "lastMetricAt": 1775817380745,
+      "period": "1775817380000",
+      "summaries": {},
+      "histograms": {}
+    }
+  ]
+}
