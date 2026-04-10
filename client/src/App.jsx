@@ -14,25 +14,27 @@ const SessionsPage = lazy(() => import('@/pages/sessions'));
 const TutorsPage = lazy(() => import('@/pages/tutors'));
 const ReviewsPage = lazy(() => import('@/pages/reviews'));
 const LeaderboardPage = lazy(() => import('@/pages/leaderboard'));
+const ResourcePage = lazy(() => import('@/pages/resource/ResourcePage'));
 
 function App() {
   return (
     <AuthProvider>
-  <ThreadProvider>
-    <BrowserRouter>
-      <Suspense fallback={null}>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+      <ThreadProvider>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <Suspense fallback={null}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
 
-          {/* Protected Routes */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/threads" element={<StudyHubPage />} />
-            <Route path="/threads/:id" element={<ThreadDetailsPage />} />
-            <Route path="/study-hub" element={<Navigate to="/threads" replace />} />
+              {/* Protected Routes */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/home" element={<HomePage />} />
+                <Route path="/threads" element={<StudyHubPage />} />
+                <Route path="/threads/:id" element={<ThreadDetailsPage />} />
+                <Route path="/study-hub" element={<Navigate to="/threads" replace />} />
+                <Route path="/resources" element={<ResourcePage />} />
 
             {/* Booking फीature routes */}
             <Route path="/sessions" element={<SessionsPage />} />
