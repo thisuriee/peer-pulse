@@ -75,6 +75,28 @@ This will run:
 - All Review tests
 - Any other unit tests in the `tests/unit/` directory
 
+## Open Coverage Report
+
+After running any coverage command, Jest generates:
+- `server/coverage/lcov-report/index.html`
+
+Open it from the `server` directory:
+
+```bash
+# Linux desktop
+xdg-open coverage/lcov-report/index.html
+```
+
+```bash
+# macOS
+open coverage/lcov-report/index.html
+```
+
+```bash
+# WSL (open in Windows default browser)
+explorer.exe coverage\\lcov-report\\index.html
+```
+
 ## Test Coverage
 
 **Auth Coverage:**

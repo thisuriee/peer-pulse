@@ -220,6 +220,22 @@ describe('ReviewService', () => {
       );
     });
 
+    it('rethrows non-duplicate errors from repository create', async () => {
+      BookingModel.findById.mockResolvedValue({
+        student: studentId,
+        tutor: tutorId,
+        status: BookingStatus.COMPLETED,
+        scheduledAt: new Date(Date.now() - 1000),
+      });
+      reviewRepository.findByBookingId.mockResolvedValue(null);
+      const unknownError = new Error('db-down');
+      reviewRepository.create.mockRejectedValue(unknownError);
+
+      await expect(service.createReview({ id: studentId }, { bookingId, rating: 5 })).rejects.toThrow(
+        'db-down'
+      );
+    });
+
     it('updates tutor badge and sends badge email when badge changes from none', async () => {
       BookingModel.findById.mockResolvedValue({
         student: studentId,
@@ -246,6 +262,32 @@ describe('ReviewService', () => {
       expect(sendEmail).toHaveBeenCalledWith(
         expect.objectContaining({ to: 'tutor@test.com', subject: 'New Badge Unlocked' })
       );
+    });
+
+    it('does not send badge email when badge remains unchanged', async () => {
+      BookingModel.findById.mockResolvedValue({
+        student: studentId,
+        tutor: tutorId,
+        status: BookingStatus.COMPLETED,
+        scheduledAt: new Date(Date.now() - 1000),
+      });
+      reviewRepository.findByBookingId.mockResolvedValue({ _id: reviewId, isDeleted: true });
+      reviewRepository.updateById.mockResolvedValue({ _id: reviewId, tutor: tutorId });
+      computeBadgeFromReviewCount.mockReturnValue('rookie');
+
+      const tutorDoc = {
+        email: 'tutor@test.com',
+        name: 'Tutor',
+        badge: 'rookie',
+        reviewCount: 2,
+        save: jest.fn().mockResolvedValue(true),
+      };
+      UserModel.findById.mockReturnValue({ select: jest.fn().mockResolvedValue(tutorDoc) });
+
+      await service.createReview({ id: studentId }, { bookingId, rating: 5 });
+
+      expect(tutorDoc.save).not.toHaveBeenCalled();
+      expect(sendEmail).not.toHaveBeenCalled();
     });
   });
 
@@ -338,6 +380,52 @@ describe('ReviewService', () => {
         UnauthorizedException
       );
     });
+
+    it('throws NotFoundException when review disappears on updateById', async () => {
+      reviewRepository.findActiveById.mockResolvedValue({
+        _id: reviewId,
+        reviewer: studentId,
+        tutor: tutorId,
+        rating: 4,
+      });
+      reviewRepository.updateById.mockResolvedValue(null);
+
+      await expect(service.updateReview({ id: studentId }, reviewId, { comment: 'x' })).rejects.toThrow(
+        NotFoundException
+      );
+    });
+
+    it('updates badge and sends email when rating change causes badge transition', async () => {
+      reviewRepository.findActiveById.mockResolvedValue({
+        _id: reviewId,
+        reviewer: studentId,
+        tutor: tutorId,
+        rating: 2,
+      });
+      reviewRepository.updateById.mockResolvedValue({
+        _id: reviewId,
+        reviewer: studentId,
+        tutor: tutorId,
+        rating: 5,
+      });
+      computeBadgeFromReviewCount.mockReturnValue('rookie');
+
+      const tutorDoc = {
+        email: 'tutor@test.com',
+        name: 'Tutor',
+        badge: 'none',
+        reviewCount: 1,
+        save: jest.fn().mockResolvedValue(true),
+      };
+      UserModel.findById.mockReturnValue({ select: jest.fn().mockResolvedValue(tutorDoc) });
+
+      await service.updateReview({ id: studentId }, reviewId, { rating: 5 });
+
+      expect(tutorDoc.save).toHaveBeenCalled();
+      expect(sendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'tutor@test.com', subject: 'New Badge Unlocked' })
+      );
+    });
   });
 
   describe('deleteReview', () => {
@@ -378,6 +466,36 @@ describe('ReviewService', () => {
     it('throws NotFoundException when review does not exist', async () => {
       reviewRepository.findActiveById.mockResolvedValue(null);
       await expect(service.deleteReview({ id: studentId }, reviewId)).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws NotFoundException when deleting user cannot be found', async () => {
+      reviewRepository.findActiveById.mockResolvedValue({ _id: reviewId, reviewer: studentId, tutor: tutorId });
+      UserModel.findById.mockReturnValue({ select: jest.fn().mockResolvedValue(null) });
+
+      await expect(service.deleteReview({ id: studentId }, reviewId)).rejects.toThrow(NotFoundException);
+    });
+
+    it('updates badge and sends email when delete changes badge', async () => {
+      reviewRepository.findActiveById.mockResolvedValue({ _id: reviewId, reviewer: studentId, tutor: tutorId });
+      UserModel.findById
+        .mockReturnValueOnce({ select: jest.fn().mockResolvedValue({ role: 'student' }) })
+        .mockReturnValueOnce({
+          select: jest.fn().mockResolvedValue({
+            email: 'tutor@test.com',
+            name: 'Tutor',
+            badge: 'none',
+            reviewCount: 1,
+            save: jest.fn().mockResolvedValue(true),
+          }),
+        });
+      reviewRepository.updateById.mockResolvedValue({ _id: reviewId, tutor: tutorId, isDeleted: true });
+      computeBadgeFromReviewCount.mockReturnValue('rookie');
+
+      await service.deleteReview({ id: studentId }, reviewId);
+
+      expect(sendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: 'tutor@test.com', subject: 'New Badge Unlocked' })
+      );
     });
   });
 
@@ -433,6 +551,109 @@ describe('ReviewService', () => {
       expect(result.risingTutors.length).toBeGreaterThan(0);
       expect(result.mostHelpfulStudents.length).toBeGreaterThan(0);
       expect(typeof result.generatedAt).toBe('string');
+    });
+
+    it('applies rising tutor tie-break by recentReviews when growth is equal', async () => {
+      const tutorA = { _id: id(), name: 'Tutor A', email: 'a@test.com', reputationScore: 4.8, reviewCount: 30 };
+      const tutorB = { _id: id(), name: 'Tutor B', email: 'b@test.com', reputationScore: 4.3, reviewCount: 5 };
+
+      UserModel.find.mockReturnValue({ select: jest.fn().mockResolvedValue([tutorA, tutorB]) });
+      ReviewModel.aggregate
+        .mockResolvedValueOnce([
+          { _id: tutorA._id, avg: 4.5, count: 3 },
+          { _id: tutorB._id, avg: 4.5, count: 8 },
+        ])
+        .mockResolvedValueOnce([
+          { _id: tutorA._id, avg: 4.0, count: 2 },
+          { _id: tutorB._id, avg: 4.0, count: 2 },
+        ])
+        .mockResolvedValueOnce([]);
+      ThreadModel.find.mockReturnValue({ select: jest.fn().mockResolvedValue([]) });
+      UserModel.findById.mockImplementation((lookupId) => ({
+        select: jest.fn().mockResolvedValue({
+          _id: lookupId,
+          name: lookupId === tutorA._id ? 'Tutor A' : 'Tutor B',
+          email: 'x@test.com',
+          reputationScore: 4.2,
+          reviewCount: 2,
+          badge: 'none',
+          role: 'tutor',
+        }),
+      }));
+
+      const result = await service.getLeaderboard();
+      expect(result.risingTutors[0]._id.toString()).toBe(tutorB._id.toString());
+    });
+
+    it('filters out non-students and null users from mostHelpfulStudents', async () => {
+      const tutorA = { _id: id(), name: 'Tutor A', email: 'a@test.com', reputationScore: 4.8, reviewCount: 30 };
+      const helperId = id();
+      const tutorUserId = id();
+      const nullUserId = id();
+
+      UserModel.find.mockReturnValue({ select: jest.fn().mockResolvedValue([tutorA]) });
+      ReviewModel.aggregate
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([
+          { _id: helperId, submitted: 2 },
+          { _id: tutorUserId, submitted: 2 },
+          { _id: nullUserId, submitted: 2 },
+        ]);
+      ThreadModel.find.mockReturnValue({
+        select: jest.fn().mockResolvedValue([
+          { authorId: helperId, upvotes: [id()], replies: [] },
+          { authorId: tutorUserId, upvotes: [id()], replies: [] },
+        ]),
+      });
+      UserModel.findById.mockImplementation((lookupId) => ({
+        select: jest.fn().mockResolvedValue(
+          lookupId.toString() === helperId
+            ? { _id: helperId, name: 'Student 1', email: 's1@test.com', role: 'student' }
+            : lookupId.toString() === tutorUserId
+            ? { _id: tutorUserId, name: 'TutorUser', email: 't@test.com', role: 'tutor' }
+            : null
+        ),
+      }));
+
+      const result = await service.getLeaderboard();
+      expect(result.mostHelpfulStudents).toHaveLength(1);
+      expect(result.mostHelpfulStudents[0].name).toBe('Student 1');
+    });
+
+    it('filters out null tutors from risingTutors lookup', async () => {
+      const tutorA = { _id: id(), name: 'Tutor A', email: 'a@test.com', reputationScore: 4.8, reviewCount: 30 };
+      const missingTutorId = id();
+      const existingTutorId = id();
+
+      UserModel.find.mockReturnValue({ select: jest.fn().mockResolvedValue([tutorA]) });
+      ReviewModel.aggregate
+        .mockResolvedValueOnce([
+          { _id: missingTutorId, avg: 4.9, count: 5 },
+          { _id: existingTutorId, avg: 4.8, count: 5 },
+        ])
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([]);
+      ThreadModel.find.mockReturnValue({ select: jest.fn().mockResolvedValue([]) });
+      UserModel.findById.mockImplementation((lookupId) => ({
+        select: jest.fn().mockResolvedValue(
+          lookupId.toString() === existingTutorId
+            ? {
+                _id: existingTutorId,
+                name: 'Existing Tutor',
+                email: 'et@test.com',
+                reputationScore: 4.8,
+                reviewCount: 5,
+                badge: 'none',
+                role: 'tutor',
+              }
+            : null
+        ),
+      }));
+
+      const result = await service.getLeaderboard();
+      expect(result.risingTutors).toHaveLength(1);
+      expect(result.risingTutors[0].name).toBe('Existing Tutor');
     });
   });
 });
