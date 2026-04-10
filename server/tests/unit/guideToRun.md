@@ -14,6 +14,12 @@ cd server
 npm run test:unit:session
 ```
 
+### Run Review Tests
+```bash
+cd server
+npm run test:unit:review
+```
+
 ## Test Structure
 
 ### Auth Tests (`tests/unit/auth/`)
@@ -28,6 +34,34 @@ npm run test:unit:session
 - **session.service.test.js** - Tests BookingService (create, update, accept, decline, cancel bookings)
 - **availability.service.test.js** - Tests AvailabilityService (manage tutor availability)
 
+### Review Tests (`tests/unit/review/`)
+
+Run review unit tests:
+```bash
+cd server
+npm run test:unit:review
+```
+
+Run review tests with coverage:
+```bash
+cd server
+NODE_ENV=test npx jest tests/unit/review --coverage
+```
+
+Run review-only module coverage (`src/modules/review` only):
+```bash
+cd server
+NODE_ENV=test npx jest tests/unit/review --coverage --collectCoverageFrom="src/modules/review/**/*.js"
+```
+
+- **badge.service.test.js** - Tests badge thresholds (`none`, `rookie`, `bronze`, `silver`, `gold`)
+- **reputation.service.test.js** - Tests tutor reputation recalculation and zero-state defaults
+- **review.repository.test.js** - Tests repository query/update behavior
+- **review.controller.test.js** - Tests controller responses and error forwarding
+- **review.service.test.js** - Tests core review module logic (create/update/delete/read/leaderboard)
+- **review.routes.test.js** - Tests route-to-controller mapping
+- **review.module.test.js** - Tests module wiring/instantiation
+
 ## Running All Unit Tests
 
 ```bash
@@ -38,6 +72,7 @@ npm run test:unit
 This will run:
 - All Auth tests
 - All Session tests
+- All Review tests
 - Any other unit tests in the `tests/unit/` directory
 
 ## Test Coverage

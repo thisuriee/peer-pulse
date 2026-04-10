@@ -5,16 +5,16 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "node --watch src/index.js",
-  "start": "node src/index.js",
-  "test": "cross-env NODE_ENV=test jest",
-  "test:unit": "cross-env NODE_ENV=test jest tests/unit",
-  "test:unit:auth": "cross-env NODE_ENV=test jest tests/unit/auth",
-  "test:unit:session": "cross-env NODE_ENV=test jest tests/unit/session",
-  "test:integration": "cross-env NODE_ENV=test jest tests/integration",
-  "test:coverage": "cross-env NODE_ENV=test jest --coverage",
-  "test:watch": "cross-env NODE_ENV=test jest --watch",
-  "test:perf": "artillery run"
-
+    "start": "node src/index.js",
+    "test": "cross-env NODE_ENV=test jest",
+    "test:unit": "cross-env NODE_ENV=test jest tests/unit",
+    "test:unit:auth": "cross-env NODE_ENV=test jest tests/unit/auth",
+    "test:unit:session": "cross-env NODE_ENV=test jest tests/unit/session",
+    "test:unit:review": "cross-env NODE_ENV=test jest tests/unit/review",
+    "test:integration": "cross-env NODE_ENV=test jest tests/integration",
+    "test:coverage": "cross-env NODE_ENV=test jest --coverage",
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "test:perf": "artillery run"
   },
   "keywords": [],
   "author": "",
@@ -53,6 +53,7 @@
   },
   "devDependencies": {
     "artillery": "^2.0.21",
+    "cross-env": "^10.1.0",
     "jest": "^30.3.0",
     "mongodb-memory-server": "^11.0.1",
     "supertest": "^7.2.2"
