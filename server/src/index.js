@@ -105,33 +105,49 @@ app.use(`${BASE_PATH}/threads`, threadRoutes);
 
 app.use(errorHandler);
 
-const server = app.listen(config.PORT, async () => {
-  logger.info(`Server starting on port ${config.PORT} in ${config.NODE_ENV}`);
-  await connectDatabase();
-  logger.info('Database connected');
-});
+module.exports = app;
 
-const gracefulShutdown = async (signal) => {
-  try {
-    logger.info(`Received ${signal}. Shutting down gracefully...`);
-    server.close(async (err) => {
-      if (err) {
-        logger.error('Error closing server', { err });
-        process.exit(1);
-      }
-      try {
-        await flushLogs();
-      } catch (e) {
-        // ignore
-      }
-      logger.info('Shutdown complete');
-      process.exit(0);
-    });
-  } catch (err) {
-    logger.error('Failed during graceful shutdown', { err });
+if (process.env.NODE_ENV !== 'test') {
+  const server = app.listen(config.PORT, async () => {
+    logger.info(`Server starting on port ${config.PORT} in ${config.NODE_ENV}`);
+    await connectDatabase();
+    logger.info('Database connected');
+  });
+
+  const gracefulShutdown = async (signal) => {
+    try {
+      logger.info(`Received ${signal}. Shutting down gracefully...`);
+      server.close(async (err) => {
+        if (err) {
+          logger.error('Error closing server', { err });
+          process.exit(1);
+        }
+        try {
+          await flushLogs();
+        } catch (e) {
+          // ignore
+        }
+        logger.info('Shutdown complete');
+        process.exit(0);
+      });
+    } catch (err) {
+      logger.error('Failed during graceful shutdown', { err });
+      process.exit(1);
+    }
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+  process.on('unhandledRejection', async (reason) => {
+    logger.error('Unhandled Rejection', { reason });
+    await flushLogs();
+  });
+  process.on('uncaughtException', async (err) => {
+    logger.error('Uncaught Exception', { err });
+    await flushLogs();
     process.exit(1);
-  }
-};
+  })
+}
 
 // Health check endpoint
 app.get(
@@ -146,14 +162,4 @@ app.get(
   }),
 );
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-process.on('unhandledRejection', async (reason) => {
-  logger.error('Unhandled Rejection', { reason });
-  await flushLogs();
-});
-process.on('uncaughtException', async (err) => {
-  logger.error('Uncaught Exception', { err });
-  await flushLogs();
-  process.exit(1);
-});
+;
