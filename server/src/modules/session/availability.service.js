@@ -145,7 +145,9 @@ class AvailabilityService {
       query.skills = { $in: [filters.subject] };
     }
 
-    const tutors = await UserModel.find(query).select("name email skills bio reputationScore");
+    const tutors = await UserModel.find(query).select(
+      "name email skills bio reputationScore badge reviewCount"
+    );
 
     const tutorsWithAvailability = await Promise.all(
       tutors.map(async (tutor) => {

@@ -41,6 +41,7 @@ export function Navbar() {
     { label: 'Home', href: '/home' },
     { label: 'Sessions', href: '/sessions' },
     { label: 'Resources', href: '/resources' },
+    { label: 'Reviews', href: '/reviews' },
     { label: 'Community', href: '/threads' },
     { label: 'Tutors', href: '/tutors' },
   ];

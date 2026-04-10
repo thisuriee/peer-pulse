@@ -83,6 +83,7 @@ function Navbar({ user, onLogout }) {
             { label: 'Home', href: '/home' },
             { label: 'Sessions', href: '/sessions', active: true },
             { label: 'Resources', href: '/resources' },
+            { label: 'Reviews', href: '/reviews' },
             { label: 'Community', href: '/threads' },
             { label: 'Tutors', href: '/tutors' },
           ].map(({ label, href, active }) => (

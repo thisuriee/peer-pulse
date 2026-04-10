@@ -11,7 +11,7 @@ const {
 const { ErrorCode } = require("../../common/enums/error-code.enum");
 const { logger } = require("../../common/utils/logger-utils");
 const { googleCalendarService } = require("../../integrations/google-calendar");
-const { sendEmail } = require("../../common/email/sendgrid.client");
+const { sendEmail, isSendgridReady } = require("../../common/email/sendgrid.client");
 
 class BookingService {
   /**
@@ -270,6 +270,44 @@ class BookingService {
       // Booking is already accepted — calendar sync failure is non-fatal
     }
 
+    // Send review reminder guidance immediately after acceptance.
+    try {
+      if (!isSendgridReady) {
+        logger.warn("Review reminder email skipped: SendGrid not initialized", { bookingId });
+      } else if (booking?.student?.email && booking?.tutor?.name) {
+        const reviewLink = `${process.env.CLIENT_URL || "http://localhost:5173"}/sessions`;
+        const sendResult = await sendEmail({
+          to: booking.student.email,
+          subject: "Session accepted — review reminder",
+          text: `Your session with ${booking.tutor.name} has been accepted.
+
+Subject: ${booking.subject}
+Scheduled at: ${new Date(booking.scheduledAt).toLocaleString()}
+Duration: ${booking.duration} minutes
+
+After your session is completed, please come back and leave a review for your tutor.
+Review from: ${reviewLink}
+Booking: ${bookingId}`,
+        });
+        if (!sendResult?.ok) {
+          logger.warn("Review reminder email send failed", {
+            bookingId,
+            reason: sendResult?.reason,
+            error: sendResult?.error,
+          });
+        }
+      } else {
+        logger.warn("Review reminder email skipped: missing student/tutor email data", {
+          bookingId,
+        });
+      }
+    } catch (e) {
+      logger.warn("Failed to send accepted-session review reminder email", {
+        bookingId,
+        error: e?.message,
+      });
+    }
+
     return booking;
   }
 
@@ -381,18 +419,6 @@ class BookingService {
     logger.info("Booking completed", { bookingId, userId });
 
     const populated = await booking.populate(["student", "tutor"]);
-
-    try {
-      if (populated?.student?.email && populated?.tutor?.name) {
-        await sendEmail({
-          to: populated.student.email,
-          subject: "Please leave a review",
-          text: `Your session with ${populated.tutor.name} is completed. Please leave a review. Booking: ${bookingId}`,
-        });
-      }
-    } catch (e) {
-      logger.warn("Failed to send review request email", { bookingId, error: e?.message });
-    }
 
     return populated;
   }

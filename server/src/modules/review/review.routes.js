@@ -13,6 +13,7 @@ const reviewController = new ReviewController(reviewService);
 
 // Public
 reviewRoutes.get("/tutor/:tutorId", reviewController.getTutorReviews);
+reviewRoutes.get("/leaderboard", reviewController.getLeaderboard);
 reviewRoutes.get("/:id", reviewController.getReviewById);
 
 // Protected (expects authenticateJWT to be applied at mount level)

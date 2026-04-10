@@ -12,6 +12,8 @@ import { Toaster } from '@/components/ui/toaster';
 
 const SessionsPage = lazy(() => import('@/pages/sessions'));
 const TutorsPage = lazy(() => import('@/pages/tutors'));
+const ReviewsPage = lazy(() => import('@/pages/reviews'));
+const LeaderboardPage = lazy(() => import('@/pages/leaderboard'));
 const ResourcePage = lazy(() => import('@/pages/resource/ResourcePage'));
 
 function App() {
@@ -34,16 +36,18 @@ function App() {
                 <Route path="/study-hub" element={<Navigate to="/threads" replace />} />
                 <Route path="/resources" element={<ResourcePage />} />
 
-                {/* Booking फीature routes */}
-                <Route path="/sessions" element={<SessionsPage />} />
-                <Route path="/tutors" element={<TutorsPage />} />
-              </Route>
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-        <Toaster />
-      </ThreadProvider>
-    </AuthProvider>
+            {/* Booking फीature routes */}
+            <Route path="/sessions" element={<SessionsPage />} />
+            <Route path="/tutors" element={<TutorsPage />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
+          </Route>
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
+    <Toaster />
+  </ThreadProvider>
+</AuthProvider>
   );
 }
 
