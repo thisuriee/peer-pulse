@@ -19,6 +19,11 @@ const resourceSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    category: {
+      type: String,
+      trim: true,
+      default: 'General',
+    },
     cloudinary_url: {
       type: String,
       required: true,

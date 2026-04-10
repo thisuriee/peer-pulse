@@ -21,17 +21,17 @@ export function StudentLibraryTab({
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-2xl border bg-gradient-to-br from-blue-50 via-cyan-50 to-white p-4 md:p-6">
+      <section className="overflow-hidden rounded-2xl border-2 border-border bg-card p-4 md:p-6 shadow-sm">
         <div className="mb-5">
-          <h2 className="text-2xl font-bold tracking-tight">My Libraries</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">My Libraries</h2>
           <p className="text-sm text-muted-foreground">
             Quick access to the tutors who approved your requests.
           </p>
         </div>
 
         {approvedTutors.length === 0 ? (
-          <div className="rounded-xl border border-dashed bg-white/70 p-6 text-center">
-            <p className="text-base font-medium">No approved libraries yet</p>
+          <div className="rounded-xl border-2 border-dashed border-border bg-muted/50 p-6 text-center">
+            <p className="text-base font-medium text-foreground">No approved libraries yet</p>
             <p className="mt-1 text-sm text-muted-foreground">
               Use the Discover tab to request access and build your library shelf.
             </p>
@@ -44,14 +44,14 @@ export function StudentLibraryTab({
                 <button
                   key={tutor._id}
                   onClick={() => setSelectedTutorId(tutor._id)}
-                  className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                  className={`flex items-center gap-3 rounded-xl border-2 p-3 text-left transition-all ${
                     isSelected
-                      ? 'border-blue-500 bg-blue-50 shadow-sm ring-1 ring-blue-500'
-                      : 'bg-white hover:border-blue-300 hover:bg-gray-50'
+                      ? 'border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                      : 'border-border bg-card hover:border-primary/50 hover:bg-accent'
                   }`}
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="truncate font-semibold text-gray-900">{tutor.name}</p>
+                    <p className="truncate font-semibold text-foreground">{tutor.name}</p>
                     <p className="truncate text-xs text-muted-foreground">{tutor.email}</p>
                   </div>
                 </button>

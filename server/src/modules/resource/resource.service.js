@@ -26,12 +26,17 @@ function normalizeResourceCategory(value) {
     .trim()
     .toLowerCase();
 
-  if (normalized === 'image' || normalized === 'video' || normalized === 'document') {
+  if (
+    normalized === 'image' ||
+    normalized === 'video' ||
+    normalized === 'document' ||
+    normalized === 'link'
+  ) {
     return normalized;
   }
 
   throw new BadRequestException(
-    "Invalid resource type. Allowed values are 'image', 'video', 'document'.",
+    "Invalid resource type. Allowed values are 'image', 'video', 'document', 'link'.",
     ErrorCode.VALIDATION_ERROR,
   );
 }
@@ -155,11 +160,7 @@ class ResourceService {
    * Create a new resource with file upload
    */
   async createResource(tutorId, resourceData, file) {
-    if (!file) {
-      throw new BadRequestException('File is required', ErrorCode.VALIDATION_ERROR);
-    }
-
-    const { title, description, type } = resourceData;
+    const { title, description, type, category, linkUrl } = resourceData;
 
     // Validate required fields
     if (!title || !description || !type) {
@@ -170,6 +171,34 @@ class ResourceService {
     }
 
     const normalizedType = normalizeResourceCategory(type);
+
+    if (normalizedType === 'link') {
+      if (!linkUrl) {
+        throw new BadRequestException(
+          'Link URL is required for link resources',
+          ErrorCode.VALIDATION_ERROR,
+        );
+      }
+
+      const resource = await ResourceModel.create({
+        title,
+        description,
+        type: normalizedType,
+        category: category || 'General',
+        cloudinary_url: linkUrl,
+        tutor_id: tutorId,
+      });
+
+      return await ResourceModel.findById(resource._id).populate('tutor_id', 'name email');
+    }
+
+    if (!file) {
+      throw new BadRequestException(
+        'File is required for this resource type',
+        ErrorCode.VALIDATION_ERROR,
+      );
+    }
+
     const cloudinaryResourceType = normalizeResourceType(normalizedType);
 
     // Create a temporary file from buffer
@@ -189,6 +218,7 @@ class ResourceService {
         title,
         description,
         type: normalizedType,
+        category: category || 'General',
         cloudinary_url: uploadResult.secure_url,
         tutor_id: tutorId,
       });
@@ -242,21 +272,25 @@ class ResourceService {
       );
     }
 
-    const { title, description, type } = updateData;
+    const { title, description, type, category, linkUrl } = updateData;
     const normalizedType = type ? normalizeResourceCategory(type) : null;
 
     // Update basic fields
     if (title) resource.title = title;
     if (description) resource.description = description;
+    if (category) resource.category = category;
     if (normalizedType) resource.type = normalizedType;
     console.log('[updateResource] Updated fields:', {
       title,
       description,
+      category,
       type: normalizedType || type,
+      linkUrl,
     });
 
-    // If new file is uploaded, replace the old one
-    if (file) {
+    if (normalizedType === 'link' && linkUrl) {
+      resource.cloudinary_url = linkUrl;
+    } else if (file && normalizedType !== 'link') {
       console.log('[updateResource] File provided:', file);
       const tempFilePath = path.join(os.tmpdir(), `${Date.now()}-${file.originalname}`);
       await fs.writeFile(tempFilePath, file.buffer);

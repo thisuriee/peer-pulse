@@ -132,7 +132,7 @@ const ResourcePage = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Study Resources</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">Study Resources</h1>
             <p className="text-muted-foreground mt-1">
               {isTutor
                 ? 'Manage your resource library and approve student access requests.'
@@ -144,10 +144,12 @@ const ResourcePage = () => {
         </div>
 
         {isTutor && (
-          <section className="mb-8 rounded-lg border p-4 md:p-6">
+          <section className="mb-8 rounded-2xl border-2 border-border bg-card p-4 md:p-6 shadow-sm">
             <div className="mb-4">
-              <h2 className="text-xl font-semibold">Incoming Access Requests</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-xl font-bold tracking-tight text-foreground">
+                Incoming Access Requests
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1">
                 Approve or reject students asking to view your resources.
               </p>
             </div>
@@ -155,16 +157,20 @@ const ResourcePage = () => {
             {isLoadingTutorRequests ? (
               <p className="text-sm text-muted-foreground">Loading pending requests...</p>
             ) : tutorRequests.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No pending requests right now.</p>
+              <div className="rounded-xl border-2 border-dashed border-border bg-muted/50 p-6 text-center">
+                <p className="text-sm text-muted-foreground">No pending requests right now.</p>
+              </div>
             ) : (
               <div className="space-y-3">
                 {tutorRequests.map((request) => (
                   <div
                     key={request._id}
-                    className="flex flex-col gap-3 rounded-md border p-3 md:flex-row md:items-center md:justify-between"
+                    className="flex flex-col gap-3 rounded-xl border-2 border-border bg-background p-3 md:flex-row md:items-center md:justify-between transition-colors hover:bg-accent/50"
                   >
                     <div>
-                      <p className="font-medium">{request.student_id?.name || 'Student'}</p>
+                      <p className="font-semibold text-foreground">
+                        {request.student_id?.name || 'Student'}
+                      </p>
                       <p className="text-sm text-muted-foreground">{request.student_id?.email}</p>
                     </div>
                     <div className="flex gap-2">
@@ -174,7 +180,7 @@ const ResourcePage = () => {
                         onClick={() =>
                           updateAccessStatus({ requestId: request._id, status: 'approved' })
                         }
-                        className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                        className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
                       >
                         Approve
                       </button>
@@ -184,7 +190,7 @@ const ResourcePage = () => {
                         onClick={() =>
                           updateAccessStatus({ requestId: request._id, status: 'rejected' })
                         }
-                        className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-60"
+                        className="rounded-lg border-2 border-input bg-background px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-accent disabled:opacity-50"
                       >
                         Reject
                       </button>
@@ -194,25 +200,31 @@ const ResourcePage = () => {
               </div>
             )}
 
-            <div className="mt-6">
-              <h3 className="text-base font-semibold">Approved Students</h3>
-              <p className="mb-3 text-sm text-muted-foreground">
+            <div className="mt-8 pt-6 border-t-2 border-border">
+              <h3 className="text-lg font-bold tracking-tight text-foreground">
+                Approved Students
+              </h3>
+              <p className="mb-4 text-sm text-muted-foreground">
                 Revoke access for any student when needed.
               </p>
 
               {isLoadingApprovedRequests ? (
                 <p className="text-sm text-muted-foreground">Loading approved students...</p>
               ) : approvedRequests.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No approved students yet.</p>
+                <div className="rounded-xl border-2 border-dashed border-border bg-muted/50 p-6 text-center">
+                  <p className="text-sm text-muted-foreground">No approved students yet.</p>
+                </div>
               ) : (
                 <div className="space-y-3">
                   {approvedRequests.map((request) => (
                     <div
                       key={request._id}
-                      className="flex flex-col gap-3 rounded-md border p-3 md:flex-row md:items-center md:justify-between"
+                      className="flex flex-col gap-3 rounded-xl border-2 border-border bg-background p-3 md:flex-row md:items-center md:justify-between transition-colors hover:bg-accent/50"
                     >
                       <div>
-                        <p className="font-medium">{request.student_id?.name || 'Student'}</p>
+                        <p className="font-semibold text-foreground">
+                          {request.student_id?.name || 'Student'}
+                        </p>
                         <p className="text-sm text-muted-foreground">{request.student_id?.email}</p>
                       </div>
                       <button
@@ -221,7 +233,7 @@ const ResourcePage = () => {
                         onClick={() =>
                           updateAccessStatus({ requestId: request._id, status: 'revoked' })
                         }
-                        className="rounded-md border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-60"
+                        className="rounded-lg border-2 border-input bg-background px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-accent disabled:opacity-50"
                       >
                         Revoke Access
                       </button>

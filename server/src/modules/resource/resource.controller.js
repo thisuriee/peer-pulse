@@ -55,12 +55,12 @@ class ResourceController {
    */
   createResource = asyncHandler(async (req, res) => {
     const tutorId = req.user.id; // From authenticateJWT middleware
-    const { title, description, type } = req.body;
+    const { title, description, type, category, linkUrl } = req.body;
     const file = req.file; // From multer middleware
 
     const resource = await resourceService.createResource(
       tutorId,
-      { title, description, type },
+      { title, description, type, category, linkUrl },
       file,
     );
 
@@ -77,13 +77,13 @@ class ResourceController {
   updateResource = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const tutorId = req.user.id;
-    const { title, description, type } = req.body;
+    const { title, description, type, category, linkUrl } = req.body;
     const file = req.file;
 
     const resource = await resourceService.updateResource(
       id,
       tutorId,
-      { title, description, type },
+      { title, description, type, category, linkUrl },
       file,
     );
 
