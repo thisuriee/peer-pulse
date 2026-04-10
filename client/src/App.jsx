@@ -6,6 +6,8 @@ import HomePage from '@/pages/home';
 
 const SessionsPage = lazy(() => import('@/pages/sessions'));
 const TutorsPage = lazy(() => import('@/pages/tutors'));
+const ReviewsPage = lazy(() => import('@/pages/reviews'));
+const LeaderboardPage = lazy(() => import('@/pages/leaderboard'));
 
 function App() {
   return (
@@ -18,6 +20,8 @@ function App() {
           <Route path="/home" element={<HomePage />} />
           <Route path="/sessions" element={<SessionsPage />} />
           <Route path="/tutors" element={<TutorsPage />} />
+          <Route path="/reviews" element={<ReviewsPage />} />
+          <Route path="/leaderboard" element={<LeaderboardPage />} />
         </Routes>
       </Suspense>
     </BrowserRouter>

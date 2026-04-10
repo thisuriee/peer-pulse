@@ -3,6 +3,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+const BADGE_META = {
+  rookie:
+    'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+  bronze:
+    'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800',
+  silver:
+    'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-800/50 dark:text-slate-300 dark:border-slate-700',
+  gold:
+    'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-950/40 dark:text-yellow-300 dark:border-yellow-800',
+};
+
 function initials(name = '') {
   return name
     .split(' ')
@@ -29,7 +40,9 @@ function initials(name = '') {
 export default function TutorCard({ tutor, onBook }) {
   const skills = tutor.skills ?? [];
   const score = tutor.reputationScore ?? 0;
+  const reviewCount = tutor.reviewCount ?? 0;
   const isAvailable = tutor.availability?.isActive === true;
+  const badge = tutor.badge ?? 'none';
   // Session durations the tutor offers, e.g. [30, 60]
   const durations = tutor.availability?.sessionDurations ?? [];
 
@@ -115,17 +128,34 @@ export default function TutorCard({ tutor, onBook }) {
         {/* ── Footer: rating + book button ── */}
         <div className="mt-auto flex items-center justify-between pt-3 border-t border-border/50">
           {/* Reputation score */}
-          <div className="flex items-center gap-1.5">
-            <Star
-              className={cn(
-                'w-3.5 h-3.5',
-                score > 0 ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/40',
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-1.5">
+              <Star
+                className={cn(
+                  'w-3.5 h-3.5',
+                  score > 0 ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/40',
+                )}
+              />
+              {score > 0 ? (
+                <span className="text-sm font-semibold">
+                  {score.toFixed(1)}
+                  <span className="text-xs text-muted-foreground font-medium ml-1">
+                    ({reviewCount})
+                  </span>
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">No rating yet</span>
               )}
-            />
-            {score > 0 ? (
-              <span className="text-sm font-semibold">{score.toFixed(1)}</span>
-            ) : (
-              <span className="text-xs text-muted-foreground">No rating yet</span>
+            </div>
+            {badge !== 'none' && (
+              <span
+                className={cn(
+                  'text-xs font-semibold px-2 py-0.5 rounded-full border capitalize',
+                  BADGE_META[badge] ?? BADGE_META.rookie
+                )}
+              >
+                {badge}
+              </span>
             )}
           </div>
 
