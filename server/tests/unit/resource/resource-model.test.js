@@ -1,5 +1,11 @@
 const { describe, it, expect, beforeAll, afterAll, afterEach } = require('@jest/globals');
 const { connectTestDB, clearTestDB, disconnectTestDB } = require('../../helpers/db.helper');
+
+jest.mock('bcrypt', () => ({
+  hash: jest.fn(async (value) => `hashed-${value}`),
+  compare: jest.fn(async () => true),
+}));
+
 const Resource = require('../../../src/database/models/resource.model');
 const User = require('../../../src/database/models/user.model');
 
@@ -16,8 +22,10 @@ afterAll(async () => await disconnectTestDB());
 describe('Resource Model', () => {
   it('creates a resource with required fields', async () => {
     const resource = await Resource.create({
-      title: 'Calculus Notes', description: 'Intro to derivatives',
-      type: 'PDF', cloudinary_url: 'https://res.cloudinary.com/demo/sample.pdf',
+      title: 'Calculus Notes',
+      description: 'Intro to derivatives',
+      type: 'PDF',
+      cloudinary_url: 'https://res.cloudinary.com/demo/sample.pdf',
       tutor_id: tutorId,
     });
     expect(resource._id).toBeDefined();
@@ -25,15 +33,24 @@ describe('Resource Model', () => {
   });
 
   it('rejects resource without required title', async () => {
-    await expect(Resource.create({
-      description: 'No title', type: 'PDF',
-      cloudinary_url: 'https://example.com/file.pdf', tutor_id: tutorId,
-    })).rejects.toThrow();
+    await expect(
+      Resource.create({
+        description: 'No title',
+        type: 'PDF',
+        cloudinary_url: 'https://example.com/file.pdf',
+        tutor_id: tutorId,
+      }),
+    ).rejects.toThrow();
   });
 
   it('rejects resource without cloudinary_url', async () => {
-    await expect(Resource.create({
-      title: 'No URL', description: 'Missing URL', type: 'PDF', tutor_id: tutorId,
-    })).rejects.toThrow();
+    await expect(
+      Resource.create({
+        title: 'No URL',
+        description: 'Missing URL',
+        type: 'PDF',
+        tutor_id: tutorId,
+      }),
+    ).rejects.toThrow();
   });
 });
