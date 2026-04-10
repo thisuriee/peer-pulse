@@ -220,6 +220,7 @@ describe('ReviewService', () => {
       );
     });
 
+<<<<<<< HEAD
     it('rethrows non-duplicate errors from repository create', async () => {
       BookingModel.findById.mockResolvedValue({
         student: studentId,
@@ -236,6 +237,8 @@ describe('ReviewService', () => {
       );
     });
 
+=======
+>>>>>>> 182f9cf (feat: add review unit tests and update test documentation)
     it('updates tutor badge and sends badge email when badge changes from none', async () => {
       BookingModel.findById.mockResolvedValue({
         student: studentId,
@@ -263,6 +266,7 @@ describe('ReviewService', () => {
         expect.objectContaining({ to: 'tutor@test.com', subject: 'New Badge Unlocked' })
       );
     });
+<<<<<<< HEAD
 
     it('does not send badge email when badge remains unchanged', async () => {
       BookingModel.findById.mockResolvedValue({
@@ -289,6 +293,8 @@ describe('ReviewService', () => {
       expect(tutorDoc.save).not.toHaveBeenCalled();
       expect(sendEmail).not.toHaveBeenCalled();
     });
+=======
+>>>>>>> 182f9cf (feat: add review unit tests and update test documentation)
   });
 
   describe('read operations', () => {
@@ -380,6 +386,7 @@ describe('ReviewService', () => {
         UnauthorizedException
       );
     });
+<<<<<<< HEAD
 
     it('throws NotFoundException when review disappears on updateById', async () => {
       reviewRepository.findActiveById.mockResolvedValue({
@@ -426,6 +433,8 @@ describe('ReviewService', () => {
         expect.objectContaining({ to: 'tutor@test.com', subject: 'New Badge Unlocked' })
       );
     });
+=======
+>>>>>>> 182f9cf (feat: add review unit tests and update test documentation)
   });
 
   describe('deleteReview', () => {
@@ -467,6 +476,7 @@ describe('ReviewService', () => {
       reviewRepository.findActiveById.mockResolvedValue(null);
       await expect(service.deleteReview({ id: studentId }, reviewId)).rejects.toThrow(NotFoundException);
     });
+<<<<<<< HEAD
 
     it('throws NotFoundException when deleting user cannot be found', async () => {
       reviewRepository.findActiveById.mockResolvedValue({ _id: reviewId, reviewer: studentId, tutor: tutorId });
@@ -497,6 +507,8 @@ describe('ReviewService', () => {
         expect.objectContaining({ to: 'tutor@test.com', subject: 'New Badge Unlocked' })
       );
     });
+=======
+>>>>>>> 182f9cf (feat: add review unit tests and update test documentation)
   });
 
   describe('getLeaderboard', () => {
@@ -552,6 +564,7 @@ describe('ReviewService', () => {
       expect(result.mostHelpfulStudents.length).toBeGreaterThan(0);
       expect(typeof result.generatedAt).toBe('string');
     });
+<<<<<<< HEAD
 
     it('applies rising tutor tie-break by recentReviews when growth is equal', async () => {
       const tutorA = { _id: id(), name: 'Tutor A', email: 'a@test.com', reputationScore: 4.8, reviewCount: 30 };
@@ -655,5 +668,7 @@ describe('ReviewService', () => {
       expect(result.risingTutors).toHaveLength(1);
       expect(result.risingTutors[0].name).toBe('Existing Tutor');
     });
+=======
+>>>>>>> 182f9cf (feat: add review unit tests and update test documentation)
   });
 });
