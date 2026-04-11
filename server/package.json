@@ -21,7 +21,8 @@
     "test:unit:thread": "cross-env NODE_ENV=test jest tests/unit/thread",
     "test:unit:resource": "cross-env NODE_ENV=test jest tests/unit/resource",
     "test:integration:thread": "cross-env NODE_ENV=test jest tests/integration/thread",
-    "test:integration:resource": "cross-env NODE_ENV=test jest tests/integration/resource"
+    "test:integration:resource": "cross-env NODE_ENV=test jest tests/integration/resource",
+    "test:unit:review": "cross-env NODE_ENV=test jest tests/unit/review",
   },
   "keywords": [],
   "author": "",
