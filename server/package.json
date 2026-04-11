@@ -5,18 +5,19 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "node --watch src/index.js",
-  "start": "node src/index.js",
-  "test": "cross-env NODE_ENV=test jest",
-  "test:unit": "cross-env NODE_ENV=test jest tests/unit",
-  "test:unit:auth": "cross-env NODE_ENV=test jest tests/unit/auth",
-  "test:unit:session": "cross-env NODE_ENV=test jest tests/unit/session",
-  "test:integration": "cross-env NODE_ENV=test jest tests/integration",
-  "test:integration:auth": "cross-env NODE_ENV=test jest tests/integration/auth",
-  "test:integration:session": "cross-env NODE_ENV=test jest tests/integration/session",
-  "test:coverage": "cross-env NODE_ENV=test jest --coverage",
-  "test:watch": "cross-env NODE_ENV=test jest --watch",
-  "test:perf": "artillery run"
-
+    "start": "node src/index.js",
+    "test": "cross-env NODE_ENV=test jest",
+    "test:unit": "cross-env NODE_ENV=test jest tests/unit",
+    "test:unit:auth": "cross-env NODE_ENV=test jest tests/unit/auth",
+    "test:unit:session": "cross-env NODE_ENV=test jest tests/unit/session",
+    "test:integration": "cross-env NODE_ENV=test jest tests/integration",
+    "test:integration:auth": "cross-env NODE_ENV=test jest tests/integration/auth",
+    "test:integration:session": "cross-env NODE_ENV=test jest tests/integration/session",
+    "test:coverage": "cross-env NODE_ENV=test jest --coverage",
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "test:perf": "artillery run",
+    "test:perf:auth": "artillery run tests/performance/scenarios/auth-performance.yml --output tests/performance/results/auth-perf.json",
+    "test:perf:session": "artillery run tests/performance/scenarios/session-performance.yml --output tests/performance/results/session-perf.json"
   },
   "keywords": [],
   "author": "",
@@ -54,8 +55,11 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@aws-sdk/credential-providers": "^3.1029.0",
     "artillery": "^2.0.21",
+    "fast-xml-parser": "^5.5.11",
     "jest": "^30.3.0",
+    "minimist": "^1.2.8",
     "mongodb-memory-server": "^11.0.1",
     "supertest": "^7.2.2"
   }

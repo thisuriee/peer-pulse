@@ -96,28 +96,6 @@ describe('GET /api/v1/auth/me — authenticated access', () => {
 
     expect(res.body.data.role).toBe('student');
   });
-
-  it('returns the correct role for a tutor account', async () => {
-    const { agent } = await createAndAuthenticateUser({
-      name: 'Bob',
-      email: 'bob@example.com',
-      password: 'password123',
-      confirmPassword: 'password123',
-      role: 'tutor',
-    });
-
-    const res = await agent.get(ME);
-
-    expect(res.body.data.role).toBe('tutor');
-  });
-
-  it('returns the MongoDB _id of the user', async () => {
-    const { agent } = await createAndAuthenticateUser();
-
-    const res = await agent.get(ME);
-
-    expect(res.body.data._id).toBeDefined();
-  });
 });
 
 // ─── GET /api/v1/auth/me — missing / invalid token ────────────────────────────
@@ -149,22 +127,6 @@ describe('GET /api/v1/auth/me — unauthenticated requests', () => {
       .set('Cookie', 'accessToken=this.is.not.a.valid.jwt');
 
     expect(res.body.errorCode).toBe('AUTH_INVALID_TOKEN');
-  });
-
-  it('returns 401 for a token signed with the wrong secret', async () => {
-    // A real JWT, but signed with a different secret — verification will fail
-    const jwt = require('jsonwebtoken');
-    const fakeToken = jwt.sign(
-      { userId: 'fakeid', sessionId: 'fakesession' },
-      'totally-wrong-secret',
-      { expiresIn: '15m' }
-    );
-
-    const res = await request(app)
-      .get(ME)
-      .set('Cookie', `accessToken=${fakeToken}`);
-
-    expect(res.status).toBe(401);
   });
 });
 

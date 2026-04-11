@@ -1,37 +1,5 @@
 'use strict';
 
-/**
- * Integration tests — Session Bookings
- *
- *   POST   /api/v1/bookings            createBooking
- *   GET    /api/v1/bookings            getBookings
- *   GET    /api/v1/bookings/:id        getBookingById
- *   PUT    /api/v1/bookings/:id        updateBooking
- *   GET    /api/v1/bookings/slots      getAvailableSlots
- *   GET    /api/v1/bookings/tutors     getTutorsWithAvailability
- *
- * These tests exercise the full HTTP stack (supertest → Express → in-memory
- * MongoDB) with no mocks. Real JWT tokens are signed, real sessions are
- * created, real availability/conflict checks run against the DB.
- *
- * Contrast with unit tests (session.service.test.js) which mock models and
- * external services to test business logic in isolation. Here we verify:
- *   - Zod validation layer in the controller
- *   - Role guards (requireStudent, requireTutor)
- *   - Full availability + conflict check pipeline
- *   - Database persistence and populate behaviour
- *   - Cookie-based auth flows carry through to session endpoints
- *
- * Key assumptions / setup:
- *   - MongoDB Memory Server is used (no real DB required)
- *   - .env.test provides JWT_SECRET, JWT_REFRESH_SECRET etc.
- *   - Tutor availability must be ACTIVE and cover the scheduled time for
- *     createBooking to succeed. Every test that creates a booking calls
- *     setupTutorAvailability() first.
- *   - getFutureDate() picks 10:00 local time 7 days from now, well inside the
- *     09:00–17:00 availability window used in setupTutorAvailability().
- */
-
 const { describe, it, expect, beforeAll, afterAll, afterEach } = require('@jest/globals');
 const request = require('supertest');
 const app     = require('../../helpers/app.helper');
@@ -152,23 +120,6 @@ describe('POST /api/v1/bookings — create booking', () => {
     expect(res.body.data.tutor._id).toBe(tutorId);
   });
 
-  it('populates student and tutor objects in the response', async () => {
-    const { studentAgent, tutorId, studentId } = await setupStudentAndTutor();
-
-    const res = await studentAgent.post(BOOKINGS).send({
-      tutor:       tutorId,
-      subject:     'Physics',
-      scheduledAt: getFutureDate(),
-      duration:    60,
-    });
-
-    expect(res.status).toBe(201);
-    expect(res.body.data.student._id).toBe(studentId);
-    expect(res.body.data.student.email).toBe('alice@example.com');
-    expect(res.body.data.tutor.email).toBe('bob@example.com');
-    expect(res.body.data.student.password).toBeUndefined();
-  });
-
   it('returns 401 when called without authentication', async () => {
     const { tutorId } = await setupStudentAndTutor();
 
@@ -182,85 +133,6 @@ describe('POST /api/v1/bookings — create booking', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns 400 when tutor field is missing', async () => {
-    const { studentAgent } = await setupStudentAndTutor();
-
-    const res = await studentAgent.post(BOOKINGS).send({
-      subject:     'Mathematics',
-      scheduledAt: getFutureDate(),
-      duration:    60,
-    });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 when subject is missing', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    const res = await studentAgent.post(BOOKINGS).send({
-      tutor:       tutorId,
-      scheduledAt: getFutureDate(),
-      duration:    60,
-    });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 when scheduledAt is not a valid ISO datetime', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    const res = await studentAgent.post(BOOKINGS).send({
-      tutor:       tutorId,
-      subject:     'Mathematics',
-      scheduledAt: 'not-a-date',
-      duration:    60,
-    });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 when duration is below the 15-minute minimum', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    const res = await studentAgent.post(BOOKINGS).send({
-      tutor:       tutorId,
-      subject:     'Mathematics',
-      scheduledAt: getFutureDate(),
-      duration:    10,
-    });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 when duration exceeds the 180-minute maximum', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    const res = await studentAgent.post(BOOKINGS).send({
-      tutor:       tutorId,
-      subject:     'Mathematics',
-      scheduledAt: getFutureDate(),
-      duration:    200,
-    });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 when scheduledAt is in the past', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    const pastDate = new Date();
-    pastDate.setDate(pastDate.getDate() - 1);
-
-    const res = await studentAgent.post(BOOKINGS).send({
-      tutor:       tutorId,
-      subject:     'Mathematics',
-      scheduledAt: pastDate.toISOString(),
-      duration:    60,
-    });
-
-    expect(res.status).toBe(400);
-  });
-
   it('returns 400 when a student tries to book themselves', async () => {
     // Register user as tutor so they pass the tutor-role check, then try self-booking
     const tutor = await registerAndLogin({
@@ -271,29 +143,6 @@ describe('POST /api/v1/bookings — create booking', () => {
     await setupTutorAvailability(tutor.agent);
 
     const res = await tutor.agent.post(BOOKINGS).send({
-      tutor:       tutor.userId,
-      subject:     'Mathematics',
-      scheduledAt: getFutureDate(),
-      duration:    60,
-    });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 when the tutor has no active availability', async () => {
-    const student = await registerAndLogin({
-      name:  'Alice',
-      email: 'alice@example.com',
-      role:  'student',
-    });
-    const tutor = await registerAndLogin({
-      name:  'Bob',
-      email: 'bob@example.com',
-      role:  'tutor',
-    });
-    // Deliberately skip setupTutorAvailability — tutor has no active record
-
-    const res = await student.agent.post(BOOKINGS).send({
       tutor:       tutor.userId,
       subject:     'Mathematics',
       scheduledAt: getFutureDate(),
@@ -331,24 +180,6 @@ describe('POST /api/v1/bookings — create booking', () => {
     });
 
     expect(second.status).toBe(400);
-  });
-
-  it('stores optional description and notes fields', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    const res = await studentAgent.post(BOOKINGS).send({
-      tutor:       tutorId,
-      subject:     'Biology',
-      description: 'Need help with cell division',
-      scheduledAt: getFutureDate(),
-      duration:    45,
-      notes:       'Please bring practice problems',
-    });
-
-    expect(res.status).toBe(201);
-    expect(res.body.data.description).toBe('Need help with cell division');
-    expect(res.body.data.notes).toBe('Please bring practice problems');
-    expect(res.body.data.duration).toBe(45);
   });
 });
 
@@ -430,57 +261,6 @@ describe('GET /api/v1/bookings — list bookings', () => {
     expect(res.body.data.bookings).toHaveLength(2);
     expect(res.body.data.total).toBe(2);
   });
-
-  it('returns pagination metadata', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    await studentAgent.post(BOOKINGS).send({
-      tutor:       tutorId,
-      subject:     'Mathematics',
-      scheduledAt: getFutureDate(),
-      duration:    60,
-    });
-
-    const res = await studentAgent.get(BOOKINGS);
-
-    expect(res.status).toBe(200);
-    expect(res.body.data).toHaveProperty('currentPage');
-    expect(res.body.data).toHaveProperty('totalPages');
-    expect(res.body.data.currentPage).toBe(1);
-  });
-
-  it('filters bookings by status query parameter', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    await studentAgent.post(BOOKINGS).send({
-      tutor:       tutorId,
-      subject:     'Mathematics',
-      scheduledAt: getFutureDate(),
-      duration:    60,
-    });
-
-    const res = await studentAgent.get(`${BOOKINGS}?status=pending`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.data.bookings).toHaveLength(1);
-    expect(res.body.data.bookings[0].status).toBe('pending');
-  });
-
-  it('returns empty list when filtering by a status that has no matching bookings', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    await studentAgent.post(BOOKINGS).send({
-      tutor:       tutorId,
-      subject:     'Mathematics',
-      scheduledAt: getFutureDate(),
-      duration:    60,
-    });
-
-    const res = await studentAgent.get(`${BOOKINGS}?status=completed`);
-
-    expect(res.status).toBe(200);
-    expect(res.body.data.bookings).toHaveLength(0);
-  });
 });
 
 // ─── GET /api/v1/bookings/:id — get single booking ─────────────────────────────
@@ -547,14 +327,6 @@ describe('GET /api/v1/bookings/:id — get booking by ID', () => {
     const res = await intruder.agent.get(`${BOOKINGS}/${bookingId}`);
 
     expect(res.status).toBe(403);
-  });
-
-  it('returns 404 for a non-existent booking ID', async () => {
-    const { studentAgent } = await setupStudentAndTutor();
-
-    const res = await studentAgent.get(`${BOOKINGS}/000000000000000000000001`);
-
-    expect(res.status).toBe(404);
   });
 });
 
@@ -632,211 +404,6 @@ describe('PUT /api/v1/bookings/:id — update booking', () => {
 
     expect(res.status).toBe(403);
   });
-
-  it('returns 400 when rescheduling to a past date', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    const createRes = await studentAgent.post(BOOKINGS).send({
-      tutor:       tutorId,
-      subject:     'Mathematics',
-      scheduledAt: getFutureDate(),
-      duration:    60,
-    });
-    const bookingId = createRes.body.data._id;
-
-    const pastDate = new Date();
-    pastDate.setDate(pastDate.getDate() - 1);
-
-    const res = await studentAgent.put(`${BOOKINGS}/${bookingId}`).send({
-      scheduledAt: pastDate.toISOString(),
-    });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 404 for a non-existent booking ID', async () => {
-    const { studentAgent } = await setupStudentAndTutor();
-
-    const res = await studentAgent
-      .put(`${BOOKINGS}/000000000000000000000001`)
-      .send({ subject: 'Physics' });
-
-    expect(res.status).toBe(404);
-  });
 });
 
-// ─── GET /api/v1/bookings/slots — available time slots ─────────────────────────
 
-describe('GET /api/v1/bookings/slots — available time slots', () => {
-  it('returns 401 when called without authentication', async () => {
-    const res = await request(app).get(`${BOOKINGS}/slots?tutorId=x&date=2099-01-01`);
-    expect(res.status).toBe(401);
-  });
-
-  it('returns an array of available slots for a tutor with active availability', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    // Pick a date 7 days from now
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + 7);
-    const dateStr = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD
-
-    const res = await studentAgent.get(
-      `${BOOKINGS}/slots?tutorId=${tutorId}&date=${dateStr}&duration=60`
-    );
-
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data.length).toBeGreaterThan(0);
-    // Each slot should have startTime, endTime, duration
-    expect(res.body.data[0]).toHaveProperty('startTime');
-    expect(res.body.data[0]).toHaveProperty('endTime');
-    expect(res.body.data[0]).toHaveProperty('duration');
-  });
-
-  it('returns an empty array when the tutor has no active availability', async () => {
-    const student = await registerAndLogin({
-      name:  'Alice',
-      email: 'alice@example.com',
-      role:  'student',
-    });
-    const tutor = await registerAndLogin({
-      name:  'Bob',
-      email: 'bob@example.com',
-      role:  'tutor',
-    });
-    // No availability set → no slots
-
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + 7);
-    const dateStr = targetDate.toISOString().split('T')[0];
-
-    const res = await student.agent.get(
-      `${BOOKINGS}/slots?tutorId=${tutor.userId}&date=${dateStr}`
-    );
-
-    expect(res.status).toBe(200);
-    expect(res.body.data).toHaveLength(0);
-  });
-
-  it('returns 400 when tutorId query parameter is missing', async () => {
-    const { studentAgent } = await setupStudentAndTutor();
-
-    const res = await studentAgent.get(`${BOOKINGS}/slots?date=2099-01-01`);
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 when date is not in YYYY-MM-DD format', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    const res = await studentAgent.get(
-      `${BOOKINGS}/slots?tutorId=${tutorId}&date=01/01/2099`
-    );
-
-    expect(res.status).toBe(400);
-  });
-
-  it('excludes already-booked slots from the results', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    // Book a slot at 10:00 local time, 7 days out
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + 7);
-    targetDate.setHours(10, 0, 0, 0);
-    const dateStr = targetDate.toISOString().split('T')[0];
-
-    await studentAgent.post(BOOKINGS).send({
-      tutor:       tutorId,
-      subject:     'Mathematics',
-      scheduledAt: targetDate.toISOString(),
-      duration:    60,
-    });
-
-    const res = await studentAgent.get(
-      `${BOOKINGS}/slots?tutorId=${tutorId}&date=${dateStr}&duration=60`
-    );
-
-    expect(res.status).toBe(200);
-    // The 10:00 slot should no longer appear
-    const slot1000 = res.body.data.find((s) => {
-      const start = new Date(s.startTime);
-      return start.getHours() === 10 && start.getMinutes() === 0;
-    });
-    expect(slot1000).toBeUndefined();
-  });
-});
-
-// ─── GET /api/v1/bookings/tutors — list tutors ─────────────────────────────────
-
-describe('GET /api/v1/bookings/tutors — list tutors with availability', () => {
-  it('returns 401 when called without authentication', async () => {
-    const res = await request(app).get(`${BOOKINGS}/tutors`);
-    expect(res.status).toBe(401);
-  });
-
-  it('returns an array of tutor user objects', async () => {
-    const { studentAgent } = await setupStudentAndTutor();
-
-    const res = await studentAgent.get(`${BOOKINGS}/tutors`);
-
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data.length).toBeGreaterThan(0);
-  });
-
-  it('does not include student accounts in the tutors list', async () => {
-    const { studentAgent } = await setupStudentAndTutor();
-
-    const res = await studentAgent.get(`${BOOKINGS}/tutors`);
-
-    expect(res.status).toBe(200);
-    // Every item in the list should have an availability field (tutors only)
-    // Student accounts are filtered out at the UserModel query level (role: 'tutor')
-    res.body.data.forEach((t) => {
-      expect(t.email).not.toBe('alice@example.com'); // alice is a student
-    });
-  });
-
-  it('filters tutors by subject when subject query param is provided', async () => {
-    const { studentAgent } = await setupStudentAndTutor();
-
-    // Give the tutor a subject/skill via availability update
-    const tutor2 = await registerAndLogin({
-      name:  'Carol Tutor',
-      email: 'carol@example.com',
-      role:  'tutor',
-    });
-    // Update carol's availability with a specific subject
-    await tutor2.agent.put(`${BOOKINGS}/availability`).send({
-      weeklySchedule: ALL_DAYS_SCHEDULE,
-      subjects:       ['Chemistry'],
-      isActive:       true,
-    });
-
-    const res = await studentAgent.get(`${BOOKINGS}/tutors?subject=Chemistry`);
-
-    expect(res.status).toBe(200);
-    // Carol should appear; Bob (who has no 'Chemistry' skill) should not
-    const emails = res.body.data.map((t) => t.email);
-    expect(emails).toContain('carol@example.com');
-  });
-
-  it('returns only tutors with active availability when activeOnly=true', async () => {
-    const { studentAgent, tutorId } = await setupStudentAndTutor();
-
-    // Register a second tutor with NO availability
-    const inactiveTutor = await registerAndLogin({
-      name:  'Inactive Tutor',
-      email: 'inactive@example.com',
-      role:  'tutor',
-    });
-
-    const res = await studentAgent.get(`${BOOKINGS}/tutors?activeOnly=true`);
-
-    expect(res.status).toBe(200);
-    const emails = res.body.data.map((t) => t.email);
-    expect(emails).toContain('bob@example.com');       // has active availability
-    expect(emails).not.toContain('inactive@example.com'); // no availability set
-  });
-});

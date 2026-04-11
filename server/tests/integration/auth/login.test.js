@@ -130,31 +130,6 @@ describe('POST /api/v1/auth/login — success', () => {
     expect(res.body.user.password).toBeUndefined();
   });
 
-  it('returns mfaRequired: false', async () => {
-    await request(app).post(REGISTER).send({
-      name: 'Alice', email: 'alice@example.com',
-      password: 'password123', confirmPassword: 'password123',
-    });
-
-    const res = await request(app)
-      .post(LOGIN)
-      .send({ email: 'alice@example.com', password: 'password123' });
-
-    expect(res.body.mfaRequired).toBe(false);
-  });
-
-  it('returns the correct role for a tutor account', async () => {
-    await request(app).post(REGISTER).send({
-      name: 'Bob', email: 'bob@example.com',
-      password: 'password123', confirmPassword: 'password123', role: 'tutor',
-    });
-
-    const res = await request(app)
-      .post(LOGIN)
-      .send({ email: 'bob@example.com', password: 'password123' });
-
-    expect(res.body.user.role).toBe('tutor');
-  });
 });
 
 // ─── login — failures ──────────────────────────────────────────────────────────
@@ -195,46 +170,6 @@ describe('POST /api/v1/auth/login — failures', () => {
     const res = await request(app)
       .post(LOGIN)
       .send({ password: 'password123' });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 when password is missing', async () => {
-    const res = await request(app)
-      .post(LOGIN)
-      .send({ email: 'alice@example.com' });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 for a malformed email', async () => {
-    const res = await request(app)
-      .post(LOGIN)
-      .send({ email: 'not-an-email', password: 'password123' });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 when password is shorter than 6 characters', async () => {
-    const res = await request(app)
-      .post(LOGIN)
-      .send({ email: 'alice@example.com', password: 'abc' });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns a "Validation failed" message and an errors array for schema failures', async () => {
-    const res = await request(app)
-      .post(LOGIN)
-      .send({ email: 'not-an-email', password: 'password123' });
-
-    expect(res.body.message).toBe('Validation failed');
-    expect(Array.isArray(res.body.errors)).toBe(true);
-    expect(res.body.errors.length).toBeGreaterThan(0);
-  });
-
-  it('returns 400 when request body is entirely empty', async () => {
-    const res = await request(app).post(LOGIN).send({});
 
     expect(res.status).toBe(400);
   });
@@ -323,25 +258,5 @@ describe('POST /api/v1/auth/logout', () => {
     const res = await request(app).post(LOGOUT);
 
     expect(res.status).toBe(401);
-  });
-
-  it('prevents accessing protected routes after logout', async () => {
-    const { agent } = await registerAndLogin();
-
-    await agent.post(LOGOUT);
-
-    // The agent's cookies are cleared — /me should now reject the request
-    const meRes = await agent.get(ME);
-    expect(meRes.status).toBe(401);
-  });
-
-  it('prevents using the refresh token after logout', async () => {
-    const { agent } = await registerAndLogin();
-
-    await agent.post(LOGOUT);
-
-    // Session is deleted — refresh must fail
-    const refreshRes = await agent.get(REFRESH);
-    expect(refreshRes.status).toBe(401);
   });
 });

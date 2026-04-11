@@ -1,0 +1,157 @@
+config:
+  target: "http://localhost:5001"
+  phases:
+    - duration: 20
+      arrivalRate: 1
+      ramp: 3
+      name: "Ramp-up"
+    - duration: 30
+      arrivalRate: 3
+      name: "Sustained Load"
+    - duration: 15
+      arrivalRate: 5
+      name: "Spike"
+
+  defaults:
+    headers:
+      User-Agent: "PeerPulse-LoadTest/1.0"
+      Accept: "application/json"
+      Content-Type: "application/json"
+
+before:
+  flow:
+    - log: "Performance Test: Authentication Started"
+    - log: "Target: http://localhost:5001"
+
+scenarios:
+  - name: "Registration Load Test"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "PerfUser_{{ $loopCount }}_{{ $timestamp }}"
+            email: "perf.user.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "SecurePass123!"
+            confirmPassword: "SecurePass123!"
+            role: "{{ oneOf(['student', 'tutor']) }}"
+          expect:
+            - statusCode: 201
+          capture:
+            - json: "data.email"
+              as: "registered_email"
+
+  - name: "Login Flow Test"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "LoginTest_{{ $loopCount }}"
+            email: "login.test.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "LoginPass456!"
+            confirmPassword: "LoginPass456!"
+            role: "{{ oneOf(['student', 'tutor']) }}"
+          expect:
+            - statusCode: 201
+          capture:
+            - json: "data.email"
+              as: "test_email"
+
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ test_email }}"
+            password: "LoginPass456!"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: "data.user"
+
+      - get:
+          url: "/api/v1/auth/refresh"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/auth/me"
+          expect:
+            - statusCode: 200
+            - hasProperty: "data.email"
+
+  - name: "Concurrent Auth Stress Test"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "StressTest_{{ $loopCount }}"
+            email: "stress.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "StressPass789!"
+            confirmPassword: "StressPass789!"
+            role: "student"
+          expect:
+            - statusCode: [201, 400]
+          capture:
+            - json: "data.email"
+              as: "stress_email"
+
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ stress_email }}"
+            password: "StressPass789!"
+          expect:
+            - statusCode: [200, 400, 401, 429]
+
+      - get:
+          url: "/api/v1/auth/me"
+          expect:
+            - statusCode: [200, 401, 429]
+
+  - name: "Logout Flow Test"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "LogoutTest_{{ $loopCount }}"
+            email: "logout.test.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "LogoutPass321!"
+            confirmPassword: "LogoutPass321!"
+            role: "{{ oneOf(['student', 'tutor']) }}"
+          expect:
+            - statusCode: 201
+          capture:
+            - json: "data.email"
+              as: "logout_email"
+
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ logout_email }}"
+            password: "LogoutPass321!"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/auth/me"
+          expect:
+            - statusCode: 200
+
+      - post:
+          url: "/api/v1/auth/logout"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/auth/me"
+          expect:
+            - statusCode: 401
+
+after:
+  flow:
+    - log: "Performance Test: Authentication Completed"
+
+plugins:
+  expect: {}
