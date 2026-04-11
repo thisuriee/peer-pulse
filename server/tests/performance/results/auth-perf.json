@@ -1,0 +1,217 @@
+{
+  "aggregate": {
+    "counters": {
+      "vusers.created_by_name.Logout Flow Test": 35,
+      "vusers.created": 185,
+      "http.requests": 185,
+      "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 185,
+      "errors.ECONNREFUSED": 185,
+      "vusers.failed": 185,
+      "vusers.created_by_name.Login Flow Test": 58,
+      "vusers.created_by_name.Registration Load Test": 48,
+      "vusers.created_by_name.Concurrent Auth Stress Test": 44
+    },
+    "rates": {
+      "http.request_rate": 7
+    },
+    "firstCounterAt": 1775910996857,
+    "lastCounterAt": 1775911061131,
+    "firstMetricAt": 1775910996857,
+    "lastMetricAt": 1775911061131,
+    "period": 1775911060000,
+    "summaries": {},
+    "histograms": {}
+  },
+  "intermediate": [
+    {
+      "counters": {
+        "vusers.created_by_name.Logout Flow Test": 3,
+        "vusers.created": 4,
+        "http.requests": 4,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 4,
+        "errors.ECONNREFUSED": 4,
+        "vusers.failed": 4,
+        "vusers.created_by_name.Login Flow Test": 1
+      },
+      "rates": {
+        "http.request_rate": 1
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775910996857,
+      "lastCounterAt": 1775910999857,
+      "firstMetricAt": 1775910996857,
+      "lastMetricAt": 1775910999857,
+      "period": "1775910990000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Logout Flow Test": 2,
+        "vusers.created": 10,
+        "http.requests": 10,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 10,
+        "errors.ECONNREFUSED": 10,
+        "vusers.failed": 10,
+        "vusers.created_by_name.Registration Load Test": 4,
+        "vusers.created_by_name.Concurrent Auth Stress Test": 2,
+        "vusers.created_by_name.Login Flow Test": 2
+      },
+      "rates": {
+        "http.request_rate": 1
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911000854,
+      "lastCounterAt": 1775911009856,
+      "firstMetricAt": 1775911000854,
+      "lastMetricAt": 1775911009856,
+      "period": "1775911000000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Registration Load Test": 5,
+        "vusers.created": 18,
+        "http.requests": 18,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 18,
+        "errors.ECONNREFUSED": 18,
+        "vusers.failed": 18,
+        "vusers.created_by_name.Logout Flow Test": 3,
+        "vusers.created_by_name.Login Flow Test": 8,
+        "vusers.created_by_name.Concurrent Auth Stress Test": 2
+      },
+      "rates": {
+        "http.request_rate": 3
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911010854,
+      "lastCounterAt": 1775911019988,
+      "firstMetricAt": 1775911010854,
+      "lastMetricAt": 1775911019988,
+      "period": "1775911010000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Logout Flow Test": 12,
+        "vusers.created": 30,
+        "http.requests": 30,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 30,
+        "errors.ECONNREFUSED": 30,
+        "vusers.failed": 30,
+        "vusers.created_by_name.Registration Load Test": 5,
+        "vusers.created_by_name.Concurrent Auth Stress Test": 5,
+        "vusers.created_by_name.Login Flow Test": 8
+      },
+      "rates": {
+        "http.request_rate": 3
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911020855,
+      "lastCounterAt": 1775911029990,
+      "firstMetricAt": 1775911020855,
+      "lastMetricAt": 1775911029990,
+      "period": "1775911020000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Logout Flow Test": 4,
+        "vusers.created": 30,
+        "http.requests": 30,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 30,
+        "errors.ECONNREFUSED": 30,
+        "vusers.failed": 30,
+        "vusers.created_by_name.Concurrent Auth Stress Test": 9,
+        "vusers.created_by_name.Registration Load Test": 8,
+        "vusers.created_by_name.Login Flow Test": 9
+      },
+      "rates": {
+        "http.request_rate": 3
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911030855,
+      "lastCounterAt": 1775911039988,
+      "firstMetricAt": 1775911030855,
+      "lastMetricAt": 1775911039988,
+      "period": "1775911030000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Concurrent Auth Stress Test": 10,
+        "vusers.created": 36,
+        "http.requests": 36,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 36,
+        "errors.ECONNREFUSED": 36,
+        "vusers.failed": 36,
+        "vusers.created_by_name.Logout Flow Test": 6,
+        "vusers.created_by_name.Login Flow Test": 13,
+        "vusers.created_by_name.Registration Load Test": 7
+      },
+      "rates": {
+        "http.request_rate": 7
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911040855,
+      "lastCounterAt": 1775911049990,
+      "firstMetricAt": 1775911040855,
+      "lastMetricAt": 1775911049990,
+      "period": "1775911040000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Registration Load Test": 17,
+        "vusers.created": 50,
+        "http.requests": 50,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 50,
+        "errors.ECONNREFUSED": 50,
+        "vusers.failed": 50,
+        "vusers.created_by_name.Login Flow Test": 16,
+        "vusers.created_by_name.Concurrent Auth Stress Test": 13,
+        "vusers.created_by_name.Logout Flow Test": 4
+      },
+      "rates": {
+        "http.request_rate": 5
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911050049,
+      "lastCounterAt": 1775911059989,
+      "firstMetricAt": 1775911050049,
+      "lastMetricAt": 1775911059989,
+      "period": "1775911050000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Concurrent Auth Stress Test": 3,
+        "vusers.created": 7,
+        "http.requests": 7,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 7,
+        "errors.ECONNREFUSED": 7,
+        "vusers.failed": 7,
+        "vusers.created_by_name.Registration Load Test": 2,
+        "vusers.created_by_name.Logout Flow Test": 1,
+        "vusers.created_by_name.Login Flow Test": 1
+      },
+      "rates": {
+        "http.request_rate": 7
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911060048,
+      "lastCounterAt": 1775911061131,
+      "firstMetricAt": 1775911060048,
+      "lastMetricAt": 1775911061131,
+      "period": "1775911060000",
+      "summaries": {},
+      "histograms": {}
+    }
+  ]
+}

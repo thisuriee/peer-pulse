@@ -4,9 +4,29 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "node --watch src/index.js",
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "test": "cross-env NODE_ENV=test jest",
+    "test:unit": "cross-env NODE_ENV=test jest tests/unit",
+    "test:unit:auth": "cross-env NODE_ENV=test jest tests/unit/auth",
+    "test:unit:session": "cross-env NODE_ENV=test jest tests/unit/session",
+    "test:unit:review": "cross-env NODE_ENV=test jest tests/unit/review",
+    "test:unit:thread": "cross-env NODE_ENV=test jest tests/unit/thread",
+    "test:unit:resource": "cross-env NODE_ENV=test jest tests/unit/resource",
+    "test:integration": "cross-env NODE_ENV=test jest tests/integration",
+    "test:integration:auth": "cross-env NODE_ENV=test jest tests/integration/auth",
+    "test:integration:session": "cross-env NODE_ENV=test jest tests/integration/session",
+    "test:integration:review": "cross-env NODE_ENV=test jest tests/integration/review",
+    "test:integration:thread": "cross-env NODE_ENV=test jest tests/integration/thread",
+    "test:integration:resource": "cross-env NODE_ENV=test jest tests/integration/resource",
+    "test:coverage": "cross-env NODE_ENV=test jest --coverage",
+    "test:watch": "cross-env NODE_ENV=test jest --watch",
+    "test:perf": "artillery run",
+    "test:perf:auth": "artillery run tests/performance/scenarios/auth-performance.yml --output tests/performance/results/auth-perf.json",
+    "test:perf:session": "artillery run tests/performance/scenarios/session-performance.yml --output tests/performance/results/session-perf.json",
+    "test:perf:review": "artillery run tests/performance/scenarios/review-load.yml --output tests/performance/results/review-perf.json",
+    "test:perf:thread": "cross-env RATE_LIMIT_MAX=100000 artillery run tests/performance/scenarios/thread-load.yml --output tests/performance/results/thread-perf.json && echo \"\\n✅ SUCCESS: Thread Performance Test Passed All Requirements!\\n\"",
+    "test:perf:resource": "artillery run tests/performance/scenarios/resource-load.yml --output tests/performance/results/resource-perf.json"
   },
   "keywords": [],
   "author": "",
@@ -14,8 +34,8 @@
   "dependencies": {
     "@logtail/node": "^0.5.6",
     "@logtail/winston": "^0.5.6",
-    "axios": "^1.13.5",
     "@sendgrid/mail": "^8.1.6",
+    "axios": "^1.13.5",
     "bcrypt": "^5.1.1",
     "cloudinary": "^2.9.0",
     "cookie-parser": "^1.4.7",
@@ -42,5 +62,15 @@
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@aws-sdk/credential-providers": "^3.1029.0",
+    "artillery": "^2.0.21",
+    "fast-xml-parser": "^5.5.11",
+    "cross-env": "^10.1.0",
+    "jest": "^30.3.0",
+    "minimist": "^1.2.8",
+    "mongodb-memory-server": "^11.0.1",
+    "supertest": "^7.2.2"
   }
 }

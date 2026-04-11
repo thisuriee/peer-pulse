@@ -1,0 +1,187 @@
+{
+  "aggregate": {
+    "counters": {
+      "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 60,
+      "vusers.created": 185,
+      "http.requests": 185,
+      "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 185,
+      "errors.ECONNREFUSED": 185,
+      "vusers.failed": 185,
+      "vusers.created_by_name.Leaderboard read load": 55,
+      "vusers.created_by_name.My reviews and tutor listing read load": 70
+    },
+    "rates": {
+      "http.request_rate": 5
+    },
+    "firstCounterAt": 1775911420687,
+    "lastCounterAt": 1775911484956,
+    "firstMetricAt": 1775911420687,
+    "lastMetricAt": 1775911484956,
+    "period": 1775911480000,
+    "summaries": {},
+    "histograms": {}
+  },
+  "intermediate": [
+    {
+      "counters": {
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 3,
+        "vusers.created": 10,
+        "http.requests": 10,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 10,
+        "errors.ECONNREFUSED": 10,
+        "vusers.failed": 10,
+        "vusers.created_by_name.Leaderboard read load": 4,
+        "vusers.created_by_name.My reviews and tutor listing read load": 3
+      },
+      "rates": {
+        "http.request_rate": 1
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911420687,
+      "lastCounterAt": 1775911429688,
+      "firstMetricAt": 1775911420687,
+      "lastMetricAt": 1775911429688,
+      "period": "1775911420000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.My reviews and tutor listing read load": 5,
+        "vusers.created": 10,
+        "http.requests": 10,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 10,
+        "errors.ECONNREFUSED": 10,
+        "vusers.failed": 10,
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 3,
+        "vusers.created_by_name.Leaderboard read load": 2
+      },
+      "rates": {
+        "http.request_rate": 1
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911430686,
+      "lastCounterAt": 1775911439689,
+      "firstMetricAt": 1775911430686,
+      "lastMetricAt": 1775911439689,
+      "period": "1775911430000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.My reviews and tutor listing read load": 7,
+        "vusers.created": 30,
+        "http.requests": 30,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 30,
+        "errors.ECONNREFUSED": 30,
+        "vusers.failed": 30,
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 13,
+        "vusers.created_by_name.Leaderboard read load": 10
+      },
+      "rates": {
+        "http.request_rate": 3
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911440687,
+      "lastCounterAt": 1775911449823,
+      "firstMetricAt": 1775911440687,
+      "lastMetricAt": 1775911449823,
+      "period": "1775911440000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 8,
+        "vusers.created": 30,
+        "http.requests": 30,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 30,
+        "errors.ECONNREFUSED": 30,
+        "vusers.failed": 30,
+        "vusers.created_by_name.My reviews and tutor listing read load": 8,
+        "vusers.created_by_name.Leaderboard read load": 14
+      },
+      "rates": {
+        "http.request_rate": 3
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911450687,
+      "lastCounterAt": 1775911459823,
+      "firstMetricAt": 1775911450687,
+      "lastMetricAt": 1775911459823,
+      "period": "1775911450000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.My reviews and tutor listing read load": 15,
+        "vusers.created": 30,
+        "http.requests": 30,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 30,
+        "errors.ECONNREFUSED": 30,
+        "vusers.failed": 30,
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 10,
+        "vusers.created_by_name.Leaderboard read load": 5
+      },
+      "rates": {
+        "http.request_rate": 3
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911460687,
+      "lastCounterAt": 1775911469823,
+      "firstMetricAt": 1775911460687,
+      "lastMetricAt": 1775911469823,
+      "period": "1775911460000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 16,
+        "vusers.created": 50,
+        "http.requests": 50,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 50,
+        "errors.ECONNREFUSED": 50,
+        "vusers.failed": 50,
+        "vusers.created_by_name.My reviews and tutor listing read load": 22,
+        "vusers.created_by_name.Leaderboard read load": 12
+      },
+      "rates": {
+        "http.request_rate": 5
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911470687,
+      "lastCounterAt": 1775911479956,
+      "firstMetricAt": 1775911470687,
+      "lastMetricAt": 1775911479956,
+      "period": "1775911470000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Leaderboard read load": 8,
+        "vusers.created": 25,
+        "http.requests": 25,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 25,
+        "errors.ECONNREFUSED": 25,
+        "vusers.failed": 25,
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 7,
+        "vusers.created_by_name.My reviews and tutor listing read load": 10
+      },
+      "rates": {
+        "http.request_rate": 5
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911480687,
+      "lastCounterAt": 1775911484956,
+      "firstMetricAt": 1775911480687,
+      "lastMetricAt": 1775911484956,
+      "period": "1775911480000",
+      "summaries": {},
+      "histograms": {}
+    }
+  ]
+}

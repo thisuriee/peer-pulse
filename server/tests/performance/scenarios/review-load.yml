@@ -1,0 +1,141 @@
+config:
+  target: "http://localhost:5001"
+  phases:
+    - duration: 20
+      arrivalRate: 1
+      ramp: 3
+      name: "Ramp-up"
+    - duration: 30
+      arrivalRate: 3
+      name: "Sustained Load"
+    - duration: 15
+      arrivalRate: 5
+      name: "Spike"
+
+  defaults:
+    headers:
+      User-Agent: "PeerPulse-LoadTest/1.0"
+      Accept: "application/json"
+      Content-Type: "application/json"
+
+before:
+  flow:
+    - log: "Performance Test: Reviews & Reputation (Member 3) started"
+    - log: "Target: http://localhost:5001 — ensure server is running with NODE_ENV=test PORT=5001"
+
+scenarios:
+  # All /api/v1/reviews routes require JWT cookies (authenticateJWT).
+  # Each flow registers a fresh user, logs in (Set-Cookie), then hits review endpoints.
+
+  - name: "Leaderboard read load"
+    weight: 35
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "PerfReviewLB_{{ $loopCount }}"
+            email: "perf.review.lb.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "ReviewPass123!"
+            confirmPassword: "ReviewPass123!"
+            role: "{{ oneOf(['student', 'tutor']) }}"
+          expect:
+            - statusCode: 201
+          capture:
+            - json: "data.email"
+              as: "lb_user_email"
+
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ lb_user_email }}"
+            password: "ReviewPass123!"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/reviews/leaderboard"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: "data.topTutors"
+
+  - name: "My reviews and tutor listing read load"
+    weight: 35
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "PerfReviewRead_{{ $loopCount }}"
+            email: "perf.review.read.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "ReviewRead456!"
+            confirmPassword: "ReviewRead456!"
+            role: "student"
+          expect:
+            - statusCode: 201
+          capture:
+            - json: "data.email"
+              as: "read_user_email"
+
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ read_user_email }}"
+            password: "ReviewRead456!"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/reviews"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: "data"
+
+      # Valid ObjectId format; usually returns 200 with an empty list if tutor has no reviews.
+      - get:
+          url: "/api/v1/reviews/tutor/507f1f77bcf86cd799439011"
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: "data"
+
+  - name: "Review create stress (missing booking — service + DB path)"
+    weight: 30
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "PerfReviewPost_{{ $loopCount }}"
+            email: "perf.review.post.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "ReviewPost789!"
+            confirmPassword: "ReviewPost789!"
+            role: "student"
+          expect:
+            - statusCode: 201
+          capture:
+            - json: "data.email"
+              as: "post_user_email"
+
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ post_user_email }}"
+            password: "ReviewPost789!"
+          expect:
+            - statusCode: 200
+
+      - post:
+          url: "/api/v1/reviews"
+          json:
+            bookingId: "507f1f77bcf86cd799439011"
+            rating: 4
+            comment: "Load test comment {{ $loopCount }}"
+          expect:
+            - statusCode: 404
+
+after:
+  flow:
+    - log: "Performance Test: Reviews & Reputation completed"
+
+plugins:
+  expect: {}

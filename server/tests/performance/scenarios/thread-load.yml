@@ -1,0 +1,62 @@
+config:
+  target: "http://localhost:5001"
+  ensure:
+    thresholds:
+      - "http.response_time.p99": 2000
+      - "http.response_time.p95": 500
+    conditions:
+      - expression: "vusers.failed == 0"
+  phases:
+    - duration: 60
+      arrivalRate: 50
+      rampTo: 100
+      name: "Ramp up to peak load (50-100 concurrent users over 60 seconds)"
+  
+  # Ensure variables are available if we need to authenticate or pass tokens
+  payload:
+    # Optional payload data for testing create thread if auth is required (use a test user's token)
+    # path: "../data/users.csv"
+    # fields:
+    #   - "token"
+
+scenarios:
+  - name: "Thread List and Aggregation Bottleneck"
+    weight: 70
+    flow:
+      - get:
+          url: "/api/v1/threads?sort=Most Upvoted"
+          expect:
+            - statusCode: 200
+
+  - name: "Read Single Thread"
+    weight: 20
+    flow:
+      # Assume an existing thread ID or fetch one in a previous step
+      # We'll first hit the list, pick an ID, and then fetch that specific thread Details
+      - get:
+          url: "/api/v1/threads"
+          capture:
+            - json: "$.data.threads[0]._id"
+              as: "threadId"
+              strict: false
+      - get:
+          url: "/api/v1/threads/{{ threadId }}"
+          ifTrue: "threadId"
+          expect:
+            - statusCode: 200
+
+  - name: "Create and Upvote Thread Simulation (Assume Auth Context or public access)"
+    weight: 10
+    flow:
+      # NOTE: This scenario might fail if auth is required and no valid token is provided. 
+      # Typically performance tests on mutating endpoints require setup/teardown.
+      # For a public or mocked test expecting unauthenticated response:
+      - post:
+          url: "/api/v1/threads"
+          json:
+            title: "Performance Test Thread {{ $randomString() }}"
+            content: "This is a load test generated thread with some detailed question."
+            tags: ["load-test", "bot"]
+          expect:
+            - statusCode: 401
+  

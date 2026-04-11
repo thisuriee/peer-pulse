@@ -1,0 +1,215 @@
+{
+  "aggregate": {
+    "counters": {
+      "vusers.created_by_name.Availability Query Test": 35,
+      "vusers.created": 185,
+      "http.requests": 185,
+      "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 185,
+      "errors.ECONNREFUSED": 185,
+      "vusers.failed": 185,
+      "vusers.created_by_name.Booking Creation Load Test": 49,
+      "vusers.created_by_name.Booking Status Transitions": 44,
+      "vusers.created_by_name.Complex Session Workflow": 57
+    },
+    "rates": {
+      "http.request_rate": 5
+    },
+    "firstCounterAt": 1775911089345,
+    "lastCounterAt": 1775911153607,
+    "firstMetricAt": 1775911089345,
+    "lastMetricAt": 1775911153607,
+    "period": 1775911150000,
+    "summaries": {},
+    "histograms": {}
+  },
+  "intermediate": [
+    {
+      "counters": {
+        "vusers.created_by_name.Availability Query Test": 1,
+        "vusers.created": 1,
+        "http.requests": 1,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 1,
+        "errors.ECONNREFUSED": 1,
+        "vusers.failed": 1
+      },
+      "rates": {
+        "http.request_rate": 1
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911089345,
+      "lastCounterAt": 1775911089363,
+      "firstMetricAt": 1775911089345,
+      "lastMetricAt": 1775911089363,
+      "period": "1775911080000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Booking Creation Load Test": 2,
+        "vusers.created": 10,
+        "http.requests": 10,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 10,
+        "errors.ECONNREFUSED": 10,
+        "vusers.failed": 10,
+        "vusers.created_by_name.Booking Status Transitions": 5,
+        "vusers.created_by_name.Complex Session Workflow": 3
+      },
+      "rates": {
+        "http.request_rate": 1
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911090343,
+      "lastCounterAt": 1775911099346,
+      "firstMetricAt": 1775911090343,
+      "lastMetricAt": 1775911099346,
+      "period": "1775911090000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Booking Creation Load Test": 2,
+        "vusers.created": 12,
+        "http.requests": 12,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 12,
+        "errors.ECONNREFUSED": 12,
+        "vusers.failed": 12,
+        "vusers.created_by_name.Booking Status Transitions": 4,
+        "vusers.created_by_name.Complex Session Workflow": 5,
+        "vusers.created_by_name.Availability Query Test": 1
+      },
+      "rates": {
+        "http.request_rate": 3
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911100343,
+      "lastCounterAt": 1775911109504,
+      "firstMetricAt": 1775911100343,
+      "lastMetricAt": 1775911109504,
+      "period": "1775911100000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Complex Session Workflow": 12,
+        "vusers.created": 30,
+        "http.requests": 30,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 30,
+        "errors.ECONNREFUSED": 30,
+        "vusers.failed": 30,
+        "vusers.created_by_name.Booking Status Transitions": 7,
+        "vusers.created_by_name.Availability Query Test": 5,
+        "vusers.created_by_name.Booking Creation Load Test": 6
+      },
+      "rates": {
+        "http.request_rate": 3
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911110345,
+      "lastCounterAt": 1775911119486,
+      "firstMetricAt": 1775911110345,
+      "lastMetricAt": 1775911119486,
+      "period": "1775911110000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Complex Session Workflow": 9,
+        "vusers.created": 30,
+        "http.requests": 30,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 30,
+        "errors.ECONNREFUSED": 30,
+        "vusers.failed": 30,
+        "vusers.created_by_name.Availability Query Test": 7,
+        "vusers.created_by_name.Booking Creation Load Test": 8,
+        "vusers.created_by_name.Booking Status Transitions": 6
+      },
+      "rates": {
+        "http.request_rate": 3
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911120345,
+      "lastCounterAt": 1775911129488,
+      "firstMetricAt": 1775911120345,
+      "lastMetricAt": 1775911129488,
+      "period": "1775911120000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Booking Creation Load Test": 11,
+        "vusers.created": 32,
+        "http.requests": 32,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 32,
+        "errors.ECONNREFUSED": 32,
+        "vusers.failed": 32,
+        "vusers.created_by_name.Complex Session Workflow": 7,
+        "vusers.created_by_name.Availability Query Test": 7,
+        "vusers.created_by_name.Booking Status Transitions": 7
+      },
+      "rates": {
+        "http.request_rate": 5
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911130345,
+      "lastCounterAt": 1775911139622,
+      "firstMetricAt": 1775911130345,
+      "lastMetricAt": 1775911139622,
+      "period": "1775911130000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Booking Creation Load Test": 15,
+        "vusers.created": 50,
+        "http.requests": 50,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 50,
+        "errors.ECONNREFUSED": 50,
+        "vusers.failed": 50,
+        "vusers.created_by_name.Booking Status Transitions": 12,
+        "vusers.created_by_name.Complex Session Workflow": 13,
+        "vusers.created_by_name.Availability Query Test": 10
+      },
+      "rates": {
+        "http.request_rate": 5
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911140346,
+      "lastCounterAt": 1775911149610,
+      "firstMetricAt": 1775911140346,
+      "lastMetricAt": 1775911149610,
+      "period": "1775911140000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Complex Session Workflow": 8,
+        "vusers.created": 20,
+        "http.requests": 20,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 20,
+        "errors.ECONNREFUSED": 20,
+        "vusers.failed": 20,
+        "vusers.created_by_name.Availability Query Test": 4,
+        "vusers.created_by_name.Booking Status Transitions": 3,
+        "vusers.created_by_name.Booking Creation Load Test": 5
+      },
+      "rates": {
+        "http.request_rate": 5
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911150345,
+      "lastCounterAt": 1775911153607,
+      "firstMetricAt": 1775911150345,
+      "lastMetricAt": 1775911153607,
+      "period": "1775911150000",
+      "summaries": {},
+      "histograms": {}
+    }
+  ]
+}
