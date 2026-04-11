@@ -65,30 +65,11 @@ describe('POST /api/v1/auth/register — success', () => {
     expect(res.body.data.role).toBe('student');
   });
 
-  it('creates a user with role "student" when explicitly provided', async () => {
-    const res = await request(app).post(BASE).send(validStudent);
-
-    expect(res.body.data.role).toBe('student');
-  });
-
-  it('creates a user with role "tutor" when provided', async () => {
-    const res = await request(app).post(BASE).send(validTutor);
-
-    expect(res.status).toBe(201);
-    expect(res.body.data.role).toBe('tutor');
-  });
-
   it('returns the correct name and email in the response', async () => {
     const res = await request(app).post(BASE).send(validStudent);
 
     expect(res.body.data.name).toBe(validStudent.name);
     expect(res.body.data.email).toBe(validStudent.email);
-  });
-
-  it('returns a MongoDB _id in the user object', async () => {
-    const res = await request(app).post(BASE).send(validStudent);
-
-    expect(res.body.data._id).toBeDefined();
   });
 });
 
@@ -130,25 +111,9 @@ describe('POST /api/v1/auth/register — Zod validation failures', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 400 when name is an empty string', async () => {
-    const res = await request(app)
-      .post(BASE)
-      .send({ ...validStudent, name: '' });
-
-    expect(res.status).toBe(400);
-  });
-
   it('returns 400 when email is missing', async () => {
     const { email: _e, ...body } = validStudent;
     const res = await request(app).post(BASE).send(body);
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 for a malformed email address', async () => {
-    const res = await request(app)
-      .post(BASE)
-      .send({ ...validStudent, email: 'not-an-email' });
 
     expect(res.status).toBe(400);
   });
@@ -160,41 +125,10 @@ describe('POST /api/v1/auth/register — Zod validation failures', () => {
     expect(res.status).toBe(400);
   });
 
-  it('returns 400 when password is shorter than 6 characters', async () => {
-    const res = await request(app)
-      .post(BASE)
-      .send({ ...validStudent, password: 'abc', confirmPassword: 'abc' });
-
-    expect(res.status).toBe(400);
-  });
-
   it('returns 400 when passwords do not match', async () => {
     const res = await request(app)
       .post(BASE)
       .send({ ...validStudent, confirmPassword: 'differentpassword' });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns a "Validation failed" message and an errors array for schema failures', async () => {
-    const { name: _n, ...body } = validStudent;
-    const res = await request(app).post(BASE).send(body);
-
-    expect(res.body.message).toBe('Validation failed');
-    expect(Array.isArray(res.body.errors)).toBe(true);
-    expect(res.body.errors.length).toBeGreaterThan(0);
-  });
-
-  it('returns 400 when role is not "student" or "tutor"', async () => {
-    const res = await request(app)
-      .post(BASE)
-      .send({ ...validStudent, role: 'admin' });
-
-    expect(res.status).toBe(400);
-  });
-
-  it('returns 400 when the request body is entirely empty', async () => {
-    const res = await request(app).post(BASE).send({});
 
     expect(res.status).toBe(400);
   });

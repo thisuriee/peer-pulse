@@ -1,0 +1,249 @@
+config:
+  target: "http://localhost:5001"
+  phases:
+    - duration: 20
+      arrivalRate: 1
+      ramp: 3
+      name: "Ramp-up"
+    - duration: 30
+      arrivalRate: 3
+      name: "Sustained Load"
+    - duration: 15
+      arrivalRate: 5
+      name: "Spike"
+
+  defaults:
+    headers:
+      User-Agent: "PeerPulse-LoadTest/1.0"
+      Accept: "application/json"
+      Content-Type: "application/json"
+
+before:
+  flow:
+    - log: "Performance Test: Session/Booking Started"
+    - log: "Target: http://localhost:5001"
+
+scenarios:
+  - name: "Booking Creation Load Test"
+    weight: 25
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "Student_Booking_{{ $loopCount }}"
+            email: "student.booking.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "StudentPass123!"
+            confirmPassword: "StudentPass123!"
+            role: "student"
+          expect:
+            - statusCode: 201
+          capture:
+            - json: "data.email"
+              as: "student_email"
+
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ student_email }}"
+            password: "StudentPass123!"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/bookings/tutors"
+          expect:
+            - statusCode: 200
+            - hasProperty: "data"
+          capture:
+            - json: "data[0]._id"
+              as: "tutor_to_book"
+
+      - post:
+          url: "/api/v1/bookings"
+          json:
+            tutorId: "{{ tutor_to_book }}"
+            startTime: "{{ $timestamp }}"
+            duration: 60
+            notes: "Booking from performance test"
+          expect:
+            - statusCode: [201, 400]
+          capture:
+            - json: "data._id"
+              as: "booking_id"
+
+      - get:
+          url: "/api/v1/bookings"
+          expect:
+            - statusCode: 200
+            - hasProperty: "data"
+
+  - name: "Availability Query Test"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "QueryTest_{{ $loopCount }}"
+            email: "query.test.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "QueryPass456!"
+            confirmPassword: "QueryPass456!"
+            role: "{{ oneOf(['student', 'tutor']) }}"
+          expect:
+            - statusCode: 201
+
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "query.test.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "QueryPass456!"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/bookings/slots"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/bookings/tutors"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/bookings"
+          expect:
+            - statusCode: 200
+
+  - name: "Booking Status Transitions"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "Transition_User_{{ $loopCount }}"
+            email: "transition.user.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "TransPass123!"
+            confirmPassword: "TransPass123!"
+            role: "tutor"
+          expect:
+            - statusCode: 201
+
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "transition.user.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "TransPass123!"
+          expect:
+            - statusCode: 200
+
+      - put:
+          url: "/api/v1/bookings/availability"
+          json:
+            dayOfWeek: "{{ oneOf(['Monday', 'Tuesday', 'Wednesday']) }}"
+            startTime: "09:00"
+            endTime: "17:00"
+            availableSlots: 5
+          expect:
+            - statusCode: [200, 201, 400]
+
+      - put:
+          url: "/api/v1/bookings/{{ $randomNumber(100000, 999999) }}/accept"
+          expect:
+            - statusCode: [200, 400, 404]
+
+      - put:
+          url: "/api/v1/bookings/{{ $randomNumber(100000, 999999) }}/decline"
+          expect:
+            - statusCode: [200, 400, 404]
+
+  - name: "Complex Session Workflow"
+    weight: 35
+    flow:
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "ComplexTutor_{{ $loopCount }}"
+            email: "complex.tutor.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "ComplexPass123!"
+            confirmPassword: "ComplexPass123!"
+            role: "tutor"
+          expect:
+            - statusCode: 201
+
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "complex.tutor.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "ComplexPass123!"
+          expect:
+            - statusCode: 200
+
+      - put:
+          url: "/api/v1/bookings/availability"
+          json:
+            dayOfWeek: "Monday"
+            startTime: "09:00"
+            endTime: "18:00"
+            availableSlots: 10
+          expect:
+            - statusCode: [200, 201, 400]
+
+      - post:
+          url: "/api/v1/auth/register"
+          json:
+            name: "ComplexStudent_{{ $loopCount }}"
+            email: "complex.student.{{ $loopCount }}.{{ $timestamp }}@example.com"
+            password: "StudentComplex123!"
+            confirmPassword: "StudentComplex123!"
+            role: "student"
+          expect:
+            - statusCode: 201
+          capture:
+            - json: "data.email"
+              as: "complex_student_email"
+
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "{{ complex_student_email }}"
+            password: "StudentComplex123!"
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: "/api/v1/bookings/tutors"
+          expect:
+            - statusCode: 200
+          capture:
+            - json: "data[0]._id"
+              as: "available_tutor"
+
+      - post:
+          url: "/api/v1/bookings"
+          json:
+            tutorId: "{{ available_tutor }}"
+            startTime: "{{ $timestamp }}"
+            duration: 60
+            notes: "Complex workflow booking test"
+          expect:
+            - statusCode: [201, 400]
+          capture:
+            - json: "data._id"
+              as: "workflow_booking_id"
+
+      - get:
+          url: "/api/v1/bookings/{{ workflow_booking_id }}"
+          expect:
+            - statusCode: [200, 404]
+
+      - get:
+          url: "/api/v1/bookings"
+          expect:
+            - statusCode: 200
+
+after:
+  flow:
+    - log: "Performance Test: Session/Booking Completed"
+
+plugins:
+  expect: {}
