@@ -35,11 +35,23 @@ const { authenticateJWT } = require('./common/middleware/auth.middleware');
 const app = express();
 const BASE_PATH = config.BASE_PATH;
 
+function buildCorsOrigins() {
+  const defaults = ['http://localhost:3000', 'http://localhost:5173'];
+  const extras = config.CORS_ORIGINS
+    ? config.CORS_ORIGINS.split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : [];
+  const fromApp =
+    config.APP_ORIGIN && /^https?:\/\//i.test(config.APP_ORIGIN) ? [config.APP_ORIGIN] : [];
+  return [...new Set([...defaults, ...fromApp, ...extras])];
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'http://localhost:5173'],
+    origin: buildCorsOrigins(),
     credentials: true,
   }),
 );

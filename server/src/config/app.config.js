@@ -6,6 +6,8 @@ const appConfig = () => ({
   NODE_ENV: getEnv('NODE_ENV', 'development'),
   APP_NAME: getEnv('APP_NAME', 'authly-backend'),
   APP_ORIGIN: getEnv('APP_ORIGIN', 'localhost'),
+  /** Comma-separated extra CORS origins (e.g. Vercel preview URLs). */
+  CORS_ORIGINS: getEnv('CORS_ORIGINS', ''),
   PORT: getEnv('PORT', '5000'),
   BASE_PATH: getEnv('BASE_PATH', '/api/v1'),
   ENABLE_DOCS: getEnv('ENABLE_DOCS', 'true'),
