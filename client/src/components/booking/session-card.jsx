@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Calendar, Clock, MessageSquareText, User } from 'lucide-react';
+import { Calendar, Clock, MessageSquareText, User, Video, CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BookingStatusBadge from './booking-status-badge';
 import AcceptBookingModal from './accept-booking-modal';
 import DeclineBookingModal from './decline-booking-modal';
 import CancelBookingModal from './cancel-booking-modal';
 import CreateReviewModal from '@/components/review/create-review-modal';
+import CompleteBookingModal from './complete-booking-modal';
 import { useMyReviews } from '@/hooks/use-reviews';
 import { cn } from '@/lib/utils';
 
@@ -159,7 +160,7 @@ export default function SessionCard({ booking, role }) {
           <Button
             size="sm"
             variant="default"
-            onClick={() => console.log('open complete modal', booking)}
+            onClick={() => setModal('complete')}
           >
             Mark Complete
           </Button>
@@ -215,7 +216,24 @@ export default function SessionCard({ booking, role }) {
                 <Clock className="w-3.5 h-3.5 shrink-0" />
                 {fmtDuration(booking.duration)}
               </span>
+              {booking.googleCalendarEventId && (
+                <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+                  <CalendarCheck className="w-3.5 h-3.5 shrink-0" />
+                  On Google Calendar
+                </span>
+              )}
             </div>
+            {booking.meetingLink && (status === 'accepted' || status === 'confirmed') && (
+              <a
+                href={booking.meetingLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 mt-2 text-xs text-primary font-medium hover:underline"
+              >
+                <Video className="w-3.5 h-3.5 shrink-0" />
+                Join Meeting
+              </a>
+            )}
             {canReview && (
               <div className="mt-2">
                 {existingReview ? (
@@ -264,7 +282,11 @@ export default function SessionCard({ booking, role }) {
         existingReview={existingReview}
       />
 
-      {/* Mark Complete modal placeholder — wired in Step 8 */}
+      <CompleteBookingModal
+        open={modal === 'complete'}
+        onOpenChange={(v) => !v && setModal(null)}
+        booking={booking}
+      />
     </>
   );
 }

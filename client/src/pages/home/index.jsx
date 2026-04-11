@@ -62,12 +62,12 @@ const BADGE_STYLES = {
 };
 
 const SESSION_STATUS_META = {
-  PENDING: { label: 'Pending', icon: AlertCircle, cls: 'text-yellow-600' },
-  ACCEPTED: { label: 'Accepted', icon: CheckCircle2, cls: 'text-green-600' },
-  CONFIRMED: { label: 'Confirmed', icon: CheckCircle2, cls: 'text-primary' },
-  COMPLETED: { label: 'Completed', icon: CheckCircle2, cls: 'text-muted-foreground' },
-  DECLINED: { label: 'Declined', icon: XCircle, cls: 'text-destructive' },
-  CANCELLED: { label: 'Cancelled', icon: XCircle, cls: 'text-destructive' },
+  pending: { label: 'Pending', icon: AlertCircle, cls: 'text-yellow-600' },
+  accepted: { label: 'Accepted', icon: CheckCircle2, cls: 'text-green-600' },
+  confirmed: { label: 'Confirmed', icon: CheckCircle2, cls: 'text-primary' },
+  completed: { label: 'Completed', icon: CheckCircle2, cls: 'text-muted-foreground' },
+  declined: { label: 'Declined', icon: XCircle, cls: 'text-destructive' },
+  cancelled: { label: 'Cancelled', icon: XCircle, cls: 'text-destructive' },
 };
 
 function fmtDate(iso) {
@@ -146,7 +146,7 @@ function StatCard({ icon: Icon, label, value, sub, accent }) {
 
 function SessionRow({ session, role }) {
   const peer = role === 'student' ? session.tutor : session.student;
-  const meta = SESSION_STATUS_META[session.status] ?? SESSION_STATUS_META.PENDING;
+  const meta = SESSION_STATUS_META[session.status] ?? SESSION_STATUS_META.pending;
   const StatusIcon = meta.icon;
 
   return (
@@ -343,7 +343,7 @@ export default function HomePage() {
   const { data: leaderboard } = useLeaderboard(true);
 
   // Normalise array vs paginated envelope
-  const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.sessions ?? []);
+  const sessions = Array.isArray(sessionsRaw) ? sessionsRaw : (sessionsRaw.bookings ?? []);
   const threads = Array.isArray(threadsRaw) ? threadsRaw : (threadsRaw.threads ?? []);
   const resources = Array.isArray(resourcesRaw) ? resourcesRaw : (resourcesRaw.resources ?? []);
 
@@ -352,10 +352,10 @@ export default function HomePage() {
 
   // Derived stats
   const upcomingSessions = sessions.filter((s) =>
-    ['PENDING', 'ACCEPTED', 'CONFIRMED'].includes(s.status),
+    ['pending', 'accepted', 'confirmed'].includes(s.status),
   );
-  const pendingRequests = sessions.filter((s) => s.status === 'PENDING');
-  const completedSessions = sessions.filter((s) => s.status === 'COMPLETED');
+  const pendingRequests = sessions.filter((s) => s.status === 'pending');
+  const completedSessions = sessions.filter((s) => s.status === 'completed');
   const reviewCount = user?.reviewCount ?? 0;
   const badge = user?.badge ?? badgeFromReviewCount(reviewCount);
   const reputationScore = user?.reputationScore ?? 0;
@@ -474,6 +474,7 @@ export default function HomePage() {
                     <Button
                       size="sm"
                       className="gap-2 h-10 bg-brand-ink text-brand-mint border-brand-ink hover:bg-brand-ink/90"
+                      onClick={() => navigate('/resources')}
                     >
                       <Plus className="w-4 h-4" />
                       New Resource
@@ -492,6 +493,7 @@ export default function HomePage() {
                     variant="outline"
                     size="sm"
                     className="gap-2 h-10 border-2 border-[hsl(var(--pp-hero-fg))]/45 bg-transparent text-[hsl(var(--pp-hero-fg))] hover:bg-[hsl(var(--pp-hero-fg))]/10"
+                    onClick={() => navigate(isTutor ? '/sessions' : '/tutors')}
                   >
                     <Calendar className="w-4 h-4" />
                     {isTutor ? 'My Schedule' : 'Book Session'}
@@ -822,7 +824,7 @@ export default function HomePage() {
                     <QuickAction
                       icon={Clock}
                       label="Set Availability"
-                      href="/sessions/availability"
+                      href="/sessions"
                     />
                     <QuickAction icon={FileText} label="Upload Resource" href="/resources/new" />
                     <QuickAction icon={Users} label="View Students" href="/sessions" />
@@ -832,7 +834,7 @@ export default function HomePage() {
                 ) : (
                   <>
                     <QuickAction icon={Search} label="Find Tutors" href="/tutors" />
-                    <QuickAction icon={Calendar} label="Book Session" href="/sessions/new" />
+                    <QuickAction icon={Calendar} label="Book Session" href="/tutors" />
                     <QuickAction icon={BookOpen} label="Browse Resources" href="/resources" />
                     <QuickAction icon={MessageSquare} label="Ask Community" href="/threads/new" />
                   </>
@@ -897,7 +899,11 @@ export default function HomePage() {
                       : 'Book a session with a top-rated tutor, explore resources, or ask the community.'}
                   </p>
                 </div>
-                <Button size="sm" className="gap-2 h-9 shrink-0">
+                <Button
+                  size="sm"
+                  className="gap-2 h-9 shrink-0"
+                  onClick={() => navigate(isTutor ? '/sessions' : '/tutors')}
+                >
                   {isTutor ? 'Manage Availability' : 'Browse Tutors'}
                   <ArrowRight className="w-4 h-4" />
                 </Button>

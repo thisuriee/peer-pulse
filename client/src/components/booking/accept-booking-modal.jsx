@@ -111,6 +111,9 @@ export default function AcceptBookingModal({ open, onOpenChange, booking }) {
               onChange={(e) => setMeetingLink(e.target.value)}
               disabled={isPending}
             />
+            <p className="text-xs text-muted-foreground">
+              A Google Meet link will be auto-generated and added to the session. You can override it with your own link above.
+            </p>
           </div>
 
           <DialogFooter>

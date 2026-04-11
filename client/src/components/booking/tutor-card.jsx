@@ -1,4 +1,4 @@
-import { Star, Users, CheckCircle, XCircle } from 'lucide-react';
+import { Star, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -38,7 +38,13 @@ function initials(name = '') {
  * @param {Function} props.onBook  - Called with the tutor object when "Book Session" clicked
  */
 export default function TutorCard({ tutor, onBook }) {
-  const skills = tutor.skills ?? [];
+  // Prefer skills from the User model; fall back to what the tutor set in the
+  // Availability manager (availability.subjects), since tutors typically set
+  // their subjects there rather than directly on their user profile.
+  const skills =
+    tutor.skills?.length > 0
+      ? tutor.skills
+      : tutor.availability?.subjects ?? [];
   const score = tutor.reputationScore ?? 0;
   const reviewCount = tutor.reviewCount ?? 0;
   const isAvailable = tutor.availability?.isActive === true;

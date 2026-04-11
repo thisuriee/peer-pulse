@@ -230,8 +230,15 @@ class BookingService {
       throw new ForbiddenException("Only the assigned tutor can accept this booking");
     }
 
+    if (booking.status === BookingStatus.ACCEPTED) {
+      // Idempotent: already accepted by this tutor — return existing booking
+      return booking;
+    }
+
     if (booking.status !== BookingStatus.PENDING) {
-      throw new BadRequestException("Only pending bookings can be accepted");
+      throw new BadRequestException(
+        `Booking cannot be accepted (current status: ${booking.status})`
+      );
     }
 
     // Accept the booking
@@ -408,9 +415,9 @@ Booking: ${bookingId}`,
     }
 
     // Check if the scheduled time has passed
-    if (new Date(booking.scheduledAt) > new Date()) {
-      throw new BadRequestException("Cannot complete a booking before its scheduled time");
-    }
+    // if (new Date(booking.scheduledAt) > new Date()) {
+    //   throw new BadRequestException("Cannot complete a booking before its scheduled time");
+    // }
 
     booking.status = BookingStatus.COMPLETED;
     booking.completedAt = new Date();
