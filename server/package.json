@@ -12,6 +12,7 @@
     "test:unit:session": "cross-env NODE_ENV=test jest tests/unit/session",
     "test:unit:review": "cross-env NODE_ENV=test jest tests/unit/review",
     "test:integration": "cross-env NODE_ENV=test jest tests/integration",
+    "test:integration:review": "cross-env NODE_ENV=test jest tests/integration/review --runInBand",
     "test:coverage": "cross-env NODE_ENV=test jest --coverage",
     "test:watch": "cross-env NODE_ENV=test jest --watch",
     "test:perf": "artillery run"
