@@ -27,6 +27,7 @@ const reviewRoutes = require('./modules/review/review.routes');
 const threadRoutes = require('./modules/thread/thread.routes');
 const bookingRoutes = require('./modules/session/session.routes');
 const calendarAuthRoutes = require('./modules/session/calender.routes');
+const libraryAccessRoutes = require('./modules/library-access/library-access.routes');
 
 // Import shared middleware
 const { authenticateJWT } = require('./common/middleware/auth.middleware');
@@ -94,6 +95,7 @@ app.use(`${BASE_PATH}/bookings`, bookingRoutes);
 
 // Component 2: Knowledge Vault (Imadh) - Resource & Content Management
 app.use(`${BASE_PATH}/resources`, resourceRoutes);
+app.use(`${BASE_PATH}/library-access`, libraryAccessRoutes);
 
 // Component 3: Reputation Engine (Aman) - Gamification & Reviews
 app.use(`${BASE_PATH}/reviews`, authenticateJWT, reviewRoutes);

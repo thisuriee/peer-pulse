@@ -17,7 +17,11 @@
     "test:watch": "cross-env NODE_ENV=test jest --watch",
     "test:perf": "artillery run",
     "test:perf:auth": "artillery run tests/performance/scenarios/auth-performance.yml --output tests/performance/results/auth-perf.json",
-    "test:perf:session": "artillery run tests/performance/scenarios/session-performance.yml --output tests/performance/results/session-perf.json"
+    "test:perf:session": "artillery run tests/performance/scenarios/session-performance.yml --output tests/performance/results/session-perf.json",
+    "test:unit:thread": "cross-env NODE_ENV=test jest tests/unit/thread",
+    "test:unit:resource": "cross-env NODE_ENV=test jest tests/unit/resource",
+    "test:integration:thread": "cross-env NODE_ENV=test jest tests/integration/thread",
+    "test:integration:resource": "cross-env NODE_ENV=test jest tests/integration/resource"
   },
   "keywords": [],
   "author": "",
@@ -58,6 +62,7 @@
     "@aws-sdk/credential-providers": "^3.1029.0",
     "artillery": "^2.0.21",
     "fast-xml-parser": "^5.5.11",
+    "cross-env": "^10.1.0",
     "jest": "^30.3.0",
     "minimist": "^1.2.8",
     "mongodb-memory-server": "^11.0.1",

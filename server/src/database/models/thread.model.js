@@ -20,6 +20,22 @@ const replySchema = new Schema(
       type: Boolean,
       default: false,
     },
+    upvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    downvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
     flaggedForReview: {
       type: Boolean,
       default: false,
@@ -28,6 +44,53 @@ const replySchema = new Schema(
       toxicityScore: Number,
       insultScore: Number,
       threatScore: Number,
+    },
+  },
+  { timestamps: true }
+);
+
+const commentSchema = new Schema(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 2000,
+    },
+    parentComment: {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
+      default: null,
+    },
+    upvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    downvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    flaggedForReview: {
+      type: Boolean,
+      default: false,
+    },
+    moderation: {
+      toxicityScore: Number,
+      insultScore: Number,
+      threatScore: Number,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }
@@ -53,6 +116,11 @@ const threadSchema = new Schema(
       trim: true,
       maxlength: 5000,
     },
+    assignedTutor: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     subject: {
       type: String,
       trim: true,
@@ -64,7 +132,14 @@ const threadSchema = new Schema(
         ref: "User",
       },
     ],
+    downvotes: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     replies: [replySchema],
+    comments: [commentSchema],
     isResolved: {
       type: Boolean,
       default: false,
@@ -98,7 +173,7 @@ threadSchema.virtual("upvoteCount").get(function () {
 
 // Virtual for reply count
 threadSchema.virtual("replyCount").get(function () {
-  return this.replies ? this.replies.length : 0;
+  return this.replies ? this.replies.filter(r => !r.isDeleted).length : 0;
 });
 
 // Ensure virtuals are included in JSON output

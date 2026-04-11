@@ -1,6 +1,8 @@
 'use strict';
 
 const { BookingModel, BookingStatus } = require('../../database/models/session.model');
+const ReviewModel = require('../../database/models/review.model');
+const { ThreadModel } = require('../../database/models/thread.model');
 const UserModel = require('../../database/models/user.model');
 const mongoose = require('mongoose');
 const { ReputationService } = require('./reputation.service');
@@ -41,6 +43,22 @@ class ReviewService {
     }
   }
 
+  canReviewBooking(booking) {
+    if (!booking) return false;
+
+    if (booking.status === BookingStatus.COMPLETED) {
+      return true;
+    }
+
+    const startableStatuses = [BookingStatus.ACCEPTED, BookingStatus.CONFIRMED];
+    if (!startableStatuses.includes(booking.status)) {
+      return false;
+    }
+
+    // Session is considered started once scheduled time is reached.
+    return new Date(booking.scheduledAt) <= new Date();
+  }
+
   async createReview(user, { bookingId, rating, comment }) {
     if (!bookingId) {
       throw new BadRequestException('bookingId is required');
@@ -55,8 +73,10 @@ class ReviewService {
       throw new NotFoundException('Booking not found');
     }
 
-    if (booking.status !== BookingStatus.COMPLETED) {
-      throw new BadRequestException('You can only review a completed booking');
+    if (!this.canReviewBooking(booking)) {
+      throw new BadRequestException(
+        'You can review only after the session has started'
+      );
     }
 
     if (booking.student.toString() !== user.id.toString()) {
@@ -278,6 +298,145 @@ class ReviewService {
     }
 
     return deleted;
+  }
+
+  async getLeaderboard() {
+    // 1) Top tutors: weighted by reputation and review volume.
+    const tutors = await UserModel.find({ role: 'tutor' }).select(
+      'name email reputationScore reviewCount badge skills'
+    );
+    const topTutors = tutors
+      .map((t) => {
+        const rep = Number(t.reputationScore || 0);
+        const reviews = Number(t.reviewCount || 0);
+        return {
+          _id: t._id,
+          name: t.name,
+          email: t.email,
+          reputationScore: rep,
+          reviewCount: reviews,
+          badge: t.badge || 'none',
+          skills: t.skills || [],
+          weightedScore: Math.round((rep * 20 + Math.log10(reviews + 1) * 15) * 10) / 10,
+        };
+      })
+      .sort((a, b) => b.weightedScore - a.weightedScore || b.reputationScore - a.reputationScore)
+      .slice(0, 15);
+
+    // 2) Rising tutors: compare last 30 days avg with previous 30 days avg.
+    const now = Date.now();
+    const d30 = new Date(now - 30 * 24 * 60 * 60 * 1000);
+    const d60 = new Date(now - 60 * 24 * 60 * 60 * 1000);
+
+    const recentAgg = await ReviewModel.aggregate([
+      { $match: { isDeleted: false, createdAt: { $gte: d30 } } },
+      { $group: { _id: '$tutor', avg: { $avg: '$rating' }, count: { $sum: 1 } } },
+    ]);
+    const prevAgg = await ReviewModel.aggregate([
+      { $match: { isDeleted: false, createdAt: { $gte: d60, $lt: d30 } } },
+      { $group: { _id: '$tutor', avg: { $avg: '$rating' }, count: { $sum: 1 } } },
+    ]);
+
+    const prevByTutor = new Map(prevAgg.map((p) => [p._id.toString(), p]));
+    const risingTutorsRaw = recentAgg
+      .map((r) => {
+        const prev = prevByTutor.get(r._id.toString());
+        const recentAvg = Number(r.avg || 0);
+        const prevAvg = Number(prev?.avg || 0);
+        return {
+          tutorId: r._id.toString(),
+          growth: Math.round((recentAvg - prevAvg) * 10) / 10,
+          recentAvg: Math.round(recentAvg * 10) / 10,
+          previousAvg: Math.round(prevAvg * 10) / 10,
+          recentReviews: Number(r.count || 0),
+          previousReviews: Number(prev?.count || 0),
+        };
+      })
+      .filter((x) => x.recentReviews > 0)
+      .sort((a, b) => b.growth - a.growth || b.recentReviews - a.recentReviews)
+      .slice(0, 15);
+
+    const risingTutors = await Promise.all(
+      risingTutorsRaw.map(async (item) => {
+        const tutor = await UserModel.findById(item.tutorId).select(
+          'name email reputationScore reviewCount badge'
+        );
+        if (!tutor) return null;
+        return {
+          ...item,
+          _id: tutor._id,
+          name: tutor.name,
+          email: tutor.email,
+          reputationScore: tutor.reputationScore || 0,
+          reviewCount: tutor.reviewCount || 0,
+          badge: tutor.badge || 'none',
+        };
+      })
+    ).then((arr) => arr.filter(Boolean));
+
+    // 3) Most helpful students: replies + upvotes received + reviews submitted.
+    const threads = await ThreadModel.find({ isDeleted: false }).select('authorId upvotes replies');
+    const studentStats = new Map();
+    const bump = (id, key, by = 1) => {
+      const k = id.toString();
+      const row = studentStats.get(k) || {
+        userId: k,
+        upvotesReceived: 0,
+        replies: 0,
+        bestAnswers: 0,
+        reviewsSubmitted: 0,
+      };
+      row[key] += by;
+      studentStats.set(k, row);
+    };
+
+    for (const t of threads) {
+      if (t.authorId) {
+        bump(t.authorId, 'upvotesReceived', Array.isArray(t.upvotes) ? t.upvotes.length : 0);
+      }
+      for (const reply of t.replies || []) {
+        if (!reply?.userId) continue;
+        bump(reply.userId, 'replies', 1);
+        if (reply.isBestAnswer) bump(reply.userId, 'bestAnswers', 1);
+      }
+    }
+
+    const reviewByReviewer = await ReviewModel.aggregate([
+      { $match: { isDeleted: false } },
+      { $group: { _id: '$reviewer', submitted: { $sum: 1 } } },
+    ]);
+    for (const x of reviewByReviewer) {
+      bump(x._id, 'reviewsSubmitted', Number(x.submitted || 0));
+    }
+
+    const helpfulStudentsRaw = Array.from(studentStats.values())
+      .map((s) => ({
+        ...s,
+        helpfulScore:
+          s.replies * 2 + s.upvotesReceived * 3 + s.bestAnswers * 5 + s.reviewsSubmitted * 2,
+      }))
+      .sort((a, b) => b.helpfulScore - a.helpfulScore)
+      .slice(0, 20);
+
+    const helpfulStudents = await Promise.all(
+      helpfulStudentsRaw.map(async (item) => {
+        const user = await UserModel.findById(item.userId).select('name email role');
+        if (!user || user.role !== 'student') return null;
+        return {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          ...item,
+        };
+      })
+    ).then((arr) => arr.filter(Boolean).slice(0, 15));
+
+    return {
+      topTutors,
+      risingTutors,
+      mostHelpfulStudents: helpfulStudents,
+      generatedAt: new Date().toISOString(),
+    };
   }
 }
 

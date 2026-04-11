@@ -1,20 +1,27 @@
 "use strict";
 
 const sgMail = require("@sendgrid/mail");
+const { logger } = require("../utils/logger-utils");
 
 const enabled = process.env.SENDGRID_ENABLED === "true";
+const hasCredentials = Boolean(
+  process.env.SENDGRID_API_KEY && process.env.SENDGRID_FROM_EMAIL
+);
+const isSendgridReady = enabled && hasCredentials;
 
-if (enabled && process.env.SENDGRID_API_KEY) {
+if (isSendgridReady) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 }
 
 async function sendEmail({ to, subject, text }) {
-  if (!enabled) return;
+  if (!enabled) {
+    logger.warn("SendGrid disabled; email skipped", { to, subject });
+    return { ok: false, skipped: true, reason: "disabled" };
+  }
 
-  if (!process.env.SENDGRID_API_KEY || !process.env.SENDGRID_FROM_EMAIL) {
-    // eslint-disable-next-line no-console
-    console.log("SendGrid not configured properly");
-    return;
+  if (!isSendgridReady) {
+    logger.warn("SendGrid not configured properly", { to, subject });
+    return { ok: false, skipped: true, reason: "not_configured" };
   }
 
   try {
@@ -24,10 +31,12 @@ async function sendEmail({ to, subject, text }) {
       subject,
       text,
     });
+    logger.info("SendGrid email sent", { to, subject });
+    return { ok: true };
   } catch (err) {
-    // eslint-disable-next-line no-console
-    console.log("SendGrid error:", err.message);
+    logger.warn("SendGrid error", { to, subject, error: err?.message });
+    return { ok: false, error: err?.message || "unknown_sendgrid_error" };
   }
 }
 
-module.exports = { sendEmail };
+module.exports = { sendEmail, isSendgridReady };

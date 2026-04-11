@@ -5,6 +5,7 @@ const {
   uploadToCloudinary,
   deleteFromCloudinary,
   extractPublicId,
+  normalizeResourceType,
 } = require('../../integrations/cloudinary');
 const {
   NotFoundException,
@@ -15,6 +16,30 @@ const { ErrorCode } = require('../../common/enums/error-code.enum');
 const fs = require('fs').promises;
 const path = require('path');
 const os = require('os');
+
+/**
+ * Normalize and validate resource category from request payload.
+ * Allowed values: image, video, document (case-insensitive).
+ */
+function normalizeResourceCategory(value) {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+
+  if (
+    normalized === 'image' ||
+    normalized === 'video' ||
+    normalized === 'document' ||
+    normalized === 'link'
+  ) {
+    return normalized;
+  }
+
+  throw new BadRequestException(
+    "Invalid resource type. Allowed values are 'image', 'video', 'document', 'link'.",
+    ErrorCode.VALIDATION_ERROR,
+  );
+}
 
 /**
  * Determine Cloudinary resource type from a URL or filename extension.
@@ -35,8 +60,9 @@ class ResourceService {
   /**
    * Get all resources with optional filtering
    */
-  async getAllResources(filters = {}) {
+  async getAllResources(userId, userRole, filters = {}) {
     const { type, tutorId, search, limit = 20, skip = 0 } = filters;
+    const LibraryAccessModel = require('../../database/models/library-access.model');
 
     const query = {};
 
@@ -44,7 +70,34 @@ class ResourceService {
       query.type = type;
     }
 
-    if (tutorId) {
+    if (userRole === 'tutor') {
+      // Tutors can only see their own library.
+      query.tutor_id = userId;
+    } else if (userRole === 'student') {
+      // Students must explicitly request a tutor library and be approved.
+      if (!tutorId) {
+        throw new BadRequestException(
+          'tutorId is required for students.',
+          ErrorCode.VALIDATION_ERROR,
+        );
+      }
+
+      const access = await LibraryAccessModel.findOne({
+        student_id: userId,
+        tutor_id: tutorId,
+        status: 'approved',
+      });
+
+      if (!access) {
+        throw new UnauthorizedException(
+          "You do not have access to this tutor's library",
+          ErrorCode.ACCESS_UNAUTHORIZED,
+        );
+      }
+
+      query.tutor_id = tutorId;
+    } else if (tutorId) {
+      // Fallback for any non-student/tutor role with explicit tutor filter.
       query.tutor_id = tutorId;
     }
 
@@ -69,11 +122,35 @@ class ResourceService {
   /**
    * Get resource by ID
    */
-  async getResourceById(resourceId) {
+  async getResourceById(resourceId, userId, userRole) {
+    const LibraryAccessModel = require('../../database/models/library-access.model');
     const resource = await ResourceModel.findById(resourceId).populate('tutor_id', 'name email');
 
     if (!resource) {
       throw new NotFoundException('Resource not found', ErrorCode.RESOURCE_NOT_FOUND);
+    }
+
+    // If the user isn't the tutor, verify access
+    if (userRole === 'tutor' && userId.toString() !== resource.tutor_id._id.toString()) {
+      throw new UnauthorizedException(
+        'You do not have access to this resource',
+        ErrorCode.ACCESS_UNAUTHORIZED,
+      );
+    }
+
+    if (userRole === 'student') {
+      const access = await LibraryAccessModel.findOne({
+        student_id: userId,
+        tutor_id: resource.tutor_id._id,
+        status: 'approved',
+      });
+
+      if (!access) {
+        throw new UnauthorizedException(
+          "You do not have access to this tutor's library",
+          ErrorCode.ACCESS_UNAUTHORIZED,
+        );
+      }
     }
 
     return resource;
@@ -83,11 +160,7 @@ class ResourceService {
    * Create a new resource with file upload
    */
   async createResource(tutorId, resourceData, file) {
-    if (!file) {
-      throw new BadRequestException('File is required', ErrorCode.VALIDATION_ERROR);
-    }
-
-    const { title, description, type } = resourceData;
+    const { title, description, type, category, linkUrl } = resourceData;
 
     // Validate required fields
     if (!title || !description || !type) {
@@ -97,19 +170,55 @@ class ResourceService {
       );
     }
 
+    const normalizedType = normalizeResourceCategory(type);
+
+    if (normalizedType === 'link') {
+      if (!linkUrl) {
+        throw new BadRequestException(
+          'Link URL is required for link resources',
+          ErrorCode.VALIDATION_ERROR,
+        );
+      }
+
+      const resource = await ResourceModel.create({
+        title,
+        description,
+        type: normalizedType,
+        category: category || 'General',
+        cloudinary_url: linkUrl,
+        tutor_id: tutorId,
+      });
+
+      return await ResourceModel.findById(resource._id).populate('tutor_id', 'name email');
+    }
+
+    if (!file) {
+      throw new BadRequestException(
+        'File is required for this resource type',
+        ErrorCode.VALIDATION_ERROR,
+      );
+    }
+
+    const cloudinaryResourceType = normalizeResourceType(normalizedType);
+
     // Create a temporary file from buffer
     const tempFilePath = path.join(os.tmpdir(), `${Date.now()}-${file.originalname}`);
     await fs.writeFile(tempFilePath, file.buffer);
 
     try {
-      // Upload to Cloudinary
-      const uploadResult = await uploadToCloudinary(tempFilePath, 'peer-pulse/resources', 'auto');
+      // Upload to Cloudinary using explicit public resource type.
+      const uploadResult = await uploadToCloudinary(
+        tempFilePath,
+        'peer-pulse/resources',
+        cloudinaryResourceType,
+      );
 
       // Create resource in database
       const resource = await ResourceModel.create({
         title,
         description,
-        type,
+        type: normalizedType,
+        category: category || 'General',
         cloudinary_url: uploadResult.secure_url,
         tutor_id: tutorId,
       });
@@ -163,16 +272,25 @@ class ResourceService {
       );
     }
 
-    const { title, description, type } = updateData;
+    const { title, description, type, category, linkUrl } = updateData;
+    const normalizedType = type ? normalizeResourceCategory(type) : null;
 
     // Update basic fields
     if (title) resource.title = title;
     if (description) resource.description = description;
-    if (type) resource.type = type;
-    console.log('[updateResource] Updated fields:', { title, description, type });
+    if (category) resource.category = category;
+    if (normalizedType) resource.type = normalizedType;
+    console.log('[updateResource] Updated fields:', {
+      title,
+      description,
+      category,
+      type: normalizedType || type,
+      linkUrl,
+    });
 
-    // If new file is uploaded, replace the old one
-    if (file) {
+    if (normalizedType === 'link' && linkUrl) {
+      resource.cloudinary_url = linkUrl;
+    } else if (file && normalizedType !== 'link') {
       console.log('[updateResource] File provided:', file);
       const tempFilePath = path.join(os.tmpdir(), `${Date.now()}-${file.originalname}`);
       await fs.writeFile(tempFilePath, file.buffer);
@@ -186,8 +304,15 @@ class ResourceService {
           await deleteFromCloudinary(oldPublicId, oldResourceType);
         }
 
-        // Upload new file
-        const uploadResult = await uploadToCloudinary(tempFilePath, 'peer-pulse/resources', 'auto');
+        const categoryForUpload = normalizedType || normalizeResourceCategory(resource.type);
+        const cloudinaryResourceType = normalizeResourceType(categoryForUpload);
+
+        // Upload new file with explicit Cloudinary resource type.
+        const uploadResult = await uploadToCloudinary(
+          tempFilePath,
+          'peer-pulse/resources',
+          cloudinaryResourceType,
+        );
         resource.cloudinary_url = uploadResult.secure_url;
 
         // Clean up temp file

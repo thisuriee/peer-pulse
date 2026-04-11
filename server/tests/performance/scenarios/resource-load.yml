@@ -1,0 +1,84 @@
+config:
+  target: 'http://localhost:5001'
+  phases:
+    - duration: 60
+      arrivalRate: 1
+      rampTo: 2
+      name: 'Resource CRUD ramp (1-2 users over 60 seconds)'
+  payload:
+    path: '../data/resource-users.csv'
+    fields:
+      - 'accessToken'
+      - 'tutorId'
+
+scenarios:
+  - name: 'Resource Upload and Library Read'
+    weight: 70
+    flow:
+      - post:
+          url: '/api/v1/resources'
+          headers:
+            Cookie: 'accessToken={{ accessToken }}'
+          json:
+            title: 'Perf Resource {{ $randomString() }}'
+            description: 'Resource generated for performance validation'
+            type: 'link'
+            category: 'Load Test'
+            linkUrl: 'https://example.com/resource/{{ $randomString() }}'
+          capture:
+            - json: '$.data._id'
+              as: 'resourceId'
+          expect:
+            - statusCode: 201
+
+      - get:
+          url: '/api/v1/resources?tutorId={{ tutorId }}&limit=10&skip=0'
+          headers:
+            Cookie: 'accessToken={{ accessToken }}'
+          expect:
+            - statusCode: 200
+
+      - get:
+          url: '/api/v1/resources/search?q=Perf&type=link&limit=5&skip=0'
+          headers:
+            Cookie: 'accessToken={{ accessToken }}'
+          expect:
+            - statusCode: 200
+
+      - put:
+          url: '/api/v1/resources/{{ resourceId }}'
+          ifTrue: 'resourceId'
+          headers:
+            Cookie: 'accessToken={{ accessToken }}'
+          json:
+            title: 'Updated Perf Resource {{ $randomString() }}'
+            description: 'Updated metadata only'
+            category: 'Load Test Updated'
+          expect:
+            - statusCode: 200
+
+      - delete:
+          url: '/api/v1/resources/{{ resourceId }}'
+          ifTrue: 'resourceId'
+          headers:
+            Cookie: 'accessToken={{ accessToken }}'
+          expect:
+            - statusCode: 200
+
+  - name: 'Resource Read and Search Pressure'
+    weight: 30
+    flow:
+      - loop:
+          - get:
+              url: '/api/v1/resources?tutorId={{ tutorId }}&limit=20&skip=0'
+              headers:
+                Cookie: 'accessToken={{ accessToken }}'
+              expect:
+                - statusCode: 200
+          - get:
+              url: '/api/v1/resources/search?q=resource&limit=20&skip=0'
+              headers:
+                Cookie: 'accessToken={{ accessToken }}'
+              expect:
+                - statusCode: 200
+        count: 3

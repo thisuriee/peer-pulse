@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { Calendar, Clock, User } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Calendar, Clock, MessageSquareText, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import BookingStatusBadge from './booking-status-badge';
 import AcceptBookingModal from './accept-booking-modal';
 import DeclineBookingModal from './decline-booking-modal';
 import CancelBookingModal from './cancel-booking-modal';
+import CreateReviewModal from '@/components/review/create-review-modal';
+import { useMyReviews } from '@/hooks/use-reviews';
 import { cn } from '@/lib/utils';
 
 function fmtDateTime(iso) {
@@ -50,13 +52,34 @@ function Avatar({ name }) {
  * }} props
  */
 export default function SessionCard({ booking, role }) {
-  const [modal, setModal] = useState(null); // 'accept' | 'decline' | 'cancel' | null
+  const [modal, setModal] = useState(null); // 'accept' | 'decline' | 'cancel' | 'review' | null
 
   const isTutor = role === 'tutor';
   const peer = isTutor ? booking.student : booking.tutor;
   const peerName = peer?.name ?? 'Unknown';
   const peerLabel = isTutor ? 'Student' : 'Tutor';
   const status = booking.status?.toLowerCase();
+  const bookingId = booking?._id ?? booking?.id;
+
+  const { data: myReviews = [] } = useMyReviews(!isTutor);
+
+  const existingReview = useMemo(() => {
+    if (isTutor || !bookingId) return null;
+    return myReviews.find((r) => {
+      const reviewBookingId =
+        (typeof r?.booking === 'string' ? r.booking : r?.booking?._id) ?? null;
+      return reviewBookingId?.toString() === bookingId.toString();
+    }) ?? null;
+  }, [myReviews, bookingId, isTutor]);
+
+  const sessionStarted = useMemo(() => {
+    if (!booking?.scheduledAt) return false;
+    return new Date(booking.scheduledAt) <= new Date();
+  }, [booking?.scheduledAt]);
+
+  const canReview =
+    !isTutor &&
+    (status === 'completed' || ((status === 'accepted' || status === 'confirmed') && sessionStarted));
 
   // ── Action buttons ────────────────────────────────────────────────────────────
   let actions = null;
@@ -97,14 +120,30 @@ export default function SessionCard({ booking, role }) {
   } else if (status === 'accepted' || status === 'confirmed') {
     if (!isTutor) {
       actions = (
-        <Button
-          size="sm"
-          variant="outline"
-          className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-          onClick={() => setModal('cancel')}
-        >
-          Cancel
-        </Button>
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => setModal('cancel')}
+          >
+            Cancel
+          </Button>
+          {canReview && (
+            <Button
+              size="sm"
+              variant={existingReview ? 'outline' : 'default'}
+              className={cn(
+                'gap-1.5',
+                existingReview && 'border-primary/40 text-primary hover:bg-primary/10'
+              )}
+              onClick={() => setModal('review')}
+            >
+              <MessageSquareText className="w-3.5 h-3.5" />
+              {existingReview ? 'View Review' : 'Write Review'}
+            </Button>
+          )}
+        </>
       );
     } else {
       actions = (
@@ -127,6 +166,21 @@ export default function SessionCard({ booking, role }) {
         </>
       );
     }
+  } else if (status === 'completed' && !isTutor && canReview) {
+    actions = (
+      <Button
+        size="sm"
+        variant={existingReview ? 'outline' : 'default'}
+        className={cn(
+          'gap-1.5',
+          existingReview && 'border-primary/40 text-primary hover:bg-primary/10'
+        )}
+        onClick={() => setModal('review')}
+      >
+        <MessageSquareText className="w-3.5 h-3.5" />
+        {existingReview ? 'View Review' : 'Write Review'}
+      </Button>
+    );
   }
 
   return (
@@ -162,6 +216,19 @@ export default function SessionCard({ booking, role }) {
                 {fmtDuration(booking.duration)}
               </span>
             </div>
+            {canReview && (
+              <div className="mt-2">
+                {existingReview ? (
+                  <p className="text-xs text-primary font-medium">
+                    Review submitted: {existingReview.rating}/5
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    You can now review this tutor.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -189,6 +256,12 @@ export default function SessionCard({ booking, role }) {
         onOpenChange={(v) => !v && setModal(null)}
         booking={booking}
         role={role}
+      />
+      <CreateReviewModal
+        open={modal === 'review'}
+        onOpenChange={(v) => !v && setModal(null)}
+        booking={booking}
+        existingReview={existingReview}
       />
 
       {/* Mark Complete modal placeholder — wired in Step 8 */}
