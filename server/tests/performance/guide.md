@@ -237,6 +237,8 @@ cd server
 # Member 1
 
 npx artillery run tests/performance/scenarios/auth-load.yml
+
+# Member 1 — bookings / sessions
 npx artillery run tests/performance/scenarios/booking-load.yml
 
 # Member 2
@@ -266,6 +268,8 @@ npx artillery run tests/performance/scenarios/resource-load.yml
 # Member 3
 
 npx artillery run tests/performance/scenarios/review-load.yml
+# or:
+npm run test:perf:review
 
 # Member 4
 
