@@ -1,980 +1,187 @@
 {
   "aggregate": {
     "counters": {
-      "vusers.created_by_name.My reviews and tutor listing read load": 60,
+      "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 60,
       "vusers.created": 185,
       "http.requests": 185,
-      "http.codes.400": 20,
-      "http.responses": 185,
-      "http.downloaded_bytes": 10316,
-      "plugins.metrics-by-endpoint./api/v1/auth/register.codes.400": 20,
-      "errors.Failed capture or match": 185,
+      "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 185,
+      "errors.ECONNREFUSED": 185,
       "vusers.failed": 185,
-      "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 69,
-      "vusers.created_by_name.Leaderboard read load": 56,
-      "http.codes.429": 165,
-      "plugins.metrics-by-endpoint./api/v1/auth/register.codes.429": 165
+      "vusers.created_by_name.Leaderboard read load": 55,
+      "vusers.created_by_name.My reviews and tutor listing read load": 70
     },
     "rates": {
       "http.request_rate": 5
     },
-    "firstCounterAt": 1775898144814,
-    "firstHistogramAt": 1775898144940,
-    "lastCounterAt": 1775898214241,
-    "lastHistogramAt": 1775898214241,
-    "firstMetricAt": 1775898144814,
-    "lastMetricAt": 1775898214241,
-    "period": 1775898210000,
-    "summaries": {
-      "http.response_time": {
-        "min": 0,
-        "max": 99,
-        "count": 185,
-        "mean": 7.2,
-        "p50": 1,
-        "median": 1,
-        "p75": 2,
-        "p90": 2,
-        "p95": 92.8,
-        "p99": 94.6,
-        "p999": 96.6
-      },
-      "http.response_time.4xx": {
-        "min": 0,
-        "max": 99,
-        "count": 185,
-        "mean": 7.2,
-        "p50": 1,
-        "median": 1,
-        "p75": 2,
-        "p90": 2,
-        "p95": 92.8,
-        "p99": 94.6,
-        "p999": 96.6
-      },
-      "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-        "min": 0,
-        "max": 99,
-        "count": 185,
-        "mean": 7.2,
-        "p50": 1,
-        "median": 1,
-        "p75": 2,
-        "p90": 2,
-        "p95": 92.8,
-        "p99": 94.6,
-        "p999": 96.6
-      }
-    },
-    "histograms": {
-      "http.response_time": {
-        "min": 0,
-        "max": 99,
-        "count": 185,
-        "mean": 7.2,
-        "p50": 1,
-        "median": 1,
-        "p75": 2,
-        "p90": 2,
-        "p95": 92.8,
-        "p99": 94.6,
-        "p999": 96.6
-      },
-      "http.response_time.4xx": {
-        "min": 0,
-        "max": 99,
-        "count": 185,
-        "mean": 7.2,
-        "p50": 1,
-        "median": 1,
-        "p75": 2,
-        "p90": 2,
-        "p95": 92.8,
-        "p99": 94.6,
-        "p999": 96.6
-      },
-      "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-        "min": 0,
-        "max": 99,
-        "count": 185,
-        "mean": 7.2,
-        "p50": 1,
-        "median": 1,
-        "p75": 2,
-        "p90": 2,
-        "p95": 92.8,
-        "p99": 94.6,
-        "p999": 96.6
-      }
-    }
+    "firstCounterAt": 1775911420687,
+    "lastCounterAt": 1775911484956,
+    "firstMetricAt": 1775911420687,
+    "lastMetricAt": 1775911484956,
+    "period": 1775911480000,
+    "summaries": {},
+    "histograms": {}
   },
   "intermediate": [
     {
       "counters": {
-        "vusers.created_by_name.My reviews and tutor listing read load": 4,
-        "vusers.created": 6,
-        "http.requests": 6,
-        "http.codes.400": 6,
-        "http.responses": 6,
-        "http.downloaded_bytes": 611,
-        "plugins.metrics-by-endpoint./api/v1/auth/register.codes.400": 6,
-        "errors.Failed capture or match": 6,
-        "vusers.failed": 6,
-        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 1,
-        "vusers.created_by_name.Leaderboard read load": 1
-      },
-      "rates": {
-        "http.request_rate": 1
-      },
-      "http.request_rate": null,
-      "firstCounterAt": 1775898144814,
-      "firstHistogramAt": 1775898144940,
-      "lastCounterAt": 1775898149911,
-      "lastHistogramAt": 1775898149911,
-      "firstMetricAt": 1775898144814,
-      "lastMetricAt": 1775898149911,
-      "period": "1775898140000",
-      "summaries": {
-        "http.response_time": {
-          "min": 1,
-          "max": 99,
-          "count": 6,
-          "mean": 79.3,
-          "p50": 94.6,
-          "median": 94.6,
-          "p75": 94.6,
-          "p90": 96.6,
-          "p95": 96.6,
-          "p99": 96.6,
-          "p999": 96.6
-        },
-        "http.response_time.4xx": {
-          "min": 1,
-          "max": 99,
-          "count": 6,
-          "mean": 79.3,
-          "p50": 94.6,
-          "median": 94.6,
-          "p75": 94.6,
-          "p90": 96.6,
-          "p95": 96.6,
-          "p99": 96.6,
-          "p999": 96.6
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 1,
-          "max": 99,
-          "count": 6,
-          "mean": 79.3,
-          "p50": 94.6,
-          "median": 94.6,
-          "p75": 94.6,
-          "p90": 96.6,
-          "p95": 96.6,
-          "p99": 96.6,
-          "p999": 96.6
-        }
-      },
-      "histograms": {
-        "http.response_time": {
-          "min": 1,
-          "max": 99,
-          "count": 6,
-          "mean": 79.3,
-          "p50": 94.6,
-          "median": 94.6,
-          "p75": 94.6,
-          "p90": 96.6,
-          "p95": 96.6,
-          "p99": 96.6,
-          "p999": 96.6
-        },
-        "http.response_time.4xx": {
-          "min": 1,
-          "max": 99,
-          "count": 6,
-          "mean": 79.3,
-          "p50": 94.6,
-          "median": 94.6,
-          "p75": 94.6,
-          "p90": 96.6,
-          "p95": 96.6,
-          "p99": 96.6,
-          "p999": 96.6
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 1,
-          "max": 99,
-          "count": 6,
-          "mean": 79.3,
-          "p50": 94.6,
-          "median": 94.6,
-          "p75": 94.6,
-          "p90": 96.6,
-          "p95": 96.6,
-          "p99": 96.6,
-          "p999": 96.6
-        }
-      }
-    },
-    {
-      "counters": {
-        "vusers.created_by_name.Leaderboard read load": 4,
-        "vusers.created": 7,
-        "http.requests": 7,
-        "http.codes.400": 4,
-        "http.responses": 7,
-        "http.downloaded_bytes": 654,
-        "plugins.metrics-by-endpoint./api/v1/auth/register.codes.400": 4,
-        "errors.Failed capture or match": 7,
-        "vusers.failed": 7,
         "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 3,
-        "http.codes.429": 3,
-        "plugins.metrics-by-endpoint./api/v1/auth/register.codes.429": 3
+        "vusers.created": 10,
+        "http.requests": 10,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 10,
+        "errors.ECONNREFUSED": 10,
+        "vusers.failed": 10,
+        "vusers.created_by_name.Leaderboard read load": 4,
+        "vusers.created_by_name.My reviews and tutor listing read load": 3
       },
       "rates": {
         "http.request_rate": 1
       },
       "http.request_rate": null,
-      "firstCounterAt": 1775898150812,
-      "firstHistogramAt": 1775898150816,
-      "lastCounterAt": 1775898159501,
-      "lastHistogramAt": 1775898159501,
-      "firstMetricAt": 1775898150812,
-      "lastMetricAt": 1775898159501,
-      "period": "1775898150000",
-      "summaries": {
-        "http.response_time": {
-          "min": 1,
-          "max": 93,
-          "count": 7,
-          "mean": 27.7,
-          "p50": 2,
-          "median": 2,
-          "p75": 2,
-          "p90": 92.8,
-          "p95": 92.8,
-          "p99": 92.8,
-          "p999": 92.8
-        },
-        "http.response_time.4xx": {
-          "min": 1,
-          "max": 93,
-          "count": 7,
-          "mean": 27.7,
-          "p50": 2,
-          "median": 2,
-          "p75": 2,
-          "p90": 92.8,
-          "p95": 92.8,
-          "p99": 92.8,
-          "p999": 92.8
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 1,
-          "max": 93,
-          "count": 7,
-          "mean": 27.7,
-          "p50": 2,
-          "median": 2,
-          "p75": 2,
-          "p90": 92.8,
-          "p95": 92.8,
-          "p99": 92.8,
-          "p999": 92.8
-        }
-      },
-      "histograms": {
-        "http.response_time": {
-          "min": 1,
-          "max": 93,
-          "count": 7,
-          "mean": 27.7,
-          "p50": 2,
-          "median": 2,
-          "p75": 2,
-          "p90": 92.8,
-          "p95": 92.8,
-          "p99": 92.8,
-          "p999": 92.8
-        },
-        "http.response_time.4xx": {
-          "min": 1,
-          "max": 93,
-          "count": 7,
-          "mean": 27.7,
-          "p50": 2,
-          "median": 2,
-          "p75": 2,
-          "p90": 92.8,
-          "p95": 92.8,
-          "p99": 92.8,
-          "p999": 92.8
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 1,
-          "max": 93,
-          "count": 7,
-          "mean": 27.7,
-          "p50": 2,
-          "median": 2,
-          "p75": 2,
-          "p90": 92.8,
-          "p95": 92.8,
-          "p99": 92.8,
-          "p999": 92.8
-        }
-      }
+      "firstCounterAt": 1775911420687,
+      "lastCounterAt": 1775911429688,
+      "firstMetricAt": 1775911420687,
+      "lastMetricAt": 1775911429688,
+      "period": "1775911420000",
+      "summaries": {},
+      "histograms": {}
     },
     {
       "counters": {
-        "vusers.created_by_name.Leaderboard read load": 1,
-        "vusers.created": 16,
-        "http.requests": 16,
-        "http.codes.429": 16,
-        "http.responses": 16,
-        "http.downloaded_bytes": 768,
-        "plugins.metrics-by-endpoint./api/v1/auth/register.codes.429": 16,
-        "errors.Failed capture or match": 16,
-        "vusers.failed": 16,
-        "vusers.created_by_name.My reviews and tutor listing read load": 8,
-        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 7
+        "vusers.created_by_name.My reviews and tutor listing read load": 5,
+        "vusers.created": 10,
+        "http.requests": 10,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 10,
+        "errors.ECONNREFUSED": 10,
+        "vusers.failed": 10,
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 3,
+        "vusers.created_by_name.Leaderboard read load": 2
       },
       "rates": {
-        "http.request_rate": 5
+        "http.request_rate": 1
       },
       "http.request_rate": null,
-      "firstCounterAt": 1775898160498,
-      "firstHistogramAt": 1775898160501,
-      "lastCounterAt": 1775898169604,
-      "lastHistogramAt": 1775898169603,
-      "firstMetricAt": 1775898160498,
-      "lastMetricAt": 1775898169604,
-      "period": "1775898160000",
-      "summaries": {
-        "http.response_time": {
-          "min": 0,
-          "max": 2,
-          "count": 16,
-          "mean": 1.1,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "http.response_time.4xx": {
-          "min": 0,
-          "max": 2,
-          "count": 16,
-          "mean": 1.1,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 0,
-          "max": 2,
-          "count": 16,
-          "mean": 1.1,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        }
-      },
-      "histograms": {
-        "http.response_time": {
-          "min": 0,
-          "max": 2,
-          "count": 16,
-          "mean": 1.1,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "http.response_time.4xx": {
-          "min": 0,
-          "max": 2,
-          "count": 16,
-          "mean": 1.1,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 0,
-          "max": 2,
-          "count": 16,
-          "mean": 1.1,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        }
-      }
+      "firstCounterAt": 1775911430686,
+      "lastCounterAt": 1775911439689,
+      "firstMetricAt": 1775911430686,
+      "lastMetricAt": 1775911439689,
+      "period": "1775911430000",
+      "summaries": {},
+      "histograms": {}
     },
     {
       "counters": {
-        "vusers.created_by_name.Leaderboard read load": 13,
+        "vusers.created_by_name.My reviews and tutor listing read load": 7,
         "vusers.created": 30,
         "http.requests": 30,
-        "http.codes.429": 30,
-        "http.responses": 30,
-        "http.downloaded_bytes": 1440,
-        "plugins.metrics-by-endpoint./api/v1/auth/register.codes.429": 30,
-        "errors.Failed capture or match": 30,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 30,
+        "errors.ECONNREFUSED": 30,
         "vusers.failed": 30,
-        "vusers.created_by_name.My reviews and tutor listing read load": 10,
-        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 7
-      },
-      "rates": {
-        "http.request_rate": 3
-      },
-      "http.request_rate": null,
-      "firstCounterAt": 1775898170499,
-      "firstHistogramAt": 1775898170501,
-      "lastCounterAt": 1775898179603,
-      "lastHistogramAt": 1775898179603,
-      "firstMetricAt": 1775898170499,
-      "lastMetricAt": 1775898179603,
-      "period": "1775898170000",
-      "summaries": {
-        "http.response_time": {
-          "min": 0,
-          "max": 2,
-          "count": 30,
-          "mean": 1.3,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "http.response_time.4xx": {
-          "min": 0,
-          "max": 2,
-          "count": 30,
-          "mean": 1.3,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 0,
-          "max": 2,
-          "count": 30,
-          "mean": 1.3,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        }
-      },
-      "histograms": {
-        "http.response_time": {
-          "min": 0,
-          "max": 2,
-          "count": 30,
-          "mean": 1.3,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "http.response_time.4xx": {
-          "min": 0,
-          "max": 2,
-          "count": 30,
-          "mean": 1.3,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 0,
-          "max": 2,
-          "count": 30,
-          "mean": 1.3,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        }
-      }
-    },
-    {
-      "counters": {
-        "vusers.created_by_name.Leaderboard read load": 4,
-        "vusers.created": 21,
-        "http.requests": 21,
-        "http.codes.429": 21,
-        "http.responses": 21,
-        "http.downloaded_bytes": 1008,
-        "plugins.metrics-by-endpoint./api/v1/auth/register.codes.429": 21,
-        "errors.Failed capture or match": 21,
-        "vusers.failed": 21,
-        "vusers.created_by_name.My reviews and tutor listing read load": 8,
-        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 9
-      },
-      "rates": {
-        "http.request_rate": 3
-      },
-      "http.request_rate": null,
-      "firstCounterAt": 1775898180499,
-      "firstHistogramAt": 1775898180501,
-      "lastCounterAt": 1775898189141,
-      "lastHistogramAt": 1775898189141,
-      "firstMetricAt": 1775898180499,
-      "lastMetricAt": 1775898189141,
-      "period": "1775898180000",
-      "summaries": {
-        "http.response_time": {
-          "min": 1,
-          "max": 2,
-          "count": 21,
-          "mean": 1.3,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "http.response_time.4xx": {
-          "min": 1,
-          "max": 2,
-          "count": 21,
-          "mean": 1.3,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 1,
-          "max": 2,
-          "count": 21,
-          "mean": 1.3,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        }
-      },
-      "histograms": {
-        "http.response_time": {
-          "min": 1,
-          "max": 2,
-          "count": 21,
-          "mean": 1.3,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "http.response_time.4xx": {
-          "min": 1,
-          "max": 2,
-          "count": 21,
-          "mean": 1.3,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 1,
-          "max": 2,
-          "count": 21,
-          "mean": 1.3,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        }
-      }
-    },
-    {
-      "counters": {
-        "vusers.created_by_name.My reviews and tutor listing read load": 9,
-        "vusers.created": 30,
-        "http.requests": 30,
-        "http.codes.429": 30,
-        "http.responses": 30,
-        "http.downloaded_bytes": 1440,
-        "plugins.metrics-by-endpoint./api/v1/auth/register.codes.429": 30,
-        "errors.Failed capture or match": 30,
-        "vusers.failed": 30,
-        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 11,
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 13,
         "vusers.created_by_name.Leaderboard read load": 10
       },
       "rates": {
         "http.request_rate": 3
       },
       "http.request_rate": null,
-      "firstCounterAt": 1775898190037,
-      "firstHistogramAt": 1775898190040,
-      "lastCounterAt": 1775898199142,
-      "lastHistogramAt": 1775898199141,
-      "firstMetricAt": 1775898190037,
-      "lastMetricAt": 1775898199142,
-      "period": "1775898190000",
-      "summaries": {
-        "http.response_time": {
-          "min": 1,
-          "max": 2,
-          "count": 30,
-          "mean": 1.2,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "http.response_time.4xx": {
-          "min": 1,
-          "max": 2,
-          "count": 30,
-          "mean": 1.2,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 1,
-          "max": 2,
-          "count": 30,
-          "mean": 1.2,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        }
-      },
-      "histograms": {
-        "http.response_time": {
-          "min": 1,
-          "max": 2,
-          "count": 30,
-          "mean": 1.2,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "http.response_time.4xx": {
-          "min": 1,
-          "max": 2,
-          "count": 30,
-          "mean": 1.2,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 1,
-          "max": 2,
-          "count": 30,
-          "mean": 1.2,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        }
-      }
+      "firstCounterAt": 1775911440687,
+      "lastCounterAt": 1775911449823,
+      "firstMetricAt": 1775911440687,
+      "lastMetricAt": 1775911449823,
+      "period": "1775911440000",
+      "summaries": {},
+      "histograms": {}
     },
     {
       "counters": {
-        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 18,
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 8,
+        "vusers.created": 30,
+        "http.requests": 30,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 30,
+        "errors.ECONNREFUSED": 30,
+        "vusers.failed": 30,
+        "vusers.created_by_name.My reviews and tutor listing read load": 8,
+        "vusers.created_by_name.Leaderboard read load": 14
+      },
+      "rates": {
+        "http.request_rate": 3
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911450687,
+      "lastCounterAt": 1775911459823,
+      "firstMetricAt": 1775911450687,
+      "lastMetricAt": 1775911459823,
+      "period": "1775911450000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.My reviews and tutor listing read load": 15,
+        "vusers.created": 30,
+        "http.requests": 30,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 30,
+        "errors.ECONNREFUSED": 30,
+        "vusers.failed": 30,
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 10,
+        "vusers.created_by_name.Leaderboard read load": 5
+      },
+      "rates": {
+        "http.request_rate": 3
+      },
+      "http.request_rate": null,
+      "firstCounterAt": 1775911460687,
+      "lastCounterAt": 1775911469823,
+      "firstMetricAt": 1775911460687,
+      "lastMetricAt": 1775911469823,
+      "period": "1775911460000",
+      "summaries": {},
+      "histograms": {}
+    },
+    {
+      "counters": {
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 16,
         "vusers.created": 50,
         "http.requests": 50,
-        "http.codes.429": 40,
-        "http.responses": 50,
-        "http.downloaded_bytes": 3195,
-        "plugins.metrics-by-endpoint./api/v1/auth/register.codes.429": 40,
-        "errors.Failed capture or match": 50,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 50,
+        "errors.ECONNREFUSED": 50,
         "vusers.failed": 50,
-        "vusers.created_by_name.My reviews and tutor listing read load": 14,
-        "vusers.created_by_name.Leaderboard read load": 18,
-        "http.codes.400": 10,
-        "plugins.metrics-by-endpoint./api/v1/auth/register.codes.400": 10
+        "vusers.created_by_name.My reviews and tutor listing read load": 22,
+        "vusers.created_by_name.Leaderboard read load": 12
       },
       "rates": {
         "http.request_rate": 5
       },
       "http.request_rate": null,
-      "firstCounterAt": 1775898200038,
-      "firstHistogramAt": 1775898200040,
-      "lastCounterAt": 1775898209242,
-      "lastHistogramAt": 1775898209242,
-      "firstMetricAt": 1775898200038,
-      "lastMetricAt": 1775898209242,
-      "period": "1775898200000",
-      "summaries": {
-        "http.response_time": {
-          "min": 0,
-          "max": 93,
-          "count": 50,
-          "mean": 10.4,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 92.8,
-          "p99": 92.8,
-          "p999": 92.8
-        },
-        "http.response_time.4xx": {
-          "min": 0,
-          "max": 93,
-          "count": 50,
-          "mean": 10.4,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 92.8,
-          "p99": 92.8,
-          "p999": 92.8
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 0,
-          "max": 93,
-          "count": 50,
-          "mean": 10.4,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 92.8,
-          "p99": 92.8,
-          "p999": 92.8
-        }
-      },
-      "histograms": {
-        "http.response_time": {
-          "min": 0,
-          "max": 93,
-          "count": 50,
-          "mean": 10.4,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 92.8,
-          "p99": 92.8,
-          "p999": 92.8
-        },
-        "http.response_time.4xx": {
-          "min": 0,
-          "max": 93,
-          "count": 50,
-          "mean": 10.4,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 92.8,
-          "p99": 92.8,
-          "p999": 92.8
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 0,
-          "max": 93,
-          "count": 50,
-          "mean": 10.4,
-          "p50": 1,
-          "median": 1,
-          "p75": 2,
-          "p90": 2,
-          "p95": 92.8,
-          "p99": 92.8,
-          "p999": 92.8
-        }
-      }
+      "firstCounterAt": 1775911470687,
+      "lastCounterAt": 1775911479956,
+      "firstMetricAt": 1775911470687,
+      "lastMetricAt": 1775911479956,
+      "period": "1775911470000",
+      "summaries": {},
+      "histograms": {}
     },
     {
       "counters": {
-        "vusers.created_by_name.Leaderboard read load": 5,
+        "vusers.created_by_name.Leaderboard read load": 8,
         "vusers.created": 25,
         "http.requests": 25,
-        "http.codes.429": 25,
-        "http.responses": 25,
-        "http.downloaded_bytes": 1200,
-        "plugins.metrics-by-endpoint./api/v1/auth/register.codes.429": 25,
-        "errors.Failed capture or match": 25,
+        "plugins.metrics-by-endpoint./api/v1/auth/register.errors.ECONNREFUSED": 25,
+        "errors.ECONNREFUSED": 25,
         "vusers.failed": 25,
-        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 13,
-        "vusers.created_by_name.My reviews and tutor listing read load": 7
+        "vusers.created_by_name.Review create stress (missing booking — service + DB path)": 7,
+        "vusers.created_by_name.My reviews and tutor listing read load": 10
       },
       "rates": {
         "http.request_rate": 5
       },
       "http.request_rate": null,
-      "firstCounterAt": 1775898210038,
-      "firstHistogramAt": 1775898210041,
-      "lastCounterAt": 1775898214241,
-      "lastHistogramAt": 1775898214241,
-      "firstMetricAt": 1775898210038,
-      "lastMetricAt": 1775898214241,
-      "period": "1775898210000",
-      "summaries": {
-        "http.response_time": {
-          "min": 0,
-          "max": 2,
-          "count": 25,
-          "mean": 1.1,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "http.response_time.4xx": {
-          "min": 0,
-          "max": 2,
-          "count": 25,
-          "mean": 1.1,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 0,
-          "max": 2,
-          "count": 25,
-          "mean": 1.1,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        }
-      },
-      "histograms": {
-        "http.response_time": {
-          "min": 0,
-          "max": 2,
-          "count": 25,
-          "mean": 1.1,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "http.response_time.4xx": {
-          "min": 0,
-          "max": 2,
-          "count": 25,
-          "mean": 1.1,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        },
-        "plugins.metrics-by-endpoint.response_time./api/v1/auth/register": {
-          "min": 0,
-          "max": 2,
-          "count": 25,
-          "mean": 1.1,
-          "p50": 1,
-          "median": 1,
-          "p75": 1,
-          "p90": 2,
-          "p95": 2,
-          "p99": 2,
-          "p999": 2
-        }
-      }
+      "firstCounterAt": 1775911480687,
+      "lastCounterAt": 1775911484956,
+      "firstMetricAt": 1775911480687,
+      "lastMetricAt": 1775911484956,
+      "period": "1775911480000",
+      "summaries": {},
+      "histograms": {}
     }
   ]
 }

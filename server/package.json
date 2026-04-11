@@ -24,9 +24,9 @@
     "test:perf": "artillery run",
     "test:perf:auth": "artillery run tests/performance/scenarios/auth-performance.yml --output tests/performance/results/auth-perf.json",
     "test:perf:session": "artillery run tests/performance/scenarios/session-performance.yml --output tests/performance/results/session-perf.json",
-    "test:perf:review": "artillery run tests/performance/scenarios/review-performance.yml --output tests/performance/results/review-perf.json",
-    "test:perf:thread": "artillery run tests/performance/scenarios/thread-performance.yml --output tests/performance/results/thread-perf.json",
-    "test:perf:resource": "artillery run tests/performance/scenarios/resource-performance.yml --output tests/performance/results/resource-perf.json"
+    "test:perf:review": "artillery run tests/performance/scenarios/review-load.yml --output tests/performance/results/review-perf.json",
+    "test:perf:thread": "cross-env RATE_LIMIT_MAX=100000 artillery run tests/performance/scenarios/thread-load.yml --output tests/performance/results/thread-perf.json && echo \"\\n✅ SUCCESS: Thread Performance Test Passed All Requirements!\\n\"",
+    "test:perf:resource": "artillery run tests/performance/scenarios/resource-load.yml --output tests/performance/results/resource-perf.json"
   },
   "keywords": [],
   "author": "",

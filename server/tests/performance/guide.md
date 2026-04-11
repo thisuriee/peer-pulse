@@ -1,12 +1,7 @@
-<<<<<<< HEAD
 # Performance Testing Guide — PeerPulse
-=======
+
 ## Requires Live Server
-
-## One terminal runs the server; another runs Artillery.
-
-## Terminal 1 — start server in test mode:
->>>>>>> origin/testing/study-hub
+One terminal runs the server; another runs Artillery.
 
 ## Overview
 This guide explains how to run performance and load tests using Artillery.js on the PeerPulse API.
@@ -22,16 +17,11 @@ This guide explains how to run performance and load tests using Artillery.js on 
 ### Terminal 1: Start Test Server
 ```bash
 cd server
-<<<<<<< HEAD
 NODE_ENV=test PORT=5001 node src/index.js
 ```
-=======
-set NODE_ENV=development && set PORT=5001 && node src/index.js
->>>>>>> origin/testing/study-hub
 
 Wait until you see **"Database connected"** in the log before proceeding to Terminal 2.
 
-<<<<<<< HEAD
 ### Terminal 2: Run Performance Tests
 ```bash
 cd server
@@ -227,7 +217,6 @@ echo "All tests completed! Check results in tests/performance/results/"
 - [Artillery Documentation](https://artillery.io/docs)
 - [Artillery CLI Reference](https://artillery.io/docs/guides/tools/cli)
 - [Load Testing Best Practices](https://en.wikipedia.org/wiki/Load_testing)
-=======
 ## Terminal 2 — create the Artillery YAML files
 
 ## Run per-module performance tests (each member runs their own)
@@ -274,4 +263,3 @@ npm run test:perf:review
 # Member 4
 
 npx artillery run tests/performance/scenarios/thread-load.yml
->>>>>>> origin/testing/study-hub
