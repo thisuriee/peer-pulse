@@ -26,7 +26,8 @@
     "test:perf:session": "artillery run tests/performance/scenarios/session-performance.yml --output tests/performance/results/session-perf.json",
     "test:perf:review": "artillery run tests/performance/scenarios/review-load.yml --output tests/performance/results/review-perf.json",
     "test:perf:thread": "cross-env RATE_LIMIT_MAX=100000 artillery run tests/performance/scenarios/thread-load.yml --output tests/performance/results/thread-perf.json && echo \"\\n✅ SUCCESS: Thread Performance Test Passed All Requirements!\\n\"",
-    "test:perf:resource": "artillery run tests/performance/scenarios/resource-load.yml --output tests/performance/results/resource-perf.json"
+    "test:perf:resource": "artillery run tests/performance/scenarios/resource-load.yml --output tests/performance/results/resource-perf.json",
+    "build": "rimraf dist && babel src --out-dir dist --copy-files"
   },
   "keywords": [],
   "author": "",
@@ -71,6 +72,10 @@
     "jest": "^30.3.0",
     "minimist": "^1.2.8",
     "mongodb-memory-server": "^11.0.1",
-    "supertest": "^7.2.2"
+    "supertest": "^7.2.2",
+    "@babel/cli": "^7.28.6",
+    "@babel/core": "^7.29.0",
+    "@babel/preset-env": "^7.29.2",
+    "rimraf": "^3.0.2"
   }
 }
