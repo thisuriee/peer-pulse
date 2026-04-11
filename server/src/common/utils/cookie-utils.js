@@ -5,10 +5,13 @@ const { calculateExpirationDate } = require("./date-utils");
 
 const REFRESH_PATH = `${config.BASE_PATH}/auth/refresh`;
 
+/** Vercel + Render (or any cross-origin SPA) require None+Secure or cookies are not sent on API XHR. */
+const isProd = config.NODE_ENV === 'production';
 const defaults = {
   httpOnly: true,
-  //secure: config.NODE_ENV === "production" ? true : false,
-  //sameSite: config.NODE_ENV === "production" ? "strict" : "lax",
+  ...(isProd
+    ? { sameSite: 'none', secure: true }
+    : { sameSite: 'lax', secure: false }),
 };
 
 const getRefreshTokenCookieOptions = () => {
