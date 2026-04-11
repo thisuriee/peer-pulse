@@ -15,6 +15,7 @@
     "test:integration": "cross-env NODE_ENV=test jest tests/integration",
     "test:integration:thread": "cross-env NODE_ENV=test jest tests/integration/thread",
     "test:integration:resource": "cross-env NODE_ENV=test jest tests/integration/resource",
+    "test:unit:review": "cross-env NODE_ENV=test jest tests/unit/review",
     "test:coverage": "cross-env NODE_ENV=test jest --coverage",
     "test:watch": "cross-env NODE_ENV=test jest --watch",
     "test:perf": "artillery run"
