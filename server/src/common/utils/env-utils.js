@@ -1,14 +1,15 @@
 "use strict";
 
-const getEnv = (key, defaultValue = "") => {
+/** When `defaultValue` is passed (including ""), missing env returns that default. Omit it for required vars. */
+const getEnv = (key, defaultValue) => {
   const value = process.env[key];
-  if (value === undefined) {
-    if (defaultValue) {
-      return defaultValue;
-    }
-    throw new Error(`Enviroment variable ${key} is not set`);
+  if (value !== undefined) {
+    return value;
   }
-  return value;
+  if (arguments.length >= 2) {
+    return defaultValue;
+  }
+  throw new Error(`Environment variable ${key} is not set`);
 };
 
 module.exports = { getEnv };
