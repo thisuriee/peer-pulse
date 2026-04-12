@@ -77,6 +77,18 @@ describe("ThreadController", () => {
         data: mockResult,
       });
     });
+
+    it("should pass error to next middleware when content is rejected by profanity filter", async () => {
+      req.body = { title: "Toxic Title", content: "Toxic Content" };
+      const error = new Error("Profanity detected");
+      error.status = 400; // Simulating BadRequestException
+      mockThreadService.createThread.mockRejectedValue(error);
+
+      await threadController.createThread(req, res, next);
+
+      expect(mockThreadService.createThread).toHaveBeenCalledWith("user123", req.body);
+      expect(next).toHaveBeenCalledWith(error);
+    });
   });
 
   describe("getThreads", () => {
@@ -132,6 +144,19 @@ describe("ThreadController", () => {
         message: "Thread updated successfully",
         data: mockResult,
       });
+    });
+
+    it("should pass error to next middleware when updated content is rejected by profanity filter", async () => {
+      req.params = { id: "thread123" };
+      req.body = { title: "Toxic Updated Title" };
+      const error = new Error("Profanity detected");
+      error.status = 400; // Simulating BadRequestException
+      mockThreadService.updateThread.mockRejectedValue(error);
+
+      await threadController.updateThread(req, res, next);
+
+      expect(mockThreadService.updateThread).toHaveBeenCalledWith("thread123", "user123", req.body);
+      expect(next).toHaveBeenCalledWith(error);
     });
   });
 
