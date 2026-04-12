@@ -62,12 +62,31 @@ describe("ThreadService", () => {
       expect(logger.info).toHaveBeenCalled();
     });
 
-    it("should throw BadRequestException when content is toxic", async () => {
-      process.env.PERSPECTIVE_TOXICITY_THRESHOLD = "0.7";
-      ProfanityFilter.analyzeText.mockResolvedValue({ toxicity: 0.9 });
+    it("should throw BadRequestException when content is toxic with 0.80 score", async () => {
+      process.env.PERSPECTIVE_TOXICITY_THRESHOLD = "0.75";
+      const toxicData = { ...threadData, content: "This is deeply toxic string variable, 0.80 score!" };
+      ProfanityFilter.analyzeText.mockResolvedValue({ toxicity: 0.80 });
 
-      await expect(threadService.createThread(authorId, threadData)).rejects.toThrow(BadRequestException);
+      await expect(threadService.createThread(authorId, toxicData)).rejects.toThrow(BadRequestException);
       expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("Blocked thread"), expect.any(Object));
+    });
+
+    it("should allow thread creation when content is non-toxic string with a passing 0.10 score", async () => {
+      process.env.PERSPECTIVE_TOXICITY_THRESHOLD = "0.75";
+      const nonToxicData = { ...threadData, content: "This is a totally normal and non-toxic string variable." };
+      ProfanityFilter.analyzeText.mockResolvedValue({ toxicity: 0.10 });
+      
+      const mockThread = {
+        _id: "thread124",
+        ...nonToxicData,
+        authorId,
+        populate: jest.fn().mockResolvedValue(true),
+      };
+      
+      ThreadModel.create.mockResolvedValue(mockThread);
+
+      await expect(threadService.createThread(authorId, nonToxicData)).resolves.not.toThrow();
+      expect(ThreadModel.create).toHaveBeenCalled();
     });
   });
 
